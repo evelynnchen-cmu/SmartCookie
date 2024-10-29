@@ -5,22 +5,38 @@
 //  Created by Evelynn Chen on 10/29/24.
 //
 
-
 import Foundation
 
 struct Folder: Codable, Identifiable {
     struct RecentNoteSummary: Codable {
-        let noteID: UUID
-        let title: String
-        let summary: String
-        let createdAt: Date
+        var noteID: UUID
+        var title: String
+        var summary: String
+        var createdAt: Date
+
+        enum CodingKeys: String, CodingKey {
+            case noteID
+            case title
+            case summary
+            case createdAt
+        }
     }
 
-    let id: UUID
-    let userID: UUID
-    let folderName: String
-    let courseID: String
-    let notes: [String]
-    let fileLocation: String
-    let recentNoteSummary: RecentNoteSummary?
+    var id: UUID
+    var userID: UUID
+    var folderName: String
+    var courseID: String
+    var notes: [String]
+    var fileLocation: String
+    var recentNoteSummary: RecentNoteSummary?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userID
+        case folderName
+        case courseID
+        case notes
+        case fileLocation
+        case recentNoteSummary
+    }
 }

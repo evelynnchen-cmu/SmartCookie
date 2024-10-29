@@ -9,10 +9,19 @@
 import Foundation
 
 struct Notification: Codable, Identifiable {
-    let id: UUID
-    let type: String
-    let scheduledAt: Date
-    let message: String
-    let quizID: UUID?
-    let userID: UUID
+    var id: String?
+    var type: String
+    var scheduledAt: Date
+    var message: String
+    var quizID: String?
+    var userID: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case type
+        case scheduledAt
+        case message
+        case quizID
+        case userID
+    }
 }

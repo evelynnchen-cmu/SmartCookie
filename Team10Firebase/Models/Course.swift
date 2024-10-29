@@ -7,12 +7,22 @@
 
 
 import Foundation
+import FirebaseFirestore
 
 struct Course: Codable, Identifiable {
-    let id: UUID
-    let userID: UUID
-    let courseName: String
-    let folders: [String]
-    let notes: [String]
-    let fileLocation: String
+    var id: String?
+    var userID: String
+    var courseName: String
+    var folders: [String]
+    var notes: [String]
+    var fileLocation: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userID
+        case courseName
+        case folders
+        case notes
+        case fileLocation
+    }
 }

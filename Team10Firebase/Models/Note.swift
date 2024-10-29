@@ -9,14 +9,27 @@
 import Foundation
 
 struct Note: Codable, Identifiable {
-    let id: UUID
-    let userID: UUID
-    let title: String
-    let summary: String
-    let content: String
-    let images: [URL]
-    let createdAt: Date
-    let courseID: UUID
-    let fileLocation: String
-    let lastAccessed: Date?
+    var id: String?
+    var userID: String?
+    var title: String
+    var summary: String
+    var content: String
+    var images: [URL]
+    var createdAt: Date
+    var courseID: String?
+    var fileLocation: String
+    var lastAccessed: Date?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userID
+        case title
+        case summary
+        case content
+        case images
+        case createdAt
+        case courseID
+        case fileLocation 
+        case lastAccessed
+    }
 }
