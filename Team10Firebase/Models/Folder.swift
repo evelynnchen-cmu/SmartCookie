@@ -6,10 +6,11 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
 struct Folder: Codable, Identifiable {
     struct RecentNoteSummary: Codable {
-        var noteID: UUID
+        var noteID: String?
         var title: String
         var summary: String
         var createdAt: Date
@@ -22,8 +23,8 @@ struct Folder: Codable, Identifiable {
         }
     }
 
-    @DocumentID var id: UUID
-    var userID: UUID
+    @DocumentID var id: String?
+    var userID: String?
     var folderName: String
     var courseID: String
     var notes: [String]

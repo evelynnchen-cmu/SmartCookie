@@ -7,6 +7,7 @@
 
 
 import Foundation
+import FirebaseFirestore
 
 struct Note: Codable, Identifiable {
     @DocumentID var id: String?

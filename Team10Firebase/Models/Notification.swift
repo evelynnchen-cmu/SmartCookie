@@ -7,6 +7,7 @@
 
 
 import Foundation
+import FirebaseFirestore
 
 struct Notification: Codable, Identifiable {
     @DocumentID var id: String?

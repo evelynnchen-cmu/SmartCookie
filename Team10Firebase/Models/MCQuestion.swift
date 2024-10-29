@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
 struct MCQuestion: Codable, Identifiable {
     @DocumentID var id: String?

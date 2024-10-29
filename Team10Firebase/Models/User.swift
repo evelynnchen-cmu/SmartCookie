@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
 struct User: Codable, Identifiable {
     struct Streak: Codable {
