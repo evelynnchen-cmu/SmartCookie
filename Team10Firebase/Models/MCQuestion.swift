@@ -8,7 +8,7 @@
 import Foundation
 
 struct MCQuestion: Codable, Identifiable {
-    var id: String?
+    @DocumentID var id: String?
     var question: String
     var potentialAnswers: [String]
     var correctAnswer: Int

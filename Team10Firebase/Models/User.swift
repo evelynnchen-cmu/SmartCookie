@@ -50,7 +50,7 @@ struct User: Codable, Identifiable {
         }
     }
 
-    var id: String?
+    @DocumentID var id: String?
     var name: String
     var notifications: [String]
     var streak: Streak

@@ -22,7 +22,7 @@ struct Folder: Codable, Identifiable {
         }
     }
 
-    var id: UUID
+    @DocumentID var id: UUID
     var userID: UUID
     var folderName: String
     var courseID: String

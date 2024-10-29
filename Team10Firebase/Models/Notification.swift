@@ -9,7 +9,7 @@
 import Foundation
 
 struct Notification: Codable, Identifiable {
-    var id: String?
+    @DocumentID var id: String?
     var type: String
     var scheduledAt: Date
     var message: String

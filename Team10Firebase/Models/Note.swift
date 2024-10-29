@@ -9,7 +9,7 @@
 import Foundation
 
 struct Note: Codable, Identifiable {
-    var id: String?
+    @DocumentID var id: String?
     var userID: String?
     var title: String
     var summary: String

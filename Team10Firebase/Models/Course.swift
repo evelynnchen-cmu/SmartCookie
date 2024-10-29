@@ -10,7 +10,7 @@ import Foundation
 import FirebaseFirestore
 
 struct Course: Codable, Identifiable {
-    var id: String?
+    @DocumentID var id: String?
     var userID: String
     var courseName: String
     var folders: [String]
