@@ -8,14 +8,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var firebase = Firebase()
+    @State private var errorMessage: String?
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationView {
+            List(firebase.courses) { course in
+                VStack(alignment: .leading) {
+                    Text(course.courseName)
+                        .font(.headline)
+                    Text("User ID: \(course.userID)")
+                        .font(.subheadline)
+                }
+            }
+            .navigationBarTitle("Courses")
+            .onAppear {
+                firebase.fetchCourses()
+            }
         }
-        .padding()
     }
 }
 
