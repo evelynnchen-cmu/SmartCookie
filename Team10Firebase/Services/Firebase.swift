@@ -15,11 +15,15 @@ class Firebase: ObservableObject {
     @Published var notes: [Note] = []
     @Published var folders: [Folder] = []
     @Published var mcQuestions: [MCQuestion] = []
+    @Published var notifications: [Notification] = []
+    @Published var users: [User] = []
     
     private let courseCollection = "Course"
     private let noteCollection = "Note"
     private let folderCollection = "Folder"
     private let mcQuestionCollection = "MCQuestion"
+     private let notificationCollection = "Notification"
+     private let userCollection = "User"
   
     // get methods
     func getCourses() {
@@ -90,6 +94,42 @@ class Firebase: ObservableObject {
             print("Total MCQuestions fetched: \(self.mcQuestions.count)")
             for mcQuestion in self.mcQuestions {
                 print("Fetched MCQuestion: \(mcQuestion)")
+            }
+        }
+    }
+
+    func getNotifications() {
+        db.collection(notificationCollection).addSnapshotListener { querySnapshot, error in
+            if let error = error {
+                print("Error fetching notifications: \(error.localizedDescription)")
+                return
+            }
+
+            self.notifications = querySnapshot?.documents.compactMap { document in
+                try? document.data(as: Notification.self)
+            } ?? []
+
+            print("Total notifications fetched: \(self.notifications.count)")
+            for notification in self.notifications {
+                print("Fetched notification: \(notification)")
+            }
+        }
+    }
+
+    func getUsers() {
+        db.collection(userCollection).addSnapshotListener { querySnapshot, error in
+            if let error = error {
+                print("Error fetching users: \(error.localizedDescription)")
+                return
+            }
+
+            self.users = querySnapshot?.documents.compactMap { document in
+                try? document.data(as: User.self)
+            } ?? []
+
+            print("Total users fetched: \(self.users.count)")
+            for user in self.users {
+                print("Fetched user: \(user)")
             }
         }
     }

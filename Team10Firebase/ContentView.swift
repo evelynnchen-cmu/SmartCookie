@@ -38,11 +38,23 @@ struct ContentView: View {
                     ForEach(firebase.folders) { folder in
                         FolderView(folder: folder)
                     }
-                      Text("MCQuestions:")
+                    Text("MCQuestions:")
                         .font(.largeTitle)
                         .padding(.leading)
                     ForEach(firebase.mcQuestions) { mcQuestion in
                         MCQuestionView(mcQuestion: mcQuestion)
+                    }
+                    Text("Notifications:")
+                        .font(.largeTitle)
+                        .padding(.leading)
+                    ForEach(firebase.notifications) { notification in
+                        NotificationView(notification: notification)
+                    }
+                    Text("Users:")
+                        .font(.largeTitle)
+                        .padding(.leading)
+                    ForEach(firebase.users) { user in
+                        UserView(user: user)
                     }
                 }
                 .padding()
@@ -53,6 +65,8 @@ struct ContentView: View {
               firebase.getNotes()
               firebase.getFolders()
               firebase.getMCQuestions()
+              firebase.getNotifications()
+              firebase.getUsers()
             }
         }
     }
@@ -143,6 +157,60 @@ struct MCQuestionView: View {
             Text("potentialAnswers: \(mcQuestion.potentialAnswers.joined(separator: ", "))")
                 .font(.body)
             Text("correctAnswer: \(mcQuestion.correctAnswer)")
+                .font(.body)
+        }
+        .padding(.leading)
+    }
+}
+
+struct NotificationView: View {
+    let notification: Notification
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("id: \(notification.id ?? "N/A")")
+                .font(.body)
+            Text("type: \(notification.type)")
+                .font(.body)
+            Text("message: \(notification.message)")
+                .font(.body)
+            if let quizID = notification.quizID {
+                Text("quizID: \(quizID)")
+                    .font(.body)
+            }
+            Text("scheduledAt: \(notification.scheduledAt)")
+                .font(.body)
+            if let userID = notification.userID {
+                Text("userID: \(userID)")
+                    .font(.body)
+            }
+        }
+        .padding(.leading)
+    }
+}
+
+struct UserView: View {
+    let user: User
+    var body: some View {
+        VStack(alignment: .leading) {
+            Text("id: \(user.id ?? "N/A")")
+                .font(.body)
+            Text("name: \(user.name)")
+                .font(.body)
+            Text("notifications: \(user.notifications.joined(separator: ", "))")
+                .font(.body)
+            Text("streak: \(user.streak.currentStreakLength)")
+                .font(.body)
+            Text("courses: \(user.courses.joined(separator: ", "))")
+                .font(.body)
+            Text("notificationsEnabled: \(user.settings.notificationsEnabled ? "Enabled" : "Disabled")")
+                .font(.body)
+            Text("notificationFrequency: \(user.settings.notificationFrequency)")
+                .font(.body)
+            Text("notesOnlyQuizScope: \(user.settings.notesOnlyQuizScope ? "Enabled" : "Disabled")")
+                .font(.body)
+            Text("notesOnlyChatScope: \(user.settings.notesOnlyChatScope ? "Enabled" : "Disabled")")
+                .font(.body)
+            Text("quizzes: \(user.quizzes.map { $0.quizID ?? "N/A" }.joined(separator: ", "))")
                 .font(.body)
         }
         .padding(.leading)
