@@ -21,7 +21,8 @@ struct Team10FirebaseApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView() // Your app's content
+//            ContentView() // Your app's content
+          AppView()
         }
     }
 }
