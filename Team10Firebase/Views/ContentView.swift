@@ -20,7 +20,7 @@ struct ContentView: View {
                         .padding(.leading)
 
                     ForEach(firebase.courses) { course in
-                        CourseView(course: course)
+                        CourseViewTest(course: course)
                     }
 
                     Text("Notes:")
@@ -28,7 +28,7 @@ struct ContentView: View {
                         .padding(.leading)
 
                     ForEach(firebase.notes) { note in
-                        NoteView(note: note)
+                        NoteViewTest(note: note)
                     }
 
                     Text("Folders:")
@@ -36,25 +36,25 @@ struct ContentView: View {
                         .padding(.leading)
 
                     ForEach(firebase.folders) { folder in
-                        FolderView(folder: folder)
+                        FolderViewTest(folder: folder)
                     }
                     Text("MCQuestions:")
                         .font(.largeTitle)
                         .padding(.leading)
                     ForEach(firebase.mcQuestions) { mcQuestion in
-                        MCQuestionView(mcQuestion: mcQuestion)
+                        MCQuestionViewTest(mcQuestion: mcQuestion)
                     }
                     Text("Notifications:")
                         .font(.largeTitle)
                         .padding(.leading)
                     ForEach(firebase.notifications) { notification in
-                        NotificationView(notification: notification)
+                        NotificationViewTest(notification: notification)
                     }
                     Text("Users:")
                         .font(.largeTitle)
                         .padding(.leading)
                     ForEach(firebase.users) { user in
-                        UserView(user: user)
+                        UserViewTest(user: user)
                     }
                 }
                 .padding()
@@ -72,7 +72,7 @@ struct ContentView: View {
     }
 }
 
-struct CourseView: View {
+struct CourseViewTest: View {
     let course: Course
 
     var body: some View {
@@ -94,7 +94,7 @@ struct CourseView: View {
     }
 }
 
-struct NoteView: View {
+struct NoteViewTest: View {
     let note: Note
 
     var body: some View {
@@ -124,7 +124,7 @@ struct NoteView: View {
     }
 }
 
-struct FolderView: View {
+struct FolderViewTest: View {
     let folder: Folder
 
     var body: some View {
@@ -146,7 +146,7 @@ struct FolderView: View {
     }
 }
 
-struct MCQuestionView: View {
+struct MCQuestionViewTest: View {
     let mcQuestion: MCQuestion
     var body: some View {
         VStack(alignment: .leading) {
@@ -163,7 +163,7 @@ struct MCQuestionView: View {
     }
 }
 
-struct NotificationView: View {
+struct NotificationViewTest: View {
     let notification: Notification
     var body: some View {
         VStack(alignment: .leading) {
@@ -188,7 +188,7 @@ struct NotificationView: View {
     }
 }
 
-struct UserView: View {
+struct UserViewTest: View {
     let user: User
     var body: some View {
         VStack(alignment: .leading) {
