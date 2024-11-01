@@ -8,9 +8,14 @@
 import SwiftUI
 
 struct HomeView: View {
-  @StateObject private var firebase = Firebase()
-  @State private var errorMessage: String?
+    @StateObject private var firebase = Firebase()
+    @State private var errorMessage: String?
 //  Note: Book/Library class example used @EnvironmentObject var library: Library for model where Library was a ViewModel
+  
+    @State private var courses: [Course] = []
+    @State private var showAddCourseModal = false
+    @State private var isLoading = false
+  
     var body: some View {
       NavigationView {
       VStack {
@@ -32,6 +37,22 @@ struct HomeView: View {
             }
           }
         }
+ 
+        Button(action: {
+             showAddCourseModal = true
+         }) {
+             Text("Add Course")
+                 .font(.headline)
+                 .foregroundColor(.white)
+                 .padding()
+                 .background(Color.blue)
+                 .cornerRadius(8)
+         }
+         .padding(.top, 20)
+         .sheet(isPresented: $showAddCourseModal) {
+ //          need onCourseCreated to refresh HomeView after course creation
+           AddCourseModal(onCourseCreated: firebase.getCourses, firebase: firebase)
+          }
 //        TODO: may change so we aren't loading all the data at once
         .onAppear {
           firebase.getCourses()
