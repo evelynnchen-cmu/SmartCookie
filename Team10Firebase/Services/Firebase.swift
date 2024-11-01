@@ -151,4 +151,28 @@ class Firebase: ObservableObject {
       throw error
     }
   }
+  
+  func createNote(noteTitle: String, noteContent: String, courseID: String, summary: String = "", images: [URL] = [], fileLocation: String = "") async throws {
+      let note = Note(
+          id: nil, // Firestore will generate the ID
+          userID: "userID_placeholder", // Adjust this as needed
+          title: noteTitle,
+          summary: summary,
+          content: noteContent,
+          images: images,
+          createdAt: Date(),
+          courseID: courseID,
+          fileLocation: fileLocation,
+          lastAccessed: nil
+      )
+      
+      do {
+          let _ = try db.collection(noteCollection).addDocument(from: note)
+      } catch {
+          throw error
+      }
+  }
+
+
+
 }

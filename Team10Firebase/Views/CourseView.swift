@@ -9,20 +9,34 @@ import SwiftUI
 struct CourseView: View {
     @StateObject private var firebase = Firebase()
     var course: Course
+    @State private var isAddingNote = false
 
-    var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading) {
-                    courseDetailsSection
-                    notesSection
-                }
-                .padding(.leading)
-            }
-        }
-        .onAppear {
-            firebase.getNotes()
-        }
+  var body: some View {
+          NavigationView {
+              ScrollView {
+                  VStack(alignment: .leading) {
+                      courseDetailsSection
+                      notesSection
+                  }
+                  .padding(.leading)
+              }
+              .navigationTitle(course.courseName)
+              .toolbar {
+                  ToolbarItem(placement: .navigationBarTrailing) {
+                      Button("Add Note") {
+                          isAddingNote = true
+                      }
+                  }
+              }
+              .sheet(isPresented: $isAddingNote) {
+                  AddNoteModal(onNoteCreated: {
+                      firebase.getNotes() // This closure will call getNotes() after a note is created
+                  }, firebase: firebase) // Pass firebase as an ObservedObject here
+              }
+              .onAppear {
+                  firebase.getNotes()
+              }
+          }
     }
 
     private var courseDetailsSection: some View {
