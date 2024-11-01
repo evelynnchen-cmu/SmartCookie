@@ -26,5 +26,7 @@
 	<true/>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:724690065404:ios:33e76fdeac844393bb8479</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to the camera to take pictures for scanning purposes.</string>
 </dict>
 </plist>
