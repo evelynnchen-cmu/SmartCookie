@@ -66,11 +66,11 @@ struct AddNoteModal: View {
     @State private var showError = false
     @State private var errorMessage: String = ""
     
-    // Callback to refresh the notes view after note creation
+    
     var onNoteCreated: () -> Void
     
     @ObservedObject var firebase: Firebase
-    var course: Course // Pass the course object to AddNoteModal
+    var course: Course 
 
     var body: some View {
         NavigationView {
@@ -90,7 +90,7 @@ struct AddNoteModal: View {
                             try await firebase.createNote(
                                 noteTitle: noteTitle,
                                 noteContent: noteContent,
-                                course: course // Pass the Course object here
+                                course: course
                             )
                             onNoteCreated()
                             dismiss()

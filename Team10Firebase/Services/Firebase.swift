@@ -175,32 +175,13 @@ class Firebase: ObservableObject {
       }
   }
   
-//  func createNote(noteTitle: String, noteContent: String, courseID: String, summary: String = "", images: [URL] = [], fileLocation: String = "") async throws {
-//      let note = Note(
-//          id: nil, // Firestore will generate the ID
-//          userID: "userID_placeholder", // Adjust this as needed
-//          title: noteTitle,
-//          summary: summary,
-//          content: noteContent,
-//          images: images,
-//          createdAt: Date(),
-//          courseID: courseID,
-//          fileLocation: fileLocation,
-//          lastAccessed: nil
-//      )
-//      
-//      do {
-//          let _ = try db.collection(noteCollection).addDocument(from: note)
-//      } catch {
-//          throw error
-//      }
-//  }
+
   
   
   func createNote(
       noteTitle: String,
       noteContent: String,
-      course: Course, // Pass the course object as a parameter
+      course: Course,
       summary: String = "",
       images: [URL] = [],
       fileLocation: String = ""
@@ -211,28 +192,26 @@ class Firebase: ObservableObject {
           return
       }
 
-      // Get the first user (assuming you need this to associate the note with a user)
+
       getFirstUser { user in
           guard let user = user, let userID = user.id, !userID.isEmpty else {
               print("Error: Missing user ID.")
               return
           }
 
-          // Create the note object
           let note = Note(
-              id: nil, // Firestore will generate the ID
-              userID: userID, // Associate with the user who created the course
+              id: nil,
+              userID: userID,
               title: noteTitle,
               summary: summary,
               content: noteContent,
               images: images,
               createdAt: Date(),
-              courseID: courseID, // Associate with the current course
+              courseID: courseID,
               fileLocation: fileLocation,
               lastAccessed: nil
           )
 
-          // Add the note to Firestore
           Task {
               do {
                   let _ = try await self.db.collection("Note").addDocument(from: note)

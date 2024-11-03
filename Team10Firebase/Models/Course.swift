@@ -26,3 +26,5 @@ struct Course: Codable, Identifiable {
         case fileLocation
     }
 }
+
+

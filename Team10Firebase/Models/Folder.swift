@@ -41,3 +41,5 @@ struct Folder: Codable, Identifiable {
         case recentNoteSummary
     }
 }
+
+

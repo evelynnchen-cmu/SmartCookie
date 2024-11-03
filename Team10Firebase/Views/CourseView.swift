@@ -98,10 +98,10 @@ struct CourseView: View {
             .sheet(isPresented: $isAddingNote) {
                 AddNoteModal(
                     onNoteCreated: {
-                        firebase.getNotes() // This closure will call getNotes() after a note is created
+                        firebase.getNotes()
                     },
                     firebase: firebase,
-                    course: course // Pass the course object here
+                    course: course 
                 )
             }
             .onAppear {
