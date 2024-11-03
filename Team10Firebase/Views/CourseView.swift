@@ -6,32 +6,36 @@
 //    var course: Course
 //    @State private var isAddingNote = false
 //
-//  var body: some View {
-//          NavigationView {
-//              ScrollView {
-//                  VStack(alignment: .leading) {
-//                      courseDetailsSection
-//                      notesSection
-//                  }
-//                  .padding(.leading)
-//              }
-//              .navigationTitle(course.courseName)
-//              .toolbar {
-//                  ToolbarItem(placement: .navigationBarTrailing) {
-//                      Button("Add Note") {
-//                          isAddingNote = true
-//                      }
-//                  }
-//              }
-//              .sheet(isPresented: $isAddingNote) {
-//                  AddNoteModal(onNoteCreated: {
-//                      firebase.getNotes() // This closure will call getNotes() after a note is created
-//                  }, firebase: firebase) // Pass firebase as an ObservedObject here
-//              }
-//              .onAppear {
-//                  firebase.getNotes()
-//              }
-//          }
+//    var body: some View {
+//        NavigationView {
+//            ScrollView {
+//                VStack(alignment: .leading) {
+//                    courseDetailsSection
+//                    notesSection
+//                }
+//                .padding(.leading)
+//            }
+//            .navigationTitle(course.courseName)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button("Add Note") {
+//                        isAddingNote = true
+//                    }
+//                }
+//            }
+//            .sheet(isPresented: $isAddingNote) {
+//                AddNoteModal(
+//                    onNoteCreated: {
+//                        firebase.getNotes()
+//                    },
+//                    firebase: firebase,
+//                    course: course 
+//                )
+//            }
+//            .onAppear {
+//                firebase.getNotes()
+//            }
+//        }
 //    }
 //
 //    private var courseDetailsSection: some View {
@@ -76,36 +80,53 @@ import SwiftUI
 struct CourseView: View {
     @StateObject private var firebase = Firebase()
     var course: Course
-    @State private var isAddingNote = false
+    @State private var isAddingFolder = false
+    @State private var selectedFolder: Folder?
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading) {
                     courseDetailsSection
-                    notesSection
+                    foldersSection
                 }
                 .padding(.leading)
             }
             .navigationTitle(course.courseName)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Add Note") {
-                        isAddingNote = true
+                    Button("Add Folder") {
+                        isAddingFolder = true
                     }
                 }
             }
-            .sheet(isPresented: $isAddingNote) {
-                AddNoteModal(
-                    onNoteCreated: {
-                        firebase.getNotes()
-                    },
+            // Handle potential errors in the Task block with try and do-catch
+            .sheet(isPresented: $isAddingFolder) {
+                AddFolderModal(
                     firebase: firebase,
-                    course: course 
+                    course: course,
+                    onFolderCreated: {
+                        Task {
+                            do {
+                                try await firebase.getFolders(for: course)
+                            } catch {
+                                print("Error fetching folders: \(error.localizedDescription)")
+                            }
+                        }
+                    }
                 )
             }
+            .sheet(item: $selectedFolder) { folder in
+                FolderView(folder: folder, firebase: firebase)
+            }
             .onAppear {
-                firebase.getNotes()
+                Task {
+                    do {
+                        try await firebase.getFolders(for: course)
+                    } catch {
+                        print("Error fetching folders on appear: \(error.localizedDescription)")
+                    }
+                }
             }
         }
     }
@@ -125,15 +146,17 @@ struct CourseView: View {
         }
     }
 
-    private var notesSection: some View {
-        let courseNotes: [Note] = firebase.notes.filter { note in
-            course.notes.contains(note.id ?? "")
-        }
+    private var foldersSection: some View {
+        VStack(alignment: .leading) {
+            Text("Folders")
+                .font(.headline)
+                .padding(.bottom, 5)
 
-        return VStack(alignment: .leading) {
-            ForEach(courseNotes, id: \.id) { note in
-                NavigationLink(destination: NoteView(note: note)) {
-                    Text(note.title)
+            ForEach(firebase.folders, id: \.id) { folder in
+                Button(action: {
+                    selectedFolder = folder
+                }) {
+                    Text(folder.folderName)
                         .font(.body)
                         .foregroundColor(.blue)
                         .padding()

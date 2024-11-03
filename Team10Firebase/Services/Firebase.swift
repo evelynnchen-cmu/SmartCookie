@@ -175,30 +175,87 @@ class Firebase: ObservableObject {
       }
   }
   
+  
+  // Function to create a folder within a course
+      func createFolder(folderName: String, course: Course) async throws {
+          guard let courseID = course.id, !courseID.isEmpty else {
+              print("Error: Missing course ID.")
+              return
+          }
 
+          let folder = Folder(
+              id: nil,
+              userID: course.userID,
+              folderName: folderName,
+              courseID: courseID,
+              notes: [],
+              fileLocation: "/\(courseID)/\(folderName)/",
+              recentNoteSummary: nil
+          )
+
+          do {
+              let folderRef = try await db.collection(folderCollection).addDocument(from: folder)
+              let folderID = folderRef.documentID
+              
+              // Update the course document to include the new folder ID
+              try await db.collection(courseCollection).document(courseID).updateData([
+                  "folders": FieldValue.arrayUnion([folderID])
+              ])
+              
+              print("Folder created successfully with ID: \(folderID)")
+          } catch {
+              print("Error creating folder: \(error.localizedDescription)")
+              throw error
+          }
+      }
+  
+  
+  // Function to retrieve folders for a specific course
+      func getFolders(for course: Course) async throws -> [Folder] {
+          guard let courseID = course.id else {
+              print("Error: Missing course ID.")
+              return []
+          }
+
+          let snapshot = try await db.collection(folderCollection)
+              .whereField("courseID", isEqualTo: courseID)
+              .getDocuments()
+
+          return snapshot.documents.compactMap { document in
+              try? document.data(as: Folder.self)
+          }
+      }
   
   
   func createNote(
       noteTitle: String,
       noteContent: String,
+      folder: Folder,
       course: Course,
       summary: String = "",
       images: [URL] = [],
       fileLocation: String = ""
   ) async throws {
-      // Ensure the course has a valid ID and userID
-      guard let courseID = course.id, !courseID.isEmpty else {
+      // Ensure the folder has a valid ID
+      guard let folderID = folder.id, !folderID.isEmpty else {
+          print("Error: Missing folder ID.")
+          return
+      }
+
+      // Ensure the course ID associated with the folder is valid
+      guard let courseID = folder.courseID, !courseID.isEmpty else {
           print("Error: Missing course ID.")
           return
       }
 
-
+      // Fetch the user to link the note with the user ID
       getFirstUser { user in
           guard let user = user, let userID = user.id, !userID.isEmpty else {
               print("Error: Missing user ID.")
               return
           }
 
+          // Create the note with references to the user, course, and folder
           let note = Note(
               id: nil,
               userID: userID,
@@ -208,21 +265,103 @@ class Firebase: ObservableObject {
               images: images,
               createdAt: Date(),
               courseID: courseID,
-              fileLocation: fileLocation,
+              fileLocation: fileLocation.isEmpty ? "\(folder.fileLocation)/\(noteTitle)" : fileLocation,
               lastAccessed: nil
           )
 
           Task {
               do {
-                  let _ = try await self.db.collection("Note").addDocument(from: note)
-                  print("Note created successfully.")
+                  // Add the note to Firestore
+                  let noteRef = try await self.db.collection("Note").addDocument(from: note)
+                  let noteID = noteRef.documentID
+
+                  // Update the folder document to include the new note ID
+                  try await self.db.collection("Folder").document(folderID).updateData([
+                      "notes": FieldValue.arrayUnion([noteID])
+                  ])
+
+                  print("Note created successfully with ID: \(noteID)")
               } catch {
                   print("Error creating note: \(error.localizedDescription)")
+                  throw error
               }
           }
       }
   }
 
+
+
+
+
+
+
+
+  
+  // Function to retrieve notes for a specific folder
+      func getNotes(for folder: Folder) async throws -> [Note] {
+          guard let folderID = folder.id else {
+              print("Error: Missing folder ID.")
+              return []
+          }
+
+          let snapshot = try await db.collection(noteCollection)
+              .whereField("folderID", isEqualTo: folderID)
+              .getDocuments()
+
+          return snapshot.documents.compactMap { document in
+              try? document.data(as: Note.self)
+          }
+      }
+  
+  
+  
+
+  
+  
+//  func createNote(
+//      noteTitle: String,
+//      noteContent: String,
+//      course: Course,
+//      summary: String = "",
+//      images: [URL] = [],
+//      fileLocation: String = ""
+//  ) async throws {
+//      // Ensure the course has a valid ID and userID
+//      guard let courseID = course.id, !courseID.isEmpty else {
+//          print("Error: Missing course ID.")
+//          return
+//      }
+//
+//
+//      getFirstUser { user in
+//          guard let user = user, let userID = user.id, !userID.isEmpty else {
+//              print("Error: Missing user ID.")
+//              return
+//          }
+//
+//          let note = Note(
+//              id: nil,
+//              userID: userID,
+//              title: noteTitle,
+//              summary: summary,
+//              content: noteContent,
+//              images: images,
+//              createdAt: Date(),
+//              courseID: courseID,
+//              fileLocation: fileLocation,
+//              lastAccessed: nil
+//          )
+//
+//          Task {
+//              do {
+//                  let _ = try await self.db.collection("Note").addDocument(from: note)
+//                  print("Note created successfully.")
+//              } catch {
+//                  print("Error creating note: \(error.localizedDescription)")
+//              }
+//          }
+//      }
+//  }
 
   
   

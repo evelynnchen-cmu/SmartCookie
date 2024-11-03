@@ -57,7 +57,6 @@
 
 
 import SwiftUI
-import FirebaseFirestore
 
 struct AddNoteModal: View {
     @Environment(\.dismiss) private var dismiss
@@ -66,11 +65,9 @@ struct AddNoteModal: View {
     @State private var showError = false
     @State private var errorMessage: String = ""
     
-    
     var onNoteCreated: () -> Void
-    
     @ObservedObject var firebase: Firebase
-    var course: Course 
+    var folder: Folder // Only folder is passed here
 
     var body: some View {
         NavigationView {
@@ -84,14 +81,10 @@ struct AddNoteModal: View {
                         .padding(.top, 4)
                 }
                 
-                Button(action: {
+                Button("Create Note") {
                     Task {
                         do {
-                            try await firebase.createNote(
-                                noteTitle: noteTitle,
-                                noteContent: noteContent,
-                                course: course
-                            )
+                            try await firebase.createNote(noteTitle: noteTitle, noteContent: noteContent, folder: folder)
                             onNoteCreated()
                             dismiss()
                         } catch {
@@ -99,8 +92,6 @@ struct AddNoteModal: View {
                             showError = true
                         }
                     }
-                }) {
-                    Text("Create Note")
                 }
                 .disabled(noteTitle.isEmpty || noteContent.isEmpty)
             }
@@ -116,4 +107,3 @@ struct AddNoteModal: View {
         }
     }
 }
-
