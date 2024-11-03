@@ -22,7 +22,7 @@ struct AppView: View {
             Text("New Scan")
           }
         
-        ChatView(courseScope: "General")
+        ChatView()
           .tabItem {
             Image(systemName: "message.fill")
             Text("Chat")
