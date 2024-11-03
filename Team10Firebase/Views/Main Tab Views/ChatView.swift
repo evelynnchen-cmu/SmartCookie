@@ -60,11 +60,19 @@ struct ChatView: View {
           ScrollView {
               VStack(alignment: .leading) {
                   ForEach(messages) { message in
-                      Text(convertMarkdown(message.content))
-                          .padding()
-                          .background(message.isUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
-                          .cornerRadius(10)
-                          .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
+                      if message.isMarkdown {
+                          Text(LocalizedStringKey(message.content))
+                              .padding()
+                              .background(message.isUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                              .cornerRadius(10)
+                              .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
+                      } else {
+                          Text(message.content)
+                              .padding()
+                              .background(message.isUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                              .cornerRadius(10)
+                              .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
+                      }
                   }
               }
                 .padding()
@@ -94,18 +102,6 @@ struct ChatView: View {
                 courseNotes = []
             }
             clearChat()
-        }
-    }
-  
-    // Converts markdown text into an AttributedString so the UI can render the styling.
-    // - Parameter markdownText: The markdown-formatted text.
-    // - Returns: An AttributedString that is parsed from markdown.
-    func convertMarkdown(_ markdownText: String) -> AttributedString {
-        do {
-            return try AttributedString(markdown: markdownText)
-        } catch {
-            print("Error parsing markdown: \(error)")
-            return AttributedString(markdownText)
         }
     }
 
