@@ -5,6 +5,61 @@
 //  Created by Vicky Chen on 11/3/24.
 //
 
+//import SwiftUI
+//
+//struct FolderModal: View {
+//    @Environment(\.dismiss) var dismiss
+//    var onFolderCreated: () -> Void
+//    @ObservedObject var firebase: Firebase
+//    var course: Course
+//    
+//    @State private var folderName: String = ""
+//    @State private var fileLocation: String = ""
+//    @State private var notes: [String] = []
+//
+//    var body: some View {
+//        NavigationView {
+//            Form {
+//                Section(header: Text("Folder Details")) {
+//                    TextField("Folder Name", text: $folderName)
+//                    TextField("File Location", text: $fileLocation)
+//                }
+//                
+//                Button("Create Folder") {
+//                    Task {
+//                        await createFolder()
+//                        onFolderCreated()
+//                        dismiss()
+//                    }
+//                }
+//                .disabled(folderName.isEmpty)
+//            }
+//            .navigationTitle("New Folder")
+//            .toolbar {
+//                ToolbarItem(placement: .cancellationAction) {
+//                    Button("Cancel") {
+//                        dismiss()
+//                    }
+//                }
+//            }
+//        }
+//    }
+//    
+//    private func createFolder() async {
+//        do {
+//            try await firebase.createFolder(
+//                folderName: folderName,
+//                course: course,
+//                notes: notes,
+//                fileLocation: fileLocation
+//            )
+//        } catch {
+//            print("Error creating folder: \(error.localizedDescription)")
+//        }
+//    }
+//}
+
+
 import SwiftUI
 
 struct FolderModal: View {
@@ -14,7 +69,6 @@ struct FolderModal: View {
     var course: Course
     
     @State private var folderName: String = ""
-    @State private var fileLocation: String = ""
     @State private var notes: [String] = []
 
     var body: some View {
@@ -22,7 +76,6 @@ struct FolderModal: View {
             Form {
                 Section(header: Text("Folder Details")) {
                     TextField("Folder Name", text: $folderName)
-                    TextField("File Location", text: $fileLocation)
                 }
                 
                 Button("Create Folder") {
@@ -46,15 +99,23 @@ struct FolderModal: View {
     }
     
     private func createFolder() async {
+        guard let courseID = course.id else {
+            print("Error: Missing course ID.")
+            return
+        }
+        
+        let fileLocation = "\(courseID)/" // Automatically set fileLocation based on courseID
+        
         do {
             try await firebase.createFolder(
                 folderName: folderName,
                 course: course,
                 notes: notes,
-                fileLocation: fileLocation
+                fileLocation: fileLocation // Pass the automatically generated fileLocation
             )
         } catch {
             print("Error creating folder: \(error.localizedDescription)")
         }
     }
 }
+
