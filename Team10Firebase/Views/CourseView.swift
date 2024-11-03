@@ -1,40 +1,41 @@
-
-
+//
+//
+//
 //import SwiftUI
 //
 //struct CourseView: View {
 //    @StateObject private var firebase = Firebase()
 //    var course: Course
-//    @State private var isAddingNote = false
+//    @State private var isAddingFolder = false
 //
 //    var body: some View {
 //        NavigationView {
 //            ScrollView {
 //                VStack(alignment: .leading) {
 //                    courseDetailsSection
-//                    notesSection
+//                    foldersSection
 //                }
 //                .padding(.leading)
 //            }
 //            .navigationTitle(course.courseName)
 //            .toolbar {
 //                ToolbarItem(placement: .navigationBarTrailing) {
-//                    Button("Add Note") {
-//                        isAddingNote = true
+//                    Button("Add Folder") {
+//                        isAddingFolder = true
 //                    }
 //                }
 //            }
-//            .sheet(isPresented: $isAddingNote) {
-//                AddNoteModal(
-//                    onNoteCreated: {
-//                        firebase.getNotes()
+//            .sheet(isPresented: $isAddingFolder) {
+//                FolderModal(
+//                    onFolderCreated: {
+//                        firebase.getFolders() // Refresh folders after adding a new one
 //                    },
 //                    firebase: firebase,
-//                    course: course 
+//                    course: course
 //                )
 //            }
 //            .onAppear {
-//                firebase.getNotes()
+//                firebase.getFolders()
 //            }
 //        }
 //    }
@@ -54,15 +55,15 @@
 //        }
 //    }
 //
-//    private var notesSection: some View {
-//        let courseNotes: [Note] = firebase.notes.filter { note in
-//            course.notes.contains(note.id ?? "")
+//    private var foldersSection: some View {
+//        let courseFolders: [Folder] = firebase.folders.filter { folder in
+//            course.folders.contains(folder.id ?? "")
 //        }
 //
 //        return VStack(alignment: .leading) {
-//            ForEach(courseNotes, id: \.id) { note in
-//                NavigationLink(destination: NoteView(note: note)) {
-//                    Text(note.title)
+//            ForEach(courseFolders, id: \.id) { folder in
+//                NavigationLink(destination: FolderView(folder: folder)) {
+//                    Text(folder.folderName)
 //                        .font(.body)
 //                        .foregroundColor(.blue)
 //                        .padding()
@@ -74,6 +75,7 @@
 //        }
 //    }
 //}
+//
 
 
 import SwiftUI
@@ -82,6 +84,7 @@ struct CourseView: View {
     @StateObject private var firebase = Firebase()
     var course: Course
     @State private var isAddingFolder = false
+    @State private var courseFolders: [Folder] = []
 
     var body: some View {
         NavigationView {
@@ -103,14 +106,14 @@ struct CourseView: View {
             .sheet(isPresented: $isAddingFolder) {
                 FolderModal(
                     onFolderCreated: {
-                        firebase.getFolders() // Refresh folders after adding a new one
+                        fetchFoldersForCourse()
                     },
                     firebase: firebase,
                     course: course
                 )
             }
             .onAppear {
-                firebase.getFolders()
+                fetchFoldersForCourse()
             }
         }
     }
@@ -131,11 +134,7 @@ struct CourseView: View {
     }
 
     private var foldersSection: some View {
-        let courseFolders: [Folder] = firebase.folders.filter { folder in
-            course.folders.contains(folder.id ?? "")
-        }
-
-        return VStack(alignment: .leading) {
+        VStack(alignment: .leading) {
             ForEach(courseFolders, id: \.id) { folder in
                 NavigationLink(destination: FolderView(folder: folder)) {
                     Text(folder.folderName)
@@ -146,6 +145,15 @@ struct CourseView: View {
                         .cornerRadius(8)
                         .padding(.vertical, 2)
                 }
+            }
+        }
+    }
+    
+    // Fetch folders that are associated with this course
+    private func fetchFoldersForCourse() {
+        firebase.getFolders { allFolders in
+            self.courseFolders = allFolders.filter { folder in
+                course.folders.contains(folder.id ?? "")
             }
         }
     }

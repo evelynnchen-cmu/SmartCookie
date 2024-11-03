@@ -57,7 +57,7 @@ struct HomeView: View {
         .onAppear {
           firebase.getCourses()
           firebase.getNotes()
-          firebase.getFolders()
+          firebase.getFolders{ _ in }
           firebase.getMCQuestions()
           firebase.getNotifications()
           firebase.getUsers()

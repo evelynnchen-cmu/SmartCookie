@@ -62,23 +62,45 @@ class Firebase: ObservableObject {
     }
   }
   
-  func getFolders() {
-    db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
-      if let error = error {
-        print("Error fetching folders: \(error.localizedDescription)")
-        return
+//  func getFolders() {
+//    db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
+//      if let error = error {
+//        print("Error fetching folders: \(error.localizedDescription)")
+//        return
+//      }
+//      
+//      self.folders = querySnapshot?.documents.compactMap { document in
+//        try? document.data(as: Folder.self)
+//      } ?? []
+//      
+//      print("Total folders fetched: \(self.folders.count)")
+//      for folder in self.folders {
+//        print("Fetched folder: \(folder)")
+//      }
+//    }
+//  }
+  
+  func getFolders(completion: @escaping ([Folder]) -> Void) {
+      db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
+          if let error = error {
+              print("Error fetching folders: \(error.localizedDescription)")
+              completion([]) // Return an empty array in case of an error
+              return
+          }
+
+          let folders = querySnapshot?.documents.compactMap { document in
+              try? document.data(as: Folder.self)
+          } ?? []
+
+          print("Total folders fetched: \(folders.count)")
+          for folder in folders {
+              print("Fetched folder: \(folder)")
+          }
+
+          completion(folders) // Pass the fetched folders to the completion handler
       }
-      
-      self.folders = querySnapshot?.documents.compactMap { document in
-        try? document.data(as: Folder.self)
-      } ?? []
-      
-      print("Total folders fetched: \(self.folders.count)")
-      for folder in self.folders {
-        print("Fetched folder: \(folder)")
-      }
-    }
   }
+
   
   func getMCQuestions() {
     db.collection(mcQuestionCollection).addSnapshotListener { querySnapshot, error in
@@ -175,44 +197,81 @@ class Firebase: ObservableObject {
       }
   }
   
-  func createFolder(
-      folderName: String,
-      course: Course,
-      notes: [String] = [],
-      fileLocation: String = ""
-  ) async throws {
-      // Ensure the course has a valid ID and userID
-      guard let courseID = course.id, !courseID.isEmpty else {
-          print("Error: Missing course ID.")
-          return
-      }
-
-      getFirstUser { user in
-          guard let user = user, let userID = user.id, !userID.isEmpty else {
-              print("Error: Missing user ID.")
+//  func createFolder(
+//      folderName: String,
+//      course: Course,
+//      notes: [String] = [],
+//      fileLocation: String = ""
+//  ) async throws {
+//      // Ensure the course has a valid ID and userID
+//      guard let courseID = course.id, !courseID.isEmpty else {
+//          print("Error: Missing course ID.")
+//          return
+//      }
+//
+//      getFirstUser { user in
+//          guard let user = user, let userID = user.id, !userID.isEmpty else {
+//              print("Error: Missing user ID.")
+//              return
+//          }
+//
+//          let folder = Folder(
+//              id: nil,
+//              userID: userID,
+//              folderName: folderName,
+//              courseID: courseID, // Associate this folder with the course
+//              notes: notes,
+//              fileLocation: fileLocation,
+//              recentNoteSummary: nil
+//          )
+//
+//          Task {
+//              do {
+//                  let _ = try await Firestore.firestore().collection("Folder").addDocument(from: folder)
+//                  print("Folder created successfully and linked to course.")
+//              } catch {
+//                  print("Error creating folder: \(error.localizedDescription)")
+//              }
+//          }
+//      }
+//  }
+  
+  func createFolder(folderName: String, course: Course, notes: [String] = [], fileLocation: String = "") async throws {
+      let db = Firestore.firestore()
+      let courseID = course.id ?? ""
+      let userID = course.userID ?? ""
+      
+      // Create the folder document
+      var ref: DocumentReference? = nil
+      ref = db.collection("Folder").addDocument(data: [
+          "userID": userID,
+          "folderName": folderName,
+          "courseID": courseID,
+          "notes": notes,
+          "fileLocation": fileLocation,
+          "recentNoteSummary": NSNull() // Explicitly setting to NSNull for Firestore
+      ]) { error in
+          if let error = error {
+              print("Error adding folder: \(error)")
               return
           }
-
-          let folder = Folder(
-              id: nil,
-              userID: userID,
-              folderName: folderName,
-              courseID: courseID, // Associate this folder with the course
-              notes: notes,
-              fileLocation: fileLocation,
-              recentNoteSummary: nil
-          )
-
-          Task {
-              do {
-                  let _ = try await Firestore.firestore().collection("Folder").addDocument(from: folder)
-                  print("Folder created successfully and linked to course.")
-              } catch {
-                  print("Error creating folder: \(error.localizedDescription)")
+          
+          guard let folderID = ref?.documentID else { return }
+          
+          // Update the course to include this new folder in its folders array
+          db.collection("Course").document(courseID).updateData([
+              "folders": FieldValue.arrayUnion([folderID])
+          ]) { error in
+              if let error = error {
+                  print("Error updating course with new folder: \(error)")
+              } else {
+                  print("Folder successfully added to course!")
               }
           }
       }
   }
+
+
   
 
   
