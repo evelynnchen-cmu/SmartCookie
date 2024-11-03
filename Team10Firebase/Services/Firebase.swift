@@ -175,6 +175,45 @@ class Firebase: ObservableObject {
       }
   }
   
+  func createFolder(
+      folderName: String,
+      course: Course,
+      notes: [String] = [],
+      fileLocation: String = ""
+  ) async throws {
+      // Ensure the course has a valid ID and userID
+      guard let courseID = course.id, !courseID.isEmpty else {
+          print("Error: Missing course ID.")
+          return
+      }
+
+      getFirstUser { user in
+          guard let user = user, let userID = user.id, !userID.isEmpty else {
+              print("Error: Missing user ID.")
+              return
+          }
+
+          let folder = Folder(
+              id: nil,
+              userID: userID,
+              folderName: folderName,
+              courseID: courseID, // Associate this folder with the course
+              notes: notes,
+              fileLocation: fileLocation,
+              recentNoteSummary: nil
+          )
+
+          Task {
+              do {
+                  let _ = try await Firestore.firestore().collection("Folder").addDocument(from: folder)
+                  print("Folder created successfully and linked to course.")
+              } catch {
+                  print("Error creating folder: \(error.localizedDescription)")
+              }
+          }
+      }
+  }
+  
 
   
   
@@ -191,7 +230,6 @@ class Firebase: ObservableObject {
           print("Error: Missing course ID.")
           return
       }
-
 
       getFirstUser { user in
           guard let user = user, let userID = user.id, !userID.isEmpty else {

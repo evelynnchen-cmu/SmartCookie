@@ -1,4 +1,5 @@
-//
+
+
 //import SwiftUI
 //
 //struct CourseView: View {
@@ -6,32 +7,36 @@
 //    var course: Course
 //    @State private var isAddingNote = false
 //
-//  var body: some View {
-//          NavigationView {
-//              ScrollView {
-//                  VStack(alignment: .leading) {
-//                      courseDetailsSection
-//                      notesSection
-//                  }
-//                  .padding(.leading)
-//              }
-//              .navigationTitle(course.courseName)
-//              .toolbar {
-//                  ToolbarItem(placement: .navigationBarTrailing) {
-//                      Button("Add Note") {
-//                          isAddingNote = true
-//                      }
-//                  }
-//              }
-//              .sheet(isPresented: $isAddingNote) {
-//                  AddNoteModal(onNoteCreated: {
-//                      firebase.getNotes() // This closure will call getNotes() after a note is created
-//                  }, firebase: firebase) // Pass firebase as an ObservedObject here
-//              }
-//              .onAppear {
-//                  firebase.getNotes()
-//              }
-//          }
+//    var body: some View {
+//        NavigationView {
+//            ScrollView {
+//                VStack(alignment: .leading) {
+//                    courseDetailsSection
+//                    notesSection
+//                }
+//                .padding(.leading)
+//            }
+//            .navigationTitle(course.courseName)
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarTrailing) {
+//                    Button("Add Note") {
+//                        isAddingNote = true
+//                    }
+//                }
+//            }
+//            .sheet(isPresented: $isAddingNote) {
+//                AddNoteModal(
+//                    onNoteCreated: {
+//                        firebase.getNotes()
+//                    },
+//                    firebase: firebase,
+//                    course: course 
+//                )
+//            }
+//            .onAppear {
+//                firebase.getNotes()
+//            }
+//        }
 //    }
 //
 //    private var courseDetailsSection: some View {
@@ -76,36 +81,36 @@ import SwiftUI
 struct CourseView: View {
     @StateObject private var firebase = Firebase()
     var course: Course
-    @State private var isAddingNote = false
+    @State private var isAddingFolder = false
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading) {
                     courseDetailsSection
-                    notesSection
+                    foldersSection
                 }
                 .padding(.leading)
             }
             .navigationTitle(course.courseName)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Add Note") {
-                        isAddingNote = true
+                    Button("Add Folder") {
+                        isAddingFolder = true
                     }
                 }
             }
-            .sheet(isPresented: $isAddingNote) {
-                AddNoteModal(
-                    onNoteCreated: {
-                        firebase.getNotes()
+            .sheet(isPresented: $isAddingFolder) {
+                FolderModal(
+                    onFolderCreated: {
+                        firebase.getFolders() // Refresh folders after adding a new one
                     },
                     firebase: firebase,
-                    course: course 
+                    course: course
                 )
             }
             .onAppear {
-                firebase.getNotes()
+                firebase.getFolders()
             }
         }
     }
@@ -125,15 +130,15 @@ struct CourseView: View {
         }
     }
 
-    private var notesSection: some View {
-        let courseNotes: [Note] = firebase.notes.filter { note in
-            course.notes.contains(note.id ?? "")
+    private var foldersSection: some View {
+        let courseFolders: [Folder] = firebase.folders.filter { folder in
+            course.folders.contains(folder.id ?? "")
         }
 
         return VStack(alignment: .leading) {
-            ForEach(courseNotes, id: \.id) { note in
-                NavigationLink(destination: NoteView(note: note)) {
-                    Text(note.title)
+            ForEach(courseFolders, id: \.id) { folder in
+                NavigationLink(destination: FolderView(folder: folder)) {
+                    Text(folder.folderName)
                         .font(.body)
                         .foregroundColor(.blue)
                         .padding()
@@ -145,3 +150,4 @@ struct CourseView: View {
         }
     }
 }
+
