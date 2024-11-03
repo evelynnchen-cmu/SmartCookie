@@ -133,23 +133,46 @@ class Firebase: ObservableObject {
       }
     }
   }
+
+  func getFirstUser(completion: @escaping (User?) -> Void) {
+      db.collection(userCollection).limit(to: 1).getDocuments { querySnapshot, error in
+          if let error = error {
+              print("Error fetching first user: \(error.localizedDescription)")
+              completion(nil)
+              return
+          }
+          
+          let user = querySnapshot?.documents.compactMap { document in
+              try? document.data(as: User.self)
+          }.first
+          
+          completion(user)
+      }
+  }
   
   // post methods
   func createCourse(courseName: String) async throws {
-    let course = Course(
-      id: nil, // Firestore will generate the ID
-      userID: "bob",
-      courseName: courseName,
-      folders: [],
-      notes: [],
-      fileLocation: "`\(courseName)/"
-    )
-    
-    do {
-      let _ = try db.collection("Course").addDocument(from: course)
-    } catch {
-      throw error
-    }
+      getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              return
+          }
+          
+          let course = Course(
+              id: nil, // Firestore will generate the ID
+              userID: user.id!,
+              courseName: courseName,
+              folders: [],
+              notes: [],
+              fileLocation: "/\(courseName)/"
+          )
+          
+          do {
+              let _ = try self.db.collection("Course").addDocument(from: course)
+          } catch {
+              print("Error creating course: \(error.localizedDescription)")
+          }
+      }
   }
   
   func createNote(noteTitle: String, noteContent: String, courseID: String, summary: String = "", images: [URL] = [], fileLocation: String = "") async throws {
