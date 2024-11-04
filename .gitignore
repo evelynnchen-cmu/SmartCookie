@@ -2,6 +2,7 @@
 # Xcode
 ##########
 *.plist
+Secrets.plist
 *.pbxuser
 !default.pbxuser
 *.mode1v3
