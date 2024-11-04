@@ -87,33 +87,31 @@ struct CourseView: View {
     @State private var courseFolders: [Folder] = []
 
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(alignment: .leading) {
-                    courseDetailsSection
-                    foldersSection
+          ScrollView {
+              VStack(alignment: .leading) {
+                  courseDetailsSection
+                  foldersSection
+              }
+              .padding(.leading)
+          }
+          .sheet(isPresented: $isAddingFolder) {
+              FolderModal(
+                  onFolderCreated: {
+                      fetchFoldersForCourse()
+                  },
+                  firebase: firebase,
+                  course: course
+              )
+          }
+          .onAppear {
+              fetchFoldersForCourse()
+          }
+        .navigationTitle(course.courseName)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Add Folder") {
+                    isAddingFolder = true
                 }
-                .padding(.leading)
-            }
-            .navigationTitle(course.courseName)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Add Folder") {
-                        isAddingFolder = true
-                    }
-                }
-            }
-            .sheet(isPresented: $isAddingFolder) {
-                FolderModal(
-                    onFolderCreated: {
-                        fetchFoldersForCourse()
-                    },
-                    firebase: firebase,
-                    course: course
-                )
-            }
-            .onAppear {
-                fetchFoldersForCourse()
             }
         }
     }
