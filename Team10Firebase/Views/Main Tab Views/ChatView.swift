@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Foundation
-
 struct ChatView: View {
     @State private var messages: [MessageBubble] = [] // Stores messages in the chat view.
     @State private var userInput: String = "" // Tracks user input from the text field.
@@ -100,6 +99,7 @@ struct ChatView: View {
                     Text(isSelectingMessages ? "Cancel" : "Select Messages")
                 }
                 .padding()
+                .disabled(messages.isEmpty)
                 
                 if isSelectingMessages {
                     Button(action: {
