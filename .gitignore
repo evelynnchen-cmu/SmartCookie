@@ -2,7 +2,7 @@
 # Xcode
 ##########
 *.plist
-Secrets.plist
+Team10Firebase/Secrets.plist
 !Info.plist
 *.pbxuser
 !default.pbxuser
