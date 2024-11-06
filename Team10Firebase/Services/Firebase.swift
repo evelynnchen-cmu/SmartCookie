@@ -62,23 +62,7 @@ class Firebase: ObservableObject {
     }
   }
   
-//  func getFolders() {
-//    db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
-//      if let error = error {
-//        print("Error fetching folders: \(error.localizedDescription)")
-//        return
-//      }
-//      
-//      self.folders = querySnapshot?.documents.compactMap { document in
-//        try? document.data(as: Folder.self)
-//      } ?? []
-//      
-//      print("Total folders fetched: \(self.folders.count)")
-//      for folder in self.folders {
-//        print("Fetched folder: \(folder)")
-//      }
-//    }
-//  }
+
   
   func getFolders(completion: @escaping ([Folder]) -> Void) {
       db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
