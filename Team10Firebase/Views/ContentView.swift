@@ -63,7 +63,9 @@ struct ContentView: View {
             .onAppear {
               firebase.getCourses()
               firebase.getNotes()
-              firebase.getFolders()
+              firebase.getFolders { folders in
+                print("Fetched folders:", folders)
+            }
               firebase.getMCQuestions()
               firebase.getNotifications()
               firebase.getUsers()

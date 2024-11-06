@@ -34,3 +34,5 @@ struct Note: Codable, Identifiable {
         case lastAccessed
     }
 }
+
+
