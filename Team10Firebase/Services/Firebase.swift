@@ -81,7 +81,7 @@ class Firebase: ObservableObject {
               print("Fetched folder: \(folder)")
           }
 
-          completion(folders) // Pass the fetched folders to the completion handler
+          completion(folders) 
       }
   }
 
@@ -165,7 +165,7 @@ class Firebase: ObservableObject {
           }
           
           let course = Course(
-              id: nil, // Firestore will generate the ID
+              id: nil,
               userID: user.id!,
               courseName: courseName,
               folders: [],
@@ -181,51 +181,13 @@ class Firebase: ObservableObject {
       }
   }
   
-//  func createFolder(
-//      folderName: String,
-//      course: Course,
-//      notes: [String] = [],
-//      fileLocation: String = ""
-//  ) async throws {
-//      // Ensure the course has a valid ID and userID
-//      guard let courseID = course.id, !courseID.isEmpty else {
-//          print("Error: Missing course ID.")
-//          return
-//      }
-//
-//      getFirstUser { user in
-//          guard let user = user, let userID = user.id, !userID.isEmpty else {
-//              print("Error: Missing user ID.")
-//              return
-//          }
-//
-//          let folder = Folder(
-//              id: nil,
-//              userID: userID,
-//              folderName: folderName,
-//              courseID: courseID, // Associate this folder with the course
-//              notes: notes,
-//              fileLocation: fileLocation,
-//              recentNoteSummary: nil
-//          )
-//
-//          Task {
-//              do {
-//                  let _ = try await Firestore.firestore().collection("Folder").addDocument(from: folder)
-//                  print("Folder created successfully and linked to course.")
-//              } catch {
-//                  print("Error creating folder: \(error.localizedDescription)")
-//              }
-//          }
-//      }
-//  }
+
   
   func createFolder(folderName: String, course: Course, notes: [String] = [], fileLocation: String = "") async throws {
       let db = Firestore.firestore()
       let courseID = course.id ?? ""
       let userID = course.userID ?? ""
       
-      // Create the folder document
       var ref: DocumentReference? = nil
       ref = db.collection("Folder").addDocument(data: [
           "userID": userID,
@@ -233,7 +195,7 @@ class Firebase: ObservableObject {
           "courseID": courseID,
           "notes": notes,
           "fileLocation": fileLocation,
-          "recentNoteSummary": NSNull() // Explicitly setting to NSNull for Firestore
+          "recentNoteSummary": NSNull()
       ]) { error in
           if let error = error {
               print("Error adding folder: \(error)")
@@ -242,7 +204,6 @@ class Firebase: ObservableObject {
           
           guard let folderID = ref?.documentID else { return }
           
-          // Update the course to include this new folder in its folders array
           db.collection("Course").document(courseID).updateData([
               "folders": FieldValue.arrayUnion([folderID])
           ]) { error in
@@ -254,55 +215,52 @@ class Firebase: ObservableObject {
           }
       }
   }
-
-
-  
-
   
   
-  func createNote(
-      noteTitle: String,
-      noteContent: String,
-      course: Course,
-      summary: String = "",
-      images: [URL] = [],
-      fileLocation: String = ""
-  ) async throws {
-      // Ensure the course has a valid ID and userID
-      guard let courseID = course.id, !courseID.isEmpty else {
-          print("Error: Missing course ID.")
-          return
-      }
-
-      getFirstUser { user in
-          guard let user = user, let userID = user.id, !userID.isEmpty else {
-              print("Error: Missing user ID.")
+      func createNote(
+          title: String,
+          summary: String,
+          content: String,
+          images: [URL] = [],
+          folder: Folder,
+          course: Course,
+          completion: @escaping (Error?) -> Void
+      ) {
+          guard let courseID = course.id, let userID = folder.userID else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course or user ID"]))
               return
           }
-
+          
           let note = Note(
               id: nil,
               userID: userID,
-              title: noteTitle,
+              title: title,
               summary: summary,
-              content: noteContent,
+              content: content,
               images: images,
               createdAt: Date(),
               courseID: courseID,
-              fileLocation: fileLocation,
+              fileLocation: "\(courseID)/\(folder.id ?? "")",
               lastAccessed: nil
           )
-
-          Task {
-              do {
-                  let _ = try await self.db.collection("Note").addDocument(from: note)
-                  print("Note created successfully.")
-              } catch {
-                  print("Error creating note: \(error.localizedDescription)")
+          
+          do {
+              let ref = try db.collection(noteCollection).addDocument(from: note)
+              db.collection(folderCollection).document(folder.id ?? "").updateData([
+                  "notes": FieldValue.arrayUnion([ref.documentID])
+              ]) { error in
+                  completion(error)
               }
+          } catch {
+              print("Error creating note: \(error)")
+              completion(error)
           }
       }
-  }
+
+
+  
+
+
   
   
       func deleteCourse(course: Course) {

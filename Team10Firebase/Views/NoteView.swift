@@ -1,9 +1,3 @@
-//
-//  NoteView.swift
-//  Team10Firebase
-//
-//  Created by Emma Tong on 10/30/24.
-//
 
 import SwiftUI
 
@@ -12,33 +6,41 @@ struct NoteView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
-                Text("Note ID: \(note.id)")
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Note ID: \(note.id ?? "N/A")")
                     .font(.body)
-                Text("userID: \(note.userID)")
+                Text("User ID: \(note.userID ?? "N/A")")
                     .font(.body)
-                Text(note.title)
+                Text("Title: \(note.title)")
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text("Summary: \(note.summary)")
                     .font(.body)
-                Text(note.summary)
+                    .foregroundColor(.gray)
+                Text("Content: \(note.content)")
                     .font(.body)
-                Text(note.content)
+                Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
                     .font(.body)
-                Text("images: \(note.images)")
+                Text("Created At: \(note.createdAt, formatter: dateFormatter)")
                     .font(.body)
-                Text("createdAt: \(note.createdAt)")
+                Text("Course ID: \(note.courseID ?? "N/A")")
                     .font(.body)
-                Text("courseID: \(note.courseID)")
+                Text("File Location: \(note.fileLocation)")
                     .font(.body)
-                Text("fileLocation: \(note.fileLocation)")
+                Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
                     .font(.body)
-                Text("lastAccessed: \(note.lastAccessed)")
-                    .font(.body)
+                    .foregroundColor(.secondary)
             }
             .padding(.leading)
         }
+        .navigationTitle(note.title)
     }
 }
 
-//#Preview {
-//    NoteView()
-//}
+private let dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    return formatter
+}()
+

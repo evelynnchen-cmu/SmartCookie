@@ -1,6 +1,5 @@
 
 
-
 import SwiftUI
 
 struct FolderModal: View {
@@ -11,7 +10,9 @@ struct FolderModal: View {
     
     @State private var folderName: String = ""
     @State private var notes: [String] = []
-
+    @State private var showAddNoteModal = false
+    @State private var selectedFolder: Folder?
+    
     var body: some View {
         NavigationView {
             Form {
@@ -27,6 +28,23 @@ struct FolderModal: View {
                     }
                 }
                 .disabled(folderName.isEmpty)
+                
+                Button("Add Note") {
+                    showAddNoteModal = true
+                }
+                .disabled(selectedFolder == nil)
+                .sheet(isPresented: $showAddNoteModal) {
+                    if let folder = selectedFolder {
+                        AddNoteModal(
+                            onNoteCreated: {
+                                firebase.getFolders { _ in }
+                            },
+                            firebase: firebase,
+                            course: course,
+                            folder: folder
+                        )
+                    }
+                }
             }
             .navigationTitle("New Folder")
             .toolbar {
@@ -45,15 +63,19 @@ struct FolderModal: View {
             return
         }
         
-        let fileLocation = "\(courseID)/" // Automatically set fileLocation based on courseID
+        let fileLocation = "\(courseID)/"
         
         do {
             try await firebase.createFolder(
                 folderName: folderName,
                 course: course,
                 notes: notes,
-                fileLocation: fileLocation // Pass the automatically generated fileLocation
+                fileLocation: fileLocation
             )
+            
+            firebase.getFolders { folders in
+                self.selectedFolder = folders.first { $0.folderName == folderName && $0.courseID == courseID }
+            }
         } catch {
             print("Error creating folder: \(error.localizedDescription)")
         }
