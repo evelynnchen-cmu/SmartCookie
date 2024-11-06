@@ -7,7 +7,6 @@
 
 import SwiftUI
 import Foundation
-
 struct ChatView: View {
     @State private var messages: [MessageBubble] = [] // Stores messages in the chat view.
     @State private var userInput: String = "" // Tracks user input from the text field.
@@ -15,6 +14,13 @@ struct ChatView: View {
     @State private var messagesHistory: [[String: String]] = [] // Maintains a history of chat messages.
     @State private var selectedScope: String = "General" // Tracks the selected scope (General or a specific course).
     @State private var courseNotes: [Note] = [] // Stores notes for the selected course.
+    @State private var selectedCourse: Course?
+    @State private var selectedFolder: Folder?
+    
+    @State private var isFilePickerPresented = false // State variable to control the presentation of the file picker
+    @State private var selectedNote: Note? // State variable to store the selected note
+    @State private var selectedMessages: Set<UUID> = [] // Track selected messages
+    @State private var isSelectingMessages = false // Track if the user is in selection mode
     
     @ObservedObject private var firebase = Firebase()
     
@@ -34,7 +40,7 @@ struct ChatView: View {
     var body: some View {
 //      Note: VStack needed or else a duplicate tab in AppView is created
         VStack {
-          // Scope selection menu
+        // Scope selection menu
             Menu {
                 Button("General") {
                     selectedScope = "General"
@@ -55,31 +61,65 @@ struct ChatView: View {
                     .cornerRadius(10)
             }
             .padding()
-
-          // Chat scroll view
-          ScrollView {
-              VStack(alignment: .leading) {
-                  ForEach(messages) { message in
-                      if message.isMarkdown {
-                          Text(LocalizedStringKey(message.content))
-                              .padding()
-                              .background(message.isUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
-                              .cornerRadius(10)
-                              .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
-                      } else {
-                          Text(message.content)
-                              .padding()
-                              .background(message.isUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
-                              .cornerRadius(10)
-                              .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
-                      }
-                  }
-              }
+            // Chat scroll view
+            ScrollView {
+                VStack(alignment: .leading) {
+                    ForEach(messages) { message in
+                        HStack {
+                            if isSelectingMessages {
+                                Button(action: {
+                                    if selectedMessages.contains(message.id) {
+                                        selectedMessages.remove(message.id)
+                                    } else {
+                                        selectedMessages.insert(message.id)
+                                    }
+                                }) {
+                                    Image(systemName: selectedMessages.contains(message.id) ? "checkmark.circle.fill" : "circle")
+                                }
+                            }
+                            Text(message.content)
+                                .padding()
+                                .background(message.isUser ? Color.blue.opacity(0.2) : Color.gray.opacity(0.2))
+                                .cornerRadius(10)
+                                .frame(maxWidth: .infinity, alignment: message.isUser ? .trailing : .leading)
+                        }
+                    }
+                }
                 .padding()
             }
-
-          // Message input field and send button
+            
+            // Message input field and send button
             HStack {
+                Button(action: {
+                    isSelectingMessages.toggle()
+                    if !isSelectingMessages {
+                        selectedMessages.removeAll()
+                    }
+                }) {
+                    Text(isSelectingMessages ? "Cancel" : "Select Messages")
+                }
+                .padding()
+                .disabled(messages.isEmpty)
+                
+                if isSelectingMessages {
+                    Button(action: {
+                        isFilePickerPresented = true
+                    }) {
+                        Text("Select Note")
+                    }
+                    .disabled(selectedMessages.isEmpty)
+                    .sheet(isPresented: $isFilePickerPresented) {
+                        FilePickerView(firebase: firebase, isPresented: $isFilePickerPresented, selectedNote: $selectedNote)
+                            .onDisappear {
+                                if isSelectingMessages, let note = selectedNote {
+                                    appendMessagesToNoteContent(note: note)
+                                }
+                                isSelectingMessages = false
+                                selectedMessages.removeAll()
+                            }
+                    }
+                }
+                Spacer()
                 TextField("Type a message", text: $userInput)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
@@ -102,6 +142,14 @@ struct ChatView: View {
                 courseNotes = []
             }
             clearChat()
+        }
+    }
+
+    private func appendMessagesToNoteContent(note: Note) {
+        let selectedMessagesContent = messages.filter { selectedMessages.contains($0.id) }.map { $0.content }.joined(separator: "\n")
+        let newContent = note.content + "\n" + selectedMessagesContent
+        if let noteID = note.id {
+            firebase.updateNoteContent(noteID: noteID, newContent: newContent)
         }
     }
 

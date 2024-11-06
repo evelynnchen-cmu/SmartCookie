@@ -374,6 +374,22 @@ class Firebase: ObservableObject {
           }
       }
 
+        // update methods
+    func updateNoteContent(noteID: String, newContent: String) {
+        let noteRef = db.collection(noteCollection).document(noteID)
+        
+        noteRef.updateData(["content": newContent]) { error in
+            if let error = error {
+                print("Error updating note: \(error.localizedDescription)")
+            } else {
+                print("Note successfully updated")
+                if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+                    self.notes[index].content = newContent
+                }
+            }
+        }
+    }
+
 
   
   
