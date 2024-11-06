@@ -305,7 +305,6 @@ class Firebase: ObservableObject {
   }
   
   
-  // New method to delete a course and its associated data
       func deleteCourse(course: Course) {
           guard let courseID = course.id else {
               print("Course ID is missing.")
@@ -314,13 +313,10 @@ class Firebase: ObservableObject {
           
           let batch = db.batch()
           
-          // Collect all Note IDs to delete
           var allNoteIDs: [String] = []
           
-          // Add Note IDs from course.notes
           allNoteIDs.append(contentsOf: course.notes)
           
-          // Query for Folders where "courseID" == courseID
           let folderQuery = db.collection("Folder").whereField("courseID", isEqualTo: courseID)
           
           folderQuery.getDocuments { (querySnapshot, error) in
@@ -340,27 +336,22 @@ class Firebase: ObservableObject {
                   let folderID = folderDoc.documentID
                   folderIDsToDelete.append(folderID)
                   
-                  // Get note IDs from folder.notes
                   if let folder = try? folderDoc.data(as: Folder.self) {
                       allNoteIDs.append(contentsOf: folder.notes)
                   }
                   
-                  // Add folder delete to batch
                   let folderRef = self.db.collection("Folder").document(folderID)
                   batch.deleteDocument(folderRef)
               }
               
-              // Add note deletes to batch
               for noteID in allNoteIDs {
                   let noteRef = self.db.collection("Note").document(noteID)
                   batch.deleteDocument(noteRef)
               }
               
-              // Add course delete to batch
               let courseRef = self.db.collection("Course").document(courseID)
               batch.deleteDocument(courseRef)
               
-              // Commit the batch
               batch.commit { error in
                   if let error = error {
                       print("Error committing batch delete: \(error.localizedDescription)")
@@ -368,7 +359,6 @@ class Firebase: ObservableObject {
                       print("Successfully deleted course \(courseID) and its related data.")
                   }
                   
-                  // Optionally, refresh the courses list
                   self.getCourses()
               }
           }
