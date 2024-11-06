@@ -1,4 +1,5 @@
 
+
 import SwiftUI
 
 struct CourseView: View {
@@ -6,6 +7,8 @@ struct CourseView: View {
     var course: Course
     @State private var isAddingFolder = false
     @State private var courseFolders: [Folder] = []
+    @State private var folderToDelete: Folder?
+    @State private var showDeleteFolderAlert = false
 
     var body: some View {
         ScrollView {
@@ -35,6 +38,24 @@ struct CourseView: View {
                 }
             }
         }
+        .alert(isPresented: $showDeleteFolderAlert) {
+            Alert(
+                title: Text("Delete Folder"),
+                message: Text("Are you sure you want to delete this folder and all its notes?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    if let folder = folderToDelete {
+                        firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
+                            if let error = error {
+                                print("Error deleting folder: \(error.localizedDescription)")
+                            } else {
+                                fetchFoldersForCourse() // Refresh folders after deletion
+                            }
+                        }
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
     }
 
     private var courseDetailsSection: some View {
@@ -57,9 +78,9 @@ struct CourseView: View {
             ForEach(courseFolders, id: \.id) { folder in
                 NavigationLink(
                     destination: FolderView(
-                        firebase: firebase, // Pass firebase instance
-                        folder: folder, // Pass the folder instance
-                        course: course // Pass the course instance
+                        firebase: firebase,
+                        folder: folder,
+                        course: course
                     )
                 ) {
                     Text(folder.folderName)
@@ -70,11 +91,18 @@ struct CourseView: View {
                         .cornerRadius(8)
                         .padding(.vertical, 2)
                 }
+                .contextMenu {
+                    Button(role: .destructive) {
+                        folderToDelete = folder
+                        showDeleteFolderAlert = true
+                    } label: {
+                        Label("Delete Folder", systemImage: "trash")
+                    }
+                }
             }
         }
     }
     
-    // Fetch folders that are associated with this course
     private func fetchFoldersForCourse() {
         firebase.getFolders { allFolders in
             self.courseFolders = allFolders.filter { folder in

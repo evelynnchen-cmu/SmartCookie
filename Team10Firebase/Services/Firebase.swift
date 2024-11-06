@@ -81,7 +81,7 @@ class Firebase: ObservableObject {
               print("Fetched folder: \(folder)")
           }
 
-          completion(folders) 
+          completion(folders)
       }
   }
 
@@ -258,8 +258,6 @@ class Firebase: ObservableObject {
       }
 
 
-  
-
 
   
   
@@ -319,6 +317,60 @@ class Firebase: ObservableObject {
                   
                   self.getCourses()
               }
+          }
+      }
+  
+  
+  
+      func deleteFolder(folder: Folder, courseID: String, completion: @escaping (Error?) -> Void) {
+          guard let folderID = folder.id else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Folder ID is missing."]))
+              return
+          }
+          
+          let batch = db.batch()
+          
+          folder.notes.forEach { noteID in
+              let noteRef = db.collection(noteCollection).document(noteID)
+              batch.deleteDocument(noteRef)
+          }
+          
+          let courseRef = db.collection(courseCollection).document(courseID)
+          batch.updateData(["folders": FieldValue.arrayRemove([folderID])], forDocument: courseRef)
+          
+          let folderRef = db.collection(folderCollection).document(folderID)
+          batch.deleteDocument(folderRef)
+          
+          batch.commit { error in
+              if let error = error {
+                  print("Error deleting folder: \(error.localizedDescription)")
+              } else {
+                  print("Successfully deleted folder \(folderID) and its notes.")
+              }
+              completion(error)
+          }
+      }
+
+      func deleteNote(note: Note, folderID: String, completion: @escaping (Error?) -> Void) {
+          guard let noteID = note.id else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Note ID is missing."]))
+              return
+          }
+          
+          let batch = db.batch()
+          let folderRef = db.collection(folderCollection).document(folderID)
+          batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: folderRef)
+          
+          let noteRef = db.collection(noteCollection).document(noteID)
+          batch.deleteDocument(noteRef)
+          
+          batch.commit { error in
+              if let error = error {
+                  print("Error deleting note: \(error.localizedDescription)")
+              } else {
+                  print("Successfully deleted note \(noteID).")
+              }
+              completion(error)
           }
       }
 
