@@ -107,12 +107,15 @@ struct ChatView: View {
                     }) {
                         Text("Select Note")
                     }
+                    .disabled(selectedMessages.isEmpty)
                     .sheet(isPresented: $isFilePickerPresented) {
                         FilePickerView(firebase: firebase, isPresented: $isFilePickerPresented, selectedNote: $selectedNote)
                             .onDisappear {
-                                if let note = selectedNote {
+                                if isSelectingMessages, let note = selectedNote {
                                     appendMessagesToNoteContent(note: note)
                                 }
+                                isSelectingMessages = false
+                                selectedMessages.removeAll()
                             }
                     }
                 }
