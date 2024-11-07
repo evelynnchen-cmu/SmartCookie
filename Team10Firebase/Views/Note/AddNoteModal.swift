@@ -92,7 +92,7 @@ struct AddNoteModal: View {
         let requestBody = OpenAIRequest(
             model: "gpt-4o-mini",
             messages: [
-                Message(role: "system", content: [MessageContent(type: "text", text: "Summarize the following content: \(content)", imageURL: nil)])
+                Message(role: "system", content: [MessageContent(type: "text", text: "You will summarize the following content. Be concise, just touch on the main points. The summary should be readable in 15-20 seconds. Content: \(content)", imageURL: nil)])
             ],
             maxTokens: 150
         )
