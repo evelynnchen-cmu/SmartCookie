@@ -1,13 +1,10 @@
 
-//
-
 import SwiftUI
 import FirebaseFirestore
 
 struct AddNoteModal: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title: String = ""
-    @State private var summary: String = ""
     @State private var content: String = ""
     @State private var images: [URL] = []
     @State private var showError = false
@@ -23,7 +20,6 @@ struct AddNoteModal: View {
             Form {
                 Section(header: Text("Note Information")) {
                     TextField("Title", text: $title)
-                    TextField("Summary", text: $summary)
                     TextField("Content", text: $content)
                     // You could add additional UI for images if needed
                 }
@@ -35,7 +31,7 @@ struct AddNoteModal: View {
                 }) {
                     Text("Create Note")
                 }
-                .disabled(title.isEmpty || summary.isEmpty || content.isEmpty)
+                .disabled(title.isEmpty || content.isEmpty)
             }
             .navigationTitle("New Note")
             .navigationBarItems(trailing: Button("Cancel") {
@@ -50,9 +46,10 @@ struct AddNoteModal: View {
     }
     
     private func createNote() {
+        // Provide an empty string as a default for summary if it’s removed
         firebase.createNote(
             title: title,
-            summary: summary,
+            summary: "",
             content: content,
             images: images,
             folder: folder,
@@ -68,3 +65,4 @@ struct AddNoteModal: View {
         }
     }
 }
+
