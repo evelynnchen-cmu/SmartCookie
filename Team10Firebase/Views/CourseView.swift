@@ -14,6 +14,7 @@ struct CourseView: View {
         ScrollView {
             VStack(alignment: .leading) {
                 courseDetailsSection
+                recentNoteSummarySection
                 foldersSection
             }
             .padding(.leading)
@@ -73,6 +74,18 @@ struct CourseView: View {
         }
     }
 
+    private var recentNoteSummarySection: some View {
+        if let recentNote = getMostRecentNoteForCourse(courseID: course.id!) {
+            Text("Most Recent Note's Summary: \(recentNote.summary)")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        } else {
+            Text("No note available")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+        }
+    }
+
     private var foldersSection: some View {
         VStack(alignment: .leading) {
             ForEach(courseFolders, id: \.id) { folder in
@@ -104,11 +117,18 @@ struct CourseView: View {
     }
     
     private func fetchFoldersForCourse() {
+        firebase.getNotes()
         firebase.getFolders { allFolders in
             self.courseFolders = allFolders.filter { folder in
                 course.folders.contains(folder.id ?? "")
             }
         }
+    }
+
+    private func getMostRecentNoteForCourse(courseID: String) -> Note? {
+        let filteredNotes = firebase.notes.filter { $0.courseID == courseID }
+        let sortedNotes = filteredNotes.sorted { $0.createdAt > $1.createdAt }
+        return sortedNotes.first
     }
 }
 
