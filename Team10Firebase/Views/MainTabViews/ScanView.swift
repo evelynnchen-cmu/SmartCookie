@@ -1,8 +1,14 @@
 //  ScanView.swift
 //  Team10Firebase
-//
-//  Created by Emma Tong on 10/30/24.
-//
+
+//  This view serves as the main scanning interface for the user. It allows the user to:
+//  1. Open the camera view by tapping the "Open Camera" button.
+//  2. Display the captured image once the user takes a picture.
+//  3. Provide "Close" and "Parse" buttons for further actions:
+//     - "Close" will reset the captured image and re-enable the camera.
+//     - "Parse" will handle the logic for processing the image.
+//  This view uses a `CameraContainerView` to handle camera interactions and photo capturing.
+
 
 import SwiftUI
 
@@ -14,13 +20,29 @@ struct ScanView: View {
         NavigationStack {
             VStack {
                 if let image = capturedImage {
-                    // Display captured image
-                    ImageView(image: image) {
-                        // Reset captured image to re-open the camera
-                        self.capturedImage = nil
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 300, height: 300)
+                        .padding()
+                    
+                    HStack {
+                        Button("Close") {
+                            capturedImage = nil
+                        }
+                        .padding()
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                        
+                        Button("Parse") {
+                            print("Parsing image...")
+                        }
+                        .padding()
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                     }
-                    .frame(width: 300, height: 300)
-                    .padding()
                 } else {
                     Text("No image captured")
                         .foregroundColor(.gray)

@@ -1,25 +1,21 @@
 //  CameraContainerView.swift
 //  Team10Firebase
-//
-//  Created by Alanna Cao on 11/4/24.
-//
+
+// This view wraps the camera interface and manages the photo capture workflow.
+// It displays a full-screen live camera view with a "Take Picture" button overlay.
+// When the user takes a photo, the captured image is passed to the `onPhotoCaptured` closure, which allows
+// `ScanView` to handle the image and display it after capturing.
 
 import SwiftUI
 
 struct CameraContainerView: View {
-    @State private var capturedImage: UIImage?
     var onPhotoCaptured: (UIImage) -> Void
 
     var body: some View {
         ZStack {
-            // Show live camera view
-            CameraView { image in
-                self.capturedImage = image
-                onPhotoCaptured(image)
-            }
-            .edgesIgnoringSafeArea(.all) // Ensure camera fills the screen
+            CameraView(onPhotoCaptured: onPhotoCaptured)
+                .edgesIgnoringSafeArea(.all)
 
-            // Overlay the "Take Picture" button
             VStack {
                 Spacer()
                 Button(action: {

@@ -3,6 +3,11 @@
 //
 //  Created by Alanna Cao on 11/2/24.
 //
+//  This view represents a low-level camera interface using `UIViewRepresentable` to integrate `AVCaptureSession` for
+//  live camera feed and photo capturing in SwiftUI. It includes setup for the camera preview and photo output,
+//  and responds to a "take picture" notification to capture a photo when triggered.
+//  The captured photo is returned via the `onPhotoCaptured` closure to be handled by the parent view.
+
 
 import SwiftUI
 import AVFoundation
@@ -17,9 +22,7 @@ struct CameraView: UIViewRepresentable {
         return cameraUIView
     }
 
-    func updateUIView(_ uiView: CameraUIView, context: Context) {
-        // No updates needed here
-    }
+    func updateUIView(_ uiView: CameraUIView, context: Context) {}
 }
 
 class CameraUIView: UIView, AVCapturePhotoCaptureDelegate {
@@ -48,26 +51,21 @@ class CameraUIView: UIView, AVCapturePhotoCaptureDelegate {
         captureSession.addInput(input)
         captureSession.addOutput(photoOutput)
 
-        // Configure the preview layer to display the camera feed
         let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.frame = bounds
         previewLayer.videoGravity = .resizeAspectFill
         layer.addSublayer(previewLayer)
 
-        // Start the capture session on a background thread
         DispatchQueue.global(qos: .userInitiated).async {
             self.captureSession.startRunning()
-            
-            // Ensure the capture session runs on the main thread for UI updates
             DispatchQueue.main.async {
-                self.setNeedsLayout() // Mark the view for layout updates
+                self.setNeedsLayout()
             }
         }
     }
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // Ensure the preview layer's frame is updated to match the view's bounds
         if let previewLayer = layer.sublayers?.first as? AVCaptureVideoPreviewLayer {
             previewLayer.frame = bounds
         }
@@ -84,7 +82,6 @@ class CameraUIView: UIView, AVCapturePhotoCaptureDelegate {
         onPhotoCaptured?(image)
     }
 }
-
 
 extension Foundation.Notification.Name {
   static let takePicture = Foundation.Notification.Name("takePicture")
