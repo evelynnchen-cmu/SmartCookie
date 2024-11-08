@@ -3,8 +3,12 @@ import SwiftUI
 import PhotosUI
 
 struct NoteView: View {
+//    var firebaseStorage: FirebaseStorage = FirebaseStorage()
+    @StateObject private var firebaseStorage = FirebaseStorage()
     @State private var isPickerPresented = false
     @State private var selectedImage: UIImage? = nil
+    @State private var alertMessage = ""
+    @State private var showAlert = false
     var note: Note
 
     var body: some View {
@@ -33,6 +37,21 @@ struct NoteView: View {
           Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
             .font(.body)
             .foregroundColor(.secondary)
+          
+          if firebaseStorage.isLoading {
+              ProgressView("Loading...")
+          } else if let image = firebaseStorage.image {
+              Image(uiImage: image)
+                  .resizable()
+                  .aspectRatio(contentMode: .fit)
+                  .frame(width: 200, height: 200)
+          } else if let errorMessage = firebaseStorage.errorMessage {
+              Text(errorMessage)
+                  .foregroundColor(.red)
+          } else {
+              Text("No image available")
+          }
+          
           // Button to upload photos
           Button(action: {
             isPickerPresented = true
@@ -41,27 +60,42 @@ struct NoteView: View {
               .font(.body)
               .foregroundColor(.blue)
           }
+          // Button to downloadImage from firebase
+          Button(action: firebaseStorage.downloadImage) {
+                          Text("Download Image")
+                              .padding()
+                              .background(Color.blue)
+                              .foregroundColor(.white)
+                              .cornerRadius(10)
+                      }
           .padding(.top)
         }
         .padding(.leading)
         .sheet(isPresented: $isPickerPresented) {
           ImagePicker(sourceType: .photoLibrary) { image in
             self.selectedImage = image
-            uploadImageToFirebase(image)
-            parseImage(image)
+            firebaseStorage.uploadImageToFirebase(image) { url in
+              if let downloadURL = url {
+                  print("Download URL: \(downloadURL)")
+                  // Handle the download URL (e.g., save it, display it, etc.)
+                  alertMessage = "Image uploaded successfully! URL: \(downloadURL)"
+                  // 
+                
+              } else {
+                  print("Failed to upload image")
+                  alertMessage = "Failed to upload image"
+              }
+              showAlert = true
+            }
+            firebaseStorage.parseImage(image)
           }
+        }
+        .alert(isPresented: $showAlert) {
+          Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
       }
       .navigationTitle(note.title)
     }
-}
-
-private func uploadImageToFirebase(_ image:UIImage) {
-  print("Unimplemented upload image to Firebase")
-}
-
-private func parseImage(_ image:UIImage) {
-  print("Unimplemented parse image")
 }
 
 private let dateFormatter: DateFormatter = {
