@@ -17,6 +17,7 @@ class NoteViewModel: ObservableObject {
     @Published var images: [UIImage] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var imagesLoaded = false
     private var db = Firestore.firestore()
     private var storage = Storage.storage()
     private var cancellables = Set<AnyCancellable>()
@@ -56,6 +57,7 @@ class NoteViewModel: ObservableObject {
 
         dispatchGroup.notify(queue: .main) {
             self.isLoading = false
+            self.imagesLoaded = true
         }
     }
 }

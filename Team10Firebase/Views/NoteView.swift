@@ -56,8 +56,9 @@ struct NoteView: View {
         } else if viewModel.images.isEmpty {
           Text("No images available")
         } else {
-          ScrollView(.horizontal) {
-            HStack {
+//          ScrollView(.horizontal) {
+//            HStack {
+          VStack {
               ForEach(viewModel.images, id: \.self) { image in
                 Image(uiImage: image)
                   .resizable()
@@ -66,7 +67,7 @@ struct NoteView: View {
                   .padding()
               }
             }
-          }
+//          }
         }
         
         // Button to upload photos
@@ -117,7 +118,15 @@ struct NoteView: View {
                 alertMessage = "Image uploaded successfully! Path: \(imagePath)"
                 // Update the note document in firebase with the new file path
                 //   firebase.updateNoteImages(noteID: note.id!, images: [downloadURL.absoluteString])
-                firebase.updateNoteImages(note: note, imagePath: imagePath)
+                print("note before update", note.images)
+                firebase.updateNoteImages(note: note, imagePath: imagePath) { updatedNote in
+                    if let updatedNote = updatedNote {
+                        viewModel.note = updatedNote
+                        viewModel.loadImages() // Fetch images again to update the view
+                    } else {
+                        print("Failed to update note with image path")
+                    }
+                }
               } else {
                 print("Failed to upload image")
                 alertMessage = "Failed to upload image"
@@ -130,7 +139,12 @@ struct NoteView: View {
         .alert(isPresented: $showAlert) {
           Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
-        .onAppear(perform: viewModel.loadImages)
+        // To avoid reloading images more than once
+        .onAppear {
+            if (!viewModel.imagesLoaded) {
+                viewModel.loadImages()
+            }
+        }
       }
       .navigationTitle(note.title)
     }
@@ -142,3 +156,6 @@ struct NoteView: View {
     formatter.timeStyle = .short
     return formatter
   }()
+
+
+

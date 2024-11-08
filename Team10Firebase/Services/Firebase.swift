@@ -391,8 +391,8 @@ class Firebase: ObservableObject {
         }
     }
 
-    func updateNoteImages(note: Note, imagePath: String) {
-      var noteID = note.id ?? ""
+  func updateNoteImages(note: Note, imagePath: String, completion: @escaping (Note?) -> Void) {
+      let noteID = note.id ?? ""
       let noteRef = db.collection(noteCollection).document(noteID)
       
         var images = note.images
@@ -401,10 +401,12 @@ class Firebase: ObservableObject {
         noteRef.updateData(["images": images]) { error in
             if let error = error {
                 print("Error updating note images: \(error.localizedDescription)")
+                completion(nil)
             } else {
                 print("Note images successfully updated")
                 if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
                     self.notes[index].images = images
+                    completion(self.notes[index])
                 }
             }
         }
