@@ -39,7 +39,7 @@ class Firebase: ObservableObject {
       
       print("Total courses fetched: \(self.courses.count)")
       for course in self.courses {
-        print("Fetched course: \(course)")
+        // print("Fetched course: \(course)")
       }
     }
   }
@@ -57,7 +57,7 @@ class Firebase: ObservableObject {
       
       print("Total notes fetched: \(self.notes.count)")
       for note in self.notes {
-        print("Fetched note: \(note)")
+        // print("Fetched note: \(note)")
       }
     }
   }
@@ -78,7 +78,7 @@ class Firebase: ObservableObject {
 
           print("Total folders fetched: \(folders.count)")
           for folder in folders {
-              print("Fetched folder: \(folder)")
+            //   print("Fetched folder: \(folder)")
           }
 
           completion(folders)
@@ -99,7 +99,7 @@ class Firebase: ObservableObject {
       
       print("Total MCQuestions fetched: \(self.mcQuestions.count)")
       for mcQuestion in self.mcQuestions {
-        print("Fetched MCQuestion: \(mcQuestion)")
+        // print("Fetched MCQuestion: \(mcQuestion)")
       }
     }
   }
@@ -117,7 +117,7 @@ class Firebase: ObservableObject {
       
       print("Total notifications fetched: \(self.notifications.count)")
       for notification in self.notifications {
-        print("Fetched notification: \(notification)")
+        // print("Fetched notification: \(notification)")
       }
     }
   }
@@ -135,7 +135,7 @@ class Firebase: ObservableObject {
       
       print("Total users fetched: \(self.users.count)")
       for user in self.users {
-        print("Fetched user: \(user)")
+        // print("Fetched user: \(user)")
       }
     }
   }
