@@ -221,7 +221,8 @@ class Firebase: ObservableObject {
           title: String,
           summary: String,
           content: String,
-          images: [URL] = [],
+//          images: [URL] = [],
+          images: [String] = [],
           folder: Folder,
           course: Course,
           completion: @escaping (Error?) -> Void
@@ -385,6 +386,25 @@ class Firebase: ObservableObject {
                 print("Note successfully updated")
                 if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
                     self.notes[index].content = newContent
+                }
+            }
+        }
+    }
+
+    func updateNoteImages(note: Note, imagePath: String) {
+      var noteID = note.id ?? ""
+      let noteRef = db.collection(noteCollection).document(noteID)
+      
+        var images = note.images
+        images.append(imagePath)
+        
+        noteRef.updateData(["images": images]) { error in
+            if let error = error {
+                print("Error updating note images: \(error.localizedDescription)")
+            } else {
+                print("Note images successfully updated")
+                if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+                    self.notes[index].images = images
                 }
             }
         }
