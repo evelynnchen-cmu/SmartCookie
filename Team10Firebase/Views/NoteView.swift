@@ -14,7 +14,8 @@ struct NoteView: View {
   
   init(firebase: Firebase, note: Note) {
     _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
-    self.note = note
+     self.note = note
+//    self.note = viewModel.note ?? note
     self.firebaseStorage = FirebaseStorage()
     self.firebase = firebase
   }
@@ -22,29 +23,33 @@ struct NoteView: View {
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
-        Text("Note ID: \(note.id ?? "N/A")")
-          .font(.body)
-        Text("User ID: \(note.userID ?? "N/A")")
-          .font(.body)
-        Text("Title: \(note.title)")
-          .font(.title)
-          .fontWeight(.bold)
-        Text("Summary: \(note.summary)")
-          .font(.body)
-          .foregroundColor(.gray)
-        Text("Content: \(note.content)")
-          .font(.body)
-        Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
-          .font(.body)
-        Text("Created At: \(note.createdAt, formatter: dateFormatter)")
-          .font(.body)
-        Text("Course ID: \(note.courseID ?? "N/A")")
-          .font(.body)
-        Text("File Location: \(note.fileLocation)")
-          .font(.body)
-        Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
-          .font(.body)
-          .foregroundColor(.secondary)
+        if let note = viewModel.note {
+            Text("Note ID: \(note.id ?? "N/A")")
+            .font(.body)
+            Text("User ID: \(note.userID ?? "N/A")")
+            .font(.body)
+            Text("Title: \(note.title)")
+            .font(.title)
+            .fontWeight(.bold)
+            Text("Summary: \(note.summary)")
+            .font(.body)
+            .foregroundColor(.gray)
+            Text("Content: \(note.content)")
+            .font(.body)
+            Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
+            .font(.body)
+            Text("Created At: \(note.createdAt, formatter: dateFormatter)")
+            .font(.body)
+            Text("Course ID: \(note.courseID ?? "N/A")")
+            .font(.body)
+            Text("File Location: \(note.fileLocation)")
+            .font(.body)
+            Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
+            .font(.body)
+            .foregroundColor(.secondary)
+        } else {
+            Text("Loading note...")
+        }
         
         // Displays images associated with this note - should probably change to onAppear
         // and refactor firebaseStorage to not store its state
@@ -118,7 +123,6 @@ struct NoteView: View {
                 alertMessage = "Image uploaded successfully! Path: \(imagePath)"
                 // Update the note document in firebase with the new file path
                 //   firebase.updateNoteImages(noteID: note.id!, images: [downloadURL.absoluteString])
-                print("note before update", note.images)
                 firebase.updateNoteImages(note: note, imagePath: imagePath) { updatedNote in
                     if let updatedNote = updatedNote {
                         viewModel.note = updatedNote
@@ -133,7 +137,21 @@ struct NoteView: View {
               }
               showAlert = true
             }
-            firebaseStorage.parseImage(image)
+            viewModel.parseImage(image) { parsedText in
+              if let content = parsedText {
+                print("Parsed image content: \(content)")
+                firebase.updateNoteContentCompletion(note: note, newContent: content) { updatedNote in
+                  if let updatedNote = updatedNote {
+                    viewModel.note = updatedNote
+                  } else {
+                    print("Failed to update note with parsed image content")
+                  }
+                }
+              }
+              else {
+                print("Failed to parse image")
+              }
+            }
           }
         }
         .alert(isPresented: $showAlert) {

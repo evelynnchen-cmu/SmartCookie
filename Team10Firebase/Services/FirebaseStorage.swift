@@ -71,10 +71,6 @@ class FirebaseStorage: ObservableObject {
         completion(filePath)
     }
   }
-
-  func parseImage(_ image:UIImage) {
-    print("Unimplemented parse image")
-  }
   
   // func downloadImage(note: Note) {
   //     isLoading = true
