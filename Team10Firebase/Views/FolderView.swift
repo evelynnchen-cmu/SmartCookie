@@ -147,7 +147,7 @@ struct FolderView: View {
                 .font(.headline)
             
             ForEach(notes, id: \.id) { note in
-                NavigationLink(destination: NoteView(note: note)) {
+                NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
                     VStack(alignment: .leading) {
                         Text(note.title)
                             .font(.body)
