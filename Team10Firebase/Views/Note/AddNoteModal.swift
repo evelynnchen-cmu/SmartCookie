@@ -6,8 +6,7 @@ struct AddNoteModal: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title: String = ""
     @State private var content: String = ""
-//    @State private var images: [URL] = []
-  @State private var images: [String] = []
+    @State private var images: [String] = []
     @State private var showError = false
     @State private var errorMessage: String = ""
     

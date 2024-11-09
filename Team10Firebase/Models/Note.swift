@@ -15,7 +15,6 @@ struct Note: Codable, Identifiable {
     var title: String
     var summary: String
     var content: String
-//    var images: [URL]
     var images: [String]
     var createdAt: Date
     var courseID: String?

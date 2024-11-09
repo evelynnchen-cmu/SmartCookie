@@ -14,8 +14,7 @@ struct NoteView: View {
   
   init(firebase: Firebase, note: Note) {
     _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
-     self.note = note
-//    self.note = viewModel.note ?? note
+    self.note = note
     self.firebaseStorage = FirebaseStorage()
     self.firebase = firebase
   }
@@ -61,8 +60,6 @@ struct NoteView: View {
         } else if viewModel.images.isEmpty {
           Text("No images available")
         } else {
-//          ScrollView(.horizontal) {
-//            HStack {
           VStack {
               ForEach(viewModel.images, id: \.self) { image in
                 Image(uiImage: image)
@@ -72,7 +69,6 @@ struct NoteView: View {
                   .padding()
               }
             }
-//          }
         }
         
         // Button to upload photos
@@ -83,46 +79,17 @@ struct NoteView: View {
             .font(.body)
             .foregroundColor(.blue)
         }
-        // Button to downloadImage from firebase
-        //   Button(action: firebaseStorage.downloadImage) {
-        //                   Text("Download Image")
-        //                       .padding()
-        //                       .background(Color.blue)
-        //                       .foregroundColor(.white)
-        //                       .cornerRadius(10)
-        //               }        }
-        
-//        Button(action: viewModel.loadImages) {
-//          Text("Load Images")
-//            .padding()
-//            .background(Color.blue)
-//            .foregroundColor(.white)
-//            .cornerRadius(10)
-//        }
       }
         .padding(.leading)
         .sheet(isPresented: $isPickerPresented) {
           ImagePicker(sourceType: .photoLibrary) { image in
             self.selectedImage = image
-            // firebaseStorage.uploadImageToFirebase(image) { url in
-            //   if let downloadURL = url {
-            //       print("Download URL: \(downloadURL)")
-            //       alertMessage = "Image uploaded successfully! URL: \(downloadURL)"
-            //       // Update the note document in firebase with the new file path
-            //     //   firebase.updateNoteImages(noteID: note.id!, images: [downloadURL.absoluteString])
-            //       firebase.updateNoteImages(noteID: note.id!, images: [])
-            //   } else {
-            //       print("Failed to upload image")
-            //       alertMessage = "Failed to upload image"
-            //   }
-            //   showAlert = true
-            // }
+            
             firebaseStorage.uploadImageToFirebase(image) { path in
               if let imagePath = path {
                 print("Image path: \(imagePath)")
                 alertMessage = "Image uploaded successfully! Path: \(imagePath)"
                 // Update the note document in firebase with the new file path
-                //   firebase.updateNoteImages(noteID: note.id!, images: [downloadURL.absoluteString])
                 firebase.updateNoteImages(note: note, imagePath: imagePath) { updatedNote in
                     if let updatedNote = updatedNote {
                         viewModel.note = updatedNote

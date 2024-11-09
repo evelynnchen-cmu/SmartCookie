@@ -221,7 +221,6 @@ class Firebase: ObservableObject {
           title: String,
           summary: String,
           content: String,
-//          images: [URL] = [],
           images: [String] = [],
           folder: Folder,
           course: Course,
