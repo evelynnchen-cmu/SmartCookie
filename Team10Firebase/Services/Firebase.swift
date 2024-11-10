@@ -217,45 +217,104 @@ class Firebase: ObservableObject {
   }
   
   
-      func createNote(
-          title: String,
-          summary: String,
-          content: String,
-          images: [String] = [],
-          folder: Folder,
-          course: Course,
-          completion: @escaping (Error?) -> Void
-      ) {
-          guard let courseID = course.id, let userID = folder.userID else {
-              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course or user ID"]))
-              return
-          }
+//      func createNote(
+//          title: String,
+//          summary: String,
+//          content: String,
+//          images: [String] = [],
+//          folder: Folder,
+//          course: Course,
+//          completion: @escaping (Error?) -> Void
+//      ) {
+//          guard let courseID = course.id, let userID = folder.userID else {
+//              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course or user ID"]))
+//              return
+//          }
+//          
+//          let note = Note(
+//              id: nil,
+//              userID: userID,
+//              title: title,
+//              summary: summary,
+//              content: content,
+//              images: images,
+//              createdAt: Date(),
+//              courseID: courseID,
+//              fileLocation: "\(courseID)/\(folder.id ?? "")",
+//              lastAccessed: nil
+//          )
+//          
+//          do {
+//              let ref = try db.collection(noteCollection).addDocument(from: note)
+//              db.collection(folderCollection).document(folder.id ?? "").updateData([
+//                  "notes": FieldValue.arrayUnion([ref.documentID])
+//              ]) { error in
+//                  completion(error)
+//              }
+//          } catch {
+//              print("Error creating note: \(error)")
+//              completion(error)
+//          }
+//      }
+  
+  
+  func createNote(
+      title: String,
+      summary: String,
+      content: String,
+      images: [String] = [],
+      course: Course,
+      folder: Folder? = nil,
+      completion: @escaping (Error?) -> Void
+  ) {
+      guard let courseID = course.id else {
+          completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course ID"]))
+          return
+      }
+      
+      let userID = folder?.userID ?? course.userID // Use userID from folder if available, else course userID
+      let note = Note(
+          id: nil,
+          userID: userID,
+          title: title,
+          summary: summary,
+          content: content,
+          images: images,
+          createdAt: Date(),
+          courseID: courseID,
+          fileLocation: "\(courseID)/\(folder?.id ?? "")",
+          lastAccessed: nil
+      )
+      
+      do {
+          let ref = try db.collection(noteCollection).addDocument(from: note)
           
-          let note = Note(
-              id: nil,
-              userID: userID,
-              title: title,
-              summary: summary,
-              content: content,
-              images: images,
-              createdAt: Date(),
-              courseID: courseID,
-              fileLocation: "\(courseID)/\(folder.id ?? "")",
-              lastAccessed: nil
-          )
-          
-          do {
-              let ref = try db.collection(noteCollection).addDocument(from: note)
+          if let folder = folder {
+              // Add note ID to the specified folder
               db.collection(folderCollection).document(folder.id ?? "").updateData([
                   "notes": FieldValue.arrayUnion([ref.documentID])
               ]) { error in
                   completion(error)
               }
-          } catch {
-              print("Error creating note: \(error)")
-              completion(error)
+          } else {
+              // Add note ID directly to the course
+              db.collection(courseCollection).document(courseID).updateData([
+                  "notes": FieldValue.arrayUnion([ref.documentID])
+              ]) { error in
+                  completion(error)
+              }
           }
+      } catch {
+          print("Error creating note: \(error)")
+          completion(error)
       }
+  }
+
+  
+  
+  
+
+
 
 
 
@@ -350,29 +409,70 @@ class Firebase: ObservableObject {
               completion(error)
           }
       }
+  
+  
 
-      func deleteNote(note: Note, folderID: String, completion: @escaping (Error?) -> Void) {
-          guard let noteID = note.id else {
-              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Note ID is missing."]))
-              return
-          }
-          
-          let batch = db.batch()
+//      func deleteNote(note: Note, folderID: String, completion: @escaping (Error?) -> Void) {
+//          guard let noteID = note.id else {
+//              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Note ID is missing."]))
+//              return
+//          }
+//          
+//          let batch = db.batch()
+//          let folderRef = db.collection(folderCollection).document(folderID)
+//          batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: folderRef)
+//          
+//          let noteRef = db.collection(noteCollection).document(noteID)
+//          batch.deleteDocument(noteRef)
+//          
+//          batch.commit { error in
+//              if let error = error {
+//                  print("Error deleting note: \(error.localizedDescription)")
+//              } else {
+//                  print("Successfully deleted note \(noteID).")
+//              }
+//              completion(error)
+//          }
+//      }
+  
+  
+  func deleteNote(note: Note, folderID: String?, completion: @escaping (Error?) -> Void) {
+      guard let noteID = note.id else {
+          completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Note ID is missing."]))
+          return
+      }
+      
+      let batch = db.batch()
+      
+      if let folderID = folderID {
+          // If folderID is provided, remove note from the folder's notes
           let folderRef = db.collection(folderCollection).document(folderID)
           batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: folderRef)
-          
-          let noteRef = db.collection(noteCollection).document(noteID)
-          batch.deleteDocument(noteRef)
-          
-          batch.commit { error in
-              if let error = error {
-                  print("Error deleting note: \(error.localizedDescription)")
-              } else {
-                  print("Successfully deleted note \(noteID).")
-              }
-              completion(error)
+      } else {
+          // If no folderID, remove note from the course's notes field
+          guard let courseID = note.courseID else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Course ID is missing for direct note deletion."]))
+              return
           }
+          let courseRef = db.collection(courseCollection).document(courseID)
+          batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: courseRef)
       }
+      
+      // Delete the note document itself
+      let noteRef = db.collection(noteCollection).document(noteID)
+      batch.deleteDocument(noteRef)
+      
+      // Commit the batch
+      batch.commit { error in
+          if let error = error {
+              print("Error deleting note: \(error.localizedDescription)")
+          } else {
+              print("Successfully deleted note \(noteID).")
+          }
+          completion(error)
+      }
+  }
+
 
         // update methods
     func updateNoteContent(noteID: String, newContent: String) {
