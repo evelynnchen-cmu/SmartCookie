@@ -1,4 +1,5 @@
 //
+//
 //import SwiftUI
 //
 //struct FolderView: View {
@@ -8,6 +9,8 @@
 //    
 //    @State private var showAddNoteModal = false
 //    @State private var notes: [Note] = []
+//    @State private var noteToDelete: Note?
+//    @State private var showDeleteNoteAlert = false
 //
 //    var body: some View {
 //        VStack(alignment: .leading) {
@@ -39,7 +42,7 @@
 //                .font(.headline)
 //            
 //            ForEach(notes, id: \.id) { note in
-//                NavigationLink(destination: NoteView(note: note)) {
+//                NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
 //                    VStack(alignment: .leading) {
 //                        Text(note.title)
 //                            .font(.body)
@@ -52,6 +55,14 @@
 //                            .foregroundColor(.secondary)
 //                    }
 //                    .padding(.vertical, 5)
+//                }
+//                .contextMenu {
+//                    Button(role: .destructive) {
+//                        noteToDelete = note
+//                        showDeleteNoteAlert = true
+//                    } label: {
+//                        Label("Delete Note", systemImage: "trash")
+//                    }
 //                }
 //            }
 //            
@@ -85,14 +96,34 @@
 //        .onAppear {
 //            fetchNotes()
 //        }
+//        .alert(isPresented: $showDeleteNoteAlert) {
+//            Alert(
+//                title: Text("Delete Note"),
+//                message: Text("Are you sure you want to delete this note?"),
+//                primaryButton: .destructive(Text("Delete")) {
+//                    if let note = noteToDelete {
+//                        firebase.deleteNote(note: note, folderID: folder.id ?? "") { error in
+//                            if let error = error {
+//                                print("Error deleting note: \(error.localizedDescription)")
+//                            } else {
+//                                fetchNotes() // Refresh the notes list after deletion
+//                            }
+//                        }
+//                    }
+//                },
+//                secondaryButton: .cancel()
+//            )
+//        }
 //    }
-//    
 //
-//    private func fetchNotes() {
-//        firebase.getNotes()
-//        
-//        notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
-//    }
+////    private func fetchNotes() {
+////        firebase.getNotes()
+////        notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
+////    }
+//  private func fetchNotes() {
+//      firebase.getNotes()
+//      notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
+//  }
 //}
 //
 //private let dateFormatter: DateFormatter = {
@@ -101,40 +132,40 @@
 //    formatter.timeStyle = .short
 //    return formatter
 //}()
-//
 
 
+// FolderView.swift
 
 import SwiftUI
 
 struct FolderView: View {
-    @ObservedObject var firebase: Firebase
-    var folder: Folder
-    var course: Course
-    
+    @ObservedObject var viewModel: FolderViewModel
     @State private var showAddNoteModal = false
-    @State private var notes: [Note] = []
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
 
+    init(firebase: Firebase, folder: Folder, course: Course) {
+      _viewModel = ObservedObject(wrappedValue: FolderViewModel(firebase: firebase,  course: course, folder: folder))
+    }
+
     var body: some View {
         VStack(alignment: .leading) {
-            Text("Folder Name: \(folder.folderName)")
+            Text("Folder Name: \(viewModel.folder.folderName)")
                 .font(.title)
                 .padding(.bottom, 2)
             
-            Text("Course ID: \(folder.courseID)")
+            Text("Course ID: \(viewModel.folder.courseID)")
                 .font(.body)
             
-            if let userID = folder.userID {
+            if let userID = viewModel.folder.userID {
                 Text("User ID: \(userID)")
                     .font(.body)
             }
             
-            Text("File Location: \(folder.fileLocation)")
+            Text("File Location: \(viewModel.folder.fileLocation)")
                 .font(.body)
             
-            if let recentNoteSummary = folder.recentNoteSummary {
+            if let recentNoteSummary = viewModel.folder.recentNoteSummary {
                 Text("Recent Note Title: \(recentNoteSummary.title)")
                     .font(.body)
                 Text("Summary: \(recentNoteSummary.summary)")
@@ -146,8 +177,8 @@ struct FolderView: View {
             Text("Notes:")
                 .font(.headline)
             
-            ForEach(notes, id: \.id) { note in
-                NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
+            ForEach(viewModel.notes, id: \.id) { note in
+                NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note)) {
                     VStack(alignment: .leading) {
                         Text(note.title)
                             .font(.body)
@@ -188,18 +219,18 @@ struct FolderView: View {
             .sheet(isPresented: $showAddNoteModal) {
                 AddNoteModal(
                     onNoteCreated: {
-                        fetchNotes()
+                        viewModel.fetchNotesForFolder()
                     },
-                    firebase: firebase,
-                    course: course,
-                    folder: folder
+                    firebase: viewModel.firebase,
+                    course: viewModel.course,
+                    folder: viewModel.folder
                 )
             }
         }
         .padding()
         .navigationTitle("Folder Details")
         .onAppear {
-            fetchNotes()
+            viewModel.fetchNotesForFolder()
         }
         .alert(isPresented: $showDeleteNoteAlert) {
             Alert(
@@ -207,11 +238,9 @@ struct FolderView: View {
                 message: Text("Are you sure you want to delete this note?"),
                 primaryButton: .destructive(Text("Delete")) {
                     if let note = noteToDelete {
-                        firebase.deleteNote(note: note, folderID: folder.id ?? "") { error in
+                        viewModel.deleteNote(note) { error in
                             if let error = error {
                                 print("Error deleting note: \(error.localizedDescription)")
-                            } else {
-                                fetchNotes() // Refresh the notes list after deletion
                             }
                         }
                     }
@@ -220,15 +249,6 @@ struct FolderView: View {
             )
         }
     }
-
-//    private func fetchNotes() {
-//        firebase.getNotes()
-//        notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
-//    }
-  private func fetchNotes() {
-      firebase.getNotes()
-      notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
-  }
 }
 
 private let dateFormatter: DateFormatter = {
@@ -237,3 +257,4 @@ private let dateFormatter: DateFormatter = {
     formatter.timeStyle = .short
     return formatter
 }()
+

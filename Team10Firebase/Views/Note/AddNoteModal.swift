@@ -135,7 +135,7 @@ struct AddNoteModal: View {
     var onNoteCreated: () -> Void
     @ObservedObject var firebase: Firebase
     var course: Course
-    var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
+    var folder: Folder?
 
     var body: some View {
         NavigationView {
@@ -143,7 +143,7 @@ struct AddNoteModal: View {
                 Section(header: Text("Note Information")) {
                     TextField("Title", text: $title)
                     TextField("Content", text: $content)
-                    // UI for adding images, if required
+    
                 }
                 
                 Button(action: {
@@ -171,14 +171,13 @@ struct AddNoteModal: View {
         do {
             let summary = try await summarizeContent(content: content)
             
-            // Determine note location based on whether folder is provided
             firebase.createNote(
                 title: title,
                 summary: summary,
                 content: content,
                 images: images,
                 course: course,
-                folder: folder // Adds to folder if specified, else directly to course
+                folder: folder
             ) { error in
                 if let error = error {
                     errorMessage = error.localizedDescription

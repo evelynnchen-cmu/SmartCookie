@@ -183,6 +183,41 @@ class Firebase: ObservableObject {
   
 
   
+//  func createFolder(folderName: String, course: Course, notes: [String] = [], fileLocation: String = "") async throws {
+//      let db = Firestore.firestore()
+//      let courseID = course.id ?? ""
+//      let userID = course.userID ?? ""
+//      
+//      var ref: DocumentReference? = nil
+//      ref = db.collection("Folder").addDocument(data: [
+//          "userID": userID,
+//          "folderName": folderName,
+//          "courseID": courseID,
+//          "notes": notes,
+//          "fileLocation": fileLocation,
+//          "recentNoteSummary": NSNull()
+//      ]) { error in
+//          if let error = error {
+//              print("Error adding folder: \(error)")
+//              return
+//          }
+//          
+//          guard let folderID = ref?.documentID else { return }
+//          
+//          db.collection("Course").document(courseID).updateData([
+//              "folders": FieldValue.arrayUnion([folderID])
+//          ]) { error in
+//              if let error = error {
+//                  print("Error updating course with new folder: \(error)")
+//              } else {
+//                  print("Folder successfully added to course!")
+//              }
+//          }
+//      }
+//  }
+  
+  
+  
   func createFolder(folderName: String, course: Course, notes: [String] = [], fileLocation: String = "") async throws {
       let db = Firestore.firestore()
       let courseID = course.id ?? ""
@@ -215,6 +250,8 @@ class Firebase: ObservableObject {
           }
       }
   }
+
+
   
   
 //      func createNote(
@@ -528,6 +565,48 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
             }
         }
     }
+  
+  
+  func getDirectNotesForCourse(courseID: String, completion: @escaping ([Note]) -> Void) {
+      db.collection(noteCollection)
+          .whereField("courseID", isEqualTo: courseID)
+          .whereField("folderID", isEqualTo: "") // Filter for direct notes without folders
+          .addSnapshotListener { querySnapshot, error in
+              if let error = error {
+                  print("Error fetching direct notes: \(error.localizedDescription)")
+                  completion([])
+                  return
+              }
+              
+              let directNotes = querySnapshot?.documents.compactMap { document in
+                  try? document.data(as: Note.self)
+              } ?? []
+              
+              completion(directNotes)
+          }
+  }
+  
+  
+  
+  func listenToDirectNotesForCourse(courseID: String, completion: @escaping ([Note]) -> Void) {
+          db.collection("Note")
+              .whereField("courseID", isEqualTo: courseID)
+              .whereField("folderID", isEqualTo: NSNull())  // Filter to only get notes outside folders
+              .addSnapshotListener { querySnapshot, error in
+                  if let error = error {
+                      print("Error fetching direct notes: \(error.localizedDescription)")
+                      completion([])  // Return an empty array if there's an error
+                      return
+                  }
+                  
+                  let notes = querySnapshot?.documents.compactMap { document in
+                      try? document.data(as: Note.self)
+                  } ?? []
+                  
+                  completion(notes)  // Pass the real-time notes data to the view model
+              }
+      }
+
 
 
   

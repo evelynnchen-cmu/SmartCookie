@@ -11,7 +11,7 @@ import FirebaseFirestore
 
 struct Course: Codable, Identifiable {
     @DocumentID var id: String?
-    var userID: String
+    var userID: String?
     var courseName: String
     var folders: [String]
     var notes: [String]
