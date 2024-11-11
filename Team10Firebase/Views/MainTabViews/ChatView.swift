@@ -23,8 +23,6 @@ struct ChatView: View {
     @State private var isMessageSelectionViewPresented = false
     @State private var showSaveConfirmation = false
     @State private var saveConfirmationMessage = ""
-    @State private var showSettingsModal = false
-    @State private var searchNotesOnly = false
     
     @ObservedObject private var firebase = Firebase()
     
@@ -77,15 +75,9 @@ struct ChatView: View {
                         .background(Color(.systemGray6))
                         .cornerRadius(8)
                     }
-                    
+
                     Spacer()
-                    
-                    Button(action: {
-                        showSettingsModal.toggle()
-                    }) {
-                        Image(systemName: "gearshape")
-                            .foregroundColor(.black)
-                    }
+
                 }
                 .padding()
                 
@@ -196,36 +188,6 @@ struct ChatView: View {
             }
             .alert(isPresented: $showSaveConfirmation) {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
-            }
-            
-            // Settings modal
-            if showSettingsModal {
-                Color.black.opacity(0.4)
-                    .edgesIgnoringSafeArea(.all)
-                
-                VStack {
-                    Text("Settings")
-                        .font(.headline)
-                        .padding()
-                    
-                    Toggle("Search notes only", isOn: $searchNotesOnly)
-                        .padding()
-                    
-                    Button(action: {
-                        showSettingsModal = false
-                    }) {
-                        Text("Close")
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    .padding()
-                }
-                .frame(width: 300, height: 200)
-                .background(Color.white)
-                .cornerRadius(12)
-                .shadow(radius: 20)
             }
         }
     }
