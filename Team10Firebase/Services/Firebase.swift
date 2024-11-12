@@ -428,6 +428,30 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
             }
         }
     }
+  
+  func toggleNotesOnlyChatScope(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notesOnlyChatScope": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notesOnlyChatScope: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notesOnlyChatScope to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
 
 
   

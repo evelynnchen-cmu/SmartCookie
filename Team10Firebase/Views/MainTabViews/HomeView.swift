@@ -16,8 +16,9 @@ struct HomeView: View {
             VStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        // Welcome Header
-                        HStack {
+                        Spacer().frame(height: 40)
+
+                        HStack(alignment: .top) {
                             VStack(alignment: .leading) {
                                 Text("Welcome back,")
                                     .font(.title)
@@ -28,13 +29,14 @@ struct HomeView: View {
                                     .foregroundColor(.blue)
                             }
                             Spacer()
-                            Image(systemName: "gearshape")
-                                .font(.title2)
-                                .foregroundColor(.black)
+                            NavigationLink(destination: SettingsView()) {
+                                Image(systemName: "gearshape")
+                                    .font(.title2)
+                                    .foregroundColor(.black)
+                            }
                         }
                         .padding(.horizontal)
                         
-                        // Classes header with plus button
                         HStack {
                             Text("Classes")
                                 .font(.title3)
@@ -54,7 +56,6 @@ struct HomeView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Grid of courses
                         LazyVGrid(columns: [
                             GridItem(.flexible(), spacing: 16),
                             GridItem(.flexible(), spacing: 16)
@@ -63,8 +64,8 @@ struct HomeView: View {
                                 NavigationLink(destination: CourseView(course: course)) {
                                     Text(course.courseName)
                                         .font(.headline)
-                                        .frame(height: 100)  // Fixed height
-                                        .frame(maxWidth: .infinity)  // Fill available width
+                                        .frame(height: 100)
+                                        .frame(maxWidth: .infinity)
                                         .background(Color.blue.opacity(0.2))
                                         .cornerRadius(12)
                                         .foregroundColor(.primary)
