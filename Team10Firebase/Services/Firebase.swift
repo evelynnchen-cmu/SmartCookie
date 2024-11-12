@@ -453,8 +453,28 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
       }
   }
 
-
-  
+func getCourse(courseID: String, completion: @escaping (Course?) -> Void) {
+    db.collection(courseCollection).document(courseID).getDocument { document, error in
+        if let error = error {
+            print("Error fetching course by ID: \(error.localizedDescription)")
+            completion(nil)
+            return
+        }
+        
+        guard let document = document, document.exists else {
+            print("Course not found")
+            completion(nil)
+            return
+        }
+        
+        if let course = try? document.data(as: Course.self) {
+            completion(course)
+        } else {
+            print("Failed to parse course")
+            completion(nil)
+        }
+    }
+}
   
   
 
