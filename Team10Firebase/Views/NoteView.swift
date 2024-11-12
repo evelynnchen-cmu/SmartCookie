@@ -3,20 +3,20 @@ import SwiftUI
 import PhotosUI
 
 struct NoteView: View {
-  var firebaseStorage: FirebaseStorage
   @StateObject var viewModel: NoteViewModel
   @ObservedObject var firebase: Firebase
   @State private var isPickerPresented = false
   @State private var showTextParserView = false
   @State private var selectedImage: UIImage?
   @State private var contentTab = true
+  @State private var showAlert = false
+  @State private var alertMessage = ""
   var note: Note
   
   
   init(firebase: Firebase, note: Note) {
     _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
     self.note = note
-    self.firebaseStorage = FirebaseStorage()
     self.firebase = firebase
   }
   
@@ -31,14 +31,10 @@ struct NoteView: View {
 //          Text("Title: \(note.title)")
 //            .font(.title)
 //            .fontWeight(.bold)
-          // Text("Summary: \(note.summary)")
-          //   .font(.body)
-          //   .foregroundColor(.gray)
           VStack(spacing: 8) {
             Text("Summary")
                 .font(.headline) // Larger font for the summary title
                 .foregroundColor(.primary)
-            
             Text(note.summary)
                 .font(.body) // Smaller font for the summary text
                 // .padding(8) // Padding inside the box
@@ -138,33 +134,73 @@ struct NoteView: View {
           }
         }
         .padding(.horizontal)
-        .sheet(isPresented: $isPickerPresented) {
-          ImagePicker(sourceType: .photoLibrary) { image in
-            self.selectedImage = image
-            self.showTextParserView = true
-  //                    self.isPickerPresented = false
+//           .fullScreenCover(isPresented: $isPickerPresented) {
+//            if !showTextParserView {
+//              ImagePicker(sourceType: .photoLibrary, isPresented: $isPickerPresented) { image in
+//              self.selectedImage = image
+//               if let checkImage = selectedImage {
+//                   self.showTextParserView = true
+//   //              self.isPickerPresented = false
+//               }
+//               // } else {
+//               //     self.alertMessage = "No image selected"
+//               //     self.showAlert = true
+//               //     self.isPickerPresented = false
+//               // }
+//              }
+//            }
+//            else {
+// //            self.selectedImage = nil
+//              if let image = self.selectedImage {
+//  //            Comment out textparser if want to call the OpenAI API
+//               TextParserView(
+//                   image: image,
+//                   viewModel: viewModel,
+//                   firebase: firebase,
+//                   isPresented: $showTextParserView,
+//                   note: note
+//               )
+//              }
+//            }
+//          }
+
+//       .sheet(isPresented: $isPickerPresented) {
+// //          ImagePicker(sourceType: .photoLibrary) { image in
+// //            self.selectedImage = image
+// //            // self.showTextParserView = true
+// //  //                    self.isPickerPresented = false
+// //          DispatchQueue.main.async {
+// //                    self.showTextParserView = true
+// //                }
+// //          }
+//         }
+          .sheet(isPresented: $isPickerPresented) {
+              ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
           }
-          // Need this empty if so that the next sheet does not have a nil image
-          if let selectedImage = selectedImage {
+          .onChange(of: selectedImage) {
+            if selectedImage != nil {
+                showTextParserView = true
+            }
           }
+      .fullScreenCover(isPresented: $showTextParserView) {
+        if let image = self.selectedImage {
+          TextParserView(
+            image: image,
+            viewModel: viewModel,
+            firebase: firebase,
+            isPresented: $showTextParserView,
+            note: note
+          )
         }
-        .sheet(isPresented: $showTextParserView) {
-          if let image = self.selectedImage {
-            Text("Not nil")
-    //                  Comment out textparser if want to call the OpenAI API
-    //                    TextParserView(
-    //                        image: image,
-    //                        firebaseStorage: firebaseStorage,
-    //                        viewModel: viewModel,
-    //                        firebase: firebase,
-    //                        isPresented: $showTextParserView,
-    //                        note: note
-    //                    )
-          }
-          else {
-            Text("Nil image")
-          }
+        else {
+          Text("Nil image")
+        }
       }
+
+         .alert(isPresented: $showAlert) {
+            Alert(title: Text("Image Selection"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+
       // To avoid reloading images more than once
       .onAppear {
         if (!viewModel.imagesLoaded) {

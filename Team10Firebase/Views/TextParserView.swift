@@ -8,16 +8,16 @@
 import SwiftUI
 
 struct TextParserView: View {
-    var image: UIImage
-    var firebaseStorage: FirebaseStorage
-    @StateObject var viewModel: NoteViewModel
-    @ObservedObject var firebase: Firebase
-    @Binding var isPresented: Bool
-    @State private var selectedImage: UIImage? = nil
-    @State private var alertMessage = ""
-    @State private var showAlert = false
-    @State private var navigateToNoteView = false
-    @State private var parsedText: String? = nil
+  var image: UIImage
+  var firebaseStorage: FirebaseStorage = FirebaseStorage()
+  @StateObject var viewModel: NoteViewModel
+  @ObservedObject var firebase: Firebase
+  @Binding var isPresented: Bool
+  @State private var selectedImage: UIImage? = nil
+  @State private var alertMessage = ""
+  @State private var showAlert = false
+  @State private var navigateToNoteView = false
+  @State private var parsedText: String? = nil
   var note: Note
   
     var body: some View {
@@ -120,15 +120,15 @@ struct TextParserView: View {
           .padding()
     }
     .onAppear {
-      viewModel.parseImage(image) { text in
-        if let content = text {
-          print("Parsed image content: \(content)")
-          self.parsedText = content
-        }
-        else {
-          print("Failed to parse image")
-        }
-      }
+      // viewModel.parseImage(image) { text in
+      //   if let content = text {
+      //     print("Parsed image content: \(content)")
+      //     self.parsedText = content
+      //   }
+      //   else {
+      //     print("Failed to parse image")
+      //   }
+      // }
     }
     .alert(isPresented: $showAlert) {
         Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
