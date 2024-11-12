@@ -23,26 +23,42 @@ struct NoteView: View {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
         if let note = viewModel.note {
-          Text("Note ID: \(note.id ?? "N/A")")
+//          Text("Note ID: \(note.id ?? "N/A")")
+//            .font(.body)
+//          Text("User ID: \(note.userID ?? "N/A")")
+//            .font(.body)
+//          Text("Title: \(note.title)")
+//            .font(.title)
+//            .fontWeight(.bold)
+          // Text("Summary: \(note.summary)")
+          //   .font(.body)
+          //   .foregroundColor(.gray)
+          VStack(spacing: 8) {
+            Text("Summary")
+                .font(.headline) // Larger font for the summary title
+                .foregroundColor(.primary)
+            
+            Text(note.summary)
+                .font(.body) // Smaller font for the summary text
+                .padding(8) // Padding inside the box
+          }
+          .background(
+              RoundedRectangle(cornerRadius: 10)
+                  .fill(Color(UIColor.systemGray6)) // Background color for the box
+                  .frame(maxWidth: .infinity)
+          )
+          Spacer()
+          Text(note.content)
             .font(.body)
-          Text("User ID: \(note.userID ?? "N/A")")
-            .font(.body)
-          Text("Title: \(note.title)")
-            .font(.title)
-            .fontWeight(.bold)
-          Text("Summary: \(note.summary)")
-            .font(.body)
-            .foregroundColor(.gray)
-          Text("Content: \(note.content)")
-            .font(.body)
-          Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
-            .font(.body)
+//          Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
+//            .font(.body)
           Text("Created At: \(note.createdAt, formatter: dateFormatter)")
             .font(.body)
-          Text("Course ID: \(note.courseID ?? "N/A")")
-            .font(.body)
-          Text("File Location: \(note.fileLocation)")
-            .font(.body)
+            .foregroundColor(.secondary)
+//          Text("Course ID: \(note.courseID ?? "N/A")")
+//            .font(.body)
+//          Text("File Location: \(note.fileLocation)")
+//            .font(.body)
           Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
             .font(.body)
             .foregroundColor(.secondary)
@@ -65,55 +81,56 @@ struct NoteView: View {
               Image(uiImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 200, height: 200)
+//                .frame(width: 200, height: 200)
+                .frame(maxWidth: .infinity)
                 .padding()
             }
           }
         }
         
-        // Button to upload photos
-        Button(action: {
-           isPickerPresented = true
-        }) {
-          Text("Upload Image from Photo Library")
-            .font(.body)
-            .foregroundColor(.blue)
-        }
-      }
-      .padding(.leading)
-               .sheet(isPresented: $isPickerPresented) {
-                 ImagePicker(sourceType: .photoLibrary) { image in
-                   self.selectedImage = image
-                    self.showTextParserView = true
-//                    self.isPickerPresented = false
-                 }
-                 // Need this empty if so that the next sheet does not have a nil image
-                 if let selectedImage = selectedImage {
-                 }
-               }
-              .sheet(isPresented: $showTextParserView) {
-                if let image = self.selectedImage {
-                  Text("Not nil")
-//                  Comment out textparser if want to call the OpenAI API
-//                    TextParserView(
-//                        image: image,
-//                        firebaseStorage: firebaseStorage,
-//                        viewModel: viewModel,
-//                        firebase: firebase,
-//                        isPresented: $showTextParserView,
-//                        note: note
-//                    )
-                }
-                else {
-                  Text("Nil image")
-                }
-              }
-        // To avoid reloading images more than once
-        .onAppear {
-          if (!viewModel.imagesLoaded) {
-            viewModel.loadImages()
+          // Button to upload photos
+          Button(action: {
+            isPickerPresented = true
+          }) {
+            Text("Upload Image from Photo Library")
+              .font(.body)
+              .foregroundColor(.blue)
           }
         }
+        .padding(.horizontal)
+        .sheet(isPresented: $isPickerPresented) {
+          ImagePicker(sourceType: .photoLibrary) { image in
+            self.selectedImage = image
+            self.showTextParserView = true
+  //                    self.isPickerPresented = false
+          }
+          // Need this empty if so that the next sheet does not have a nil image
+          if let selectedImage = selectedImage {
+          }
+        }
+        .sheet(isPresented: $showTextParserView) {
+          if let image = self.selectedImage {
+            Text("Not nil")
+    //                  Comment out textparser if want to call the OpenAI API
+    //                    TextParserView(
+    //                        image: image,
+    //                        firebaseStorage: firebaseStorage,
+    //                        viewModel: viewModel,
+    //                        firebase: firebase,
+    //                        isPresented: $showTextParserView,
+    //                        note: note
+    //                    )
+          }
+          else {
+            Text("Nil image")
+          }
+      }
+      // To avoid reloading images more than once
+      .onAppear {
+        if (!viewModel.imagesLoaded) {
+          viewModel.loadImages()
+        }
+      }
       }
       .navigationTitle(note.title)
     }
