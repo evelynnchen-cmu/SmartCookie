@@ -273,12 +273,6 @@ class Firebase: ObservableObject {
   
   
   
-
-
-
-
-
-  
   
       func deleteCourse(course: Course) {
           guard let courseID = course.id else {

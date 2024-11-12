@@ -162,7 +162,7 @@ struct CourseView: View {
         VStack(alignment: .leading) {
             Text("Folders")
                 .font(.headline)
-            
+
             ForEach(courseFolders, id: \.id) { folder in
                 NavigationLink(
                     destination: FolderView(
@@ -192,6 +192,7 @@ struct CourseView: View {
     }
     
     private func fetchFoldersForCourse() {
+        firebase.getNotes()
         firebase.getFolders { allFolders in
             self.courseFolders = allFolders.filter { folder in
                 course.folders.contains(folder.id ?? "")
@@ -202,7 +203,6 @@ struct CourseView: View {
   private func fetchDirectNotesForCourse() {
       directCourseNotes = firebase.notes.filter { note in
           let containsNote = course.notes.contains(note.id ?? "")
-          print("Note ID: \(note.id ?? "No ID"), Title: \(note.title), Belongs to Course: \(containsNote)")
           return containsNote
       }
       print("Filtered directCourseNotes count: \(directCourseNotes.count)")
