@@ -11,6 +11,7 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var firebase = Firebase()
     @State private var isNotesOnlyChatScope: Bool = false
+    @State private var isNotesOnlyQuizScope: Bool = false
     
     var body: some View {
       Form {
@@ -24,12 +25,24 @@ struct SettingsView: View {
                   }
               }
           }
+        
+        Toggle(isOn: $isNotesOnlyQuizScope) {
+            Text("Notes Only Quiz Scope")
+        }
+        .onChange(of: isNotesOnlyQuizScope) { oldValue, newValue in
+            firebase.toggleNotesOnlyQuizScope(isEnabled: newValue) { error in
+                if let error = error {
+                    print("Failed to toggle quiz scope: \(error.localizedDescription)")
+                }
+            }
+        }
       }
         .navigationTitle("Settings")
         .onAppear {
             firebase.getFirstUser { user in
                 if let user = user {
                     isNotesOnlyChatScope = user.settings.notesOnlyChatScope
+                    isNotesOnlyQuizScope = user.settings.notesOnlyQuizScope
                 } else {
                     print("Failed to fetch user.")
                 }

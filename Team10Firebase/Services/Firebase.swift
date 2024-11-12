@@ -452,6 +452,30 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
           }
       }
   }
+  
+  func toggleNotesOnlyQuizScope(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notesOnlyQuizScope": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notesOnlyQuizScope: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notesOnlyQuizScope to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
 
 
   
