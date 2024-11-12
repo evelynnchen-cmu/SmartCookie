@@ -12,6 +12,7 @@ struct SettingsView: View {
     @StateObject private var firebase = Firebase()
     @State private var isNotesOnlyChatScope: Bool = false
     @State private var isNotesOnlyQuizScope: Bool = false
+    @State private var isNotificationsEnabled: Bool = false
     
     var body: some View {
       Form {
@@ -36,6 +37,17 @@ struct SettingsView: View {
                 }
             }
         }
+        
+        Toggle(isOn: $isNotificationsEnabled) {
+            Text("Notifications")
+        }
+        .onChange(of: isNotificationsEnabled) { oldValue, newValue in
+            firebase.toggleNotificationsEnabled(isEnabled: newValue) { error in
+                if let error = error {
+                    print("Failed to toggle notification preferences: \(error.localizedDescription)")
+                }
+            }
+        }
       }
         .navigationTitle("Settings")
         .onAppear {
@@ -43,6 +55,7 @@ struct SettingsView: View {
                 if let user = user {
                     isNotesOnlyChatScope = user.settings.notesOnlyChatScope
                     isNotesOnlyQuizScope = user.settings.notesOnlyQuizScope
+                    isNotificationsEnabled = user.settings.notificationsEnabled
                 } else {
                     print("Failed to fetch user.")
                 }

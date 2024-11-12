@@ -476,14 +476,29 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
           }
       }
   }
-
-
   
-  
-  
-
-
-
-
+  func toggleNotificationsEnabled(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notificationsEnabled": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notificationsEnabled: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notifications to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
 
 }
