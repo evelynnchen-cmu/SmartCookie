@@ -9,6 +9,7 @@ struct NoteView: View {
   @State private var isPickerPresented = false
   @State private var showTextParserView = false
   @State private var selectedImage: UIImage?
+  @State private var contentTab = true
   var note: Note
   
   
@@ -40,61 +41,100 @@ struct NoteView: View {
             
             Text(note.summary)
                 .font(.body) // Smaller font for the summary text
-                .padding(8) // Padding inside the box
+                // .padding(8) // Padding inside the box
           }
           .background(
               RoundedRectangle(cornerRadius: 10)
                   .fill(Color(UIColor.systemGray6)) // Background color for the box
                   .frame(maxWidth: .infinity)
           )
-          Spacer()
-          Text(note.content)
-            .font(.body)
-//          Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
-//            .font(.body)
-          Text("Created At: \(note.createdAt, formatter: dateFormatter)")
-            .font(.body)
-            .foregroundColor(.secondary)
-//          Text("Course ID: \(note.courseID ?? "N/A")")
-//            .font(.body)
-//          Text("File Location: \(note.fileLocation)")
-//            .font(.body)
-          Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
-            .font(.body)
-            .foregroundColor(.secondary)
-        } else {
-          Text("Loading note...")
-        }
-        
-        // Displays images associated with this note - should probably change to onAppear
-        // and refactor firebaseStorage to not store its state
-        if viewModel.isLoading {
-          ProgressView("Loading...")
-        } else if let errorMessage = viewModel.errorMessage {
-          Text(errorMessage)
-            .foregroundColor(.red)
-        } else if viewModel.images.isEmpty {
-          Text("No images available")
-        } else {
-          VStack {
-            ForEach(viewModel.images, id: \.self) { image in
-              Image(uiImage: image)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-//                .frame(width: 200, height: 200)
-                .frame(maxWidth: .infinity)
-                .padding()
-            }
-          }
-        }
-        
+          .padding(8) // Padding around the box
+          .frame(maxWidth: .infinity)
+
           // Button to upload photos
           Button(action: {
             isPickerPresented = true
           }) {
             Text("Upload Image from Photo Library")
+              .font(.headline)
+              .padding()
+              .frame(maxWidth: .infinity)
+              .background(Color.blue)
+              .foregroundColor(Color.white)
+              .cornerRadius(8)
+          }
+          
+          Spacer()
+
+          // Buttons to switch between tabs
+            HStack {
+                Button(action: {
+                    contentTab = true
+                }) {
+                    Text("Content")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(contentTab ? Color.blue : Color.clear)
+                        .foregroundColor(contentTab ? Color.white : Color.blue)
+                        .cornerRadius(8)
+                }
+                
+                Button(action: {
+                    contentTab = false
+                }) {
+                    Text("Images")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(!contentTab ? Color.blue : Color.clear)
+                        .foregroundColor(!contentTab ? Color.white : Color.blue)
+                        .cornerRadius(8)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+          if (contentTab) {
+            Text(note.content)
               .font(.body)
-              .foregroundColor(.blue)
+  //          Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
+  //            .font(.body)
+            Text("Created At: \(note.createdAt, formatter: dateFormatter)")
+              .font(.body)
+              .foregroundColor(.secondary)
+  //          Text("Course ID: \(note.courseID ?? "N/A")")
+  //            .font(.body)
+  //          Text("File Location: \(note.fileLocation)")
+  //            .font(.body)
+            Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
+              .font(.body)
+              .foregroundColor(.secondary)
+          }
+          else {
+
+          // Displays images associated with this note - should probably change to onAppear
+        // and refactor firebaseStorage to not store its state
+            if viewModel.isLoading {
+              ProgressView("Loading...")
+            } else if let errorMessage = viewModel.errorMessage {
+              Text(errorMessage)
+                .foregroundColor(.red)
+            } else if viewModel.images.isEmpty {
+              Text("No images available")
+            } else {
+              VStack {
+                ForEach(viewModel.images, id: \.self) { image in
+                  Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+    //                .frame(width: 200, height: 200)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+              }
+            }
+        }
+
+          } else {
+            Text("Loading note...")
           }
         }
         .padding(.horizontal)
@@ -142,12 +182,3 @@ struct NoteView: View {
     formatter.timeStyle = .short
     return formatter
   }()
-  
-  
-  enum ActiveSheet: Identifiable {
-    case imagePicker, textParserView
-    
-    var id: Int {
-      hashValue
-    }
-  }
