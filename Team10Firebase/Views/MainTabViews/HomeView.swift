@@ -1,5 +1,3 @@
-
-
 import SwiftUI
 
 struct HomeView: View {
@@ -11,47 +9,79 @@ struct HomeView: View {
     @State private var isLoading = false
     @State private var showDeleteAlert = false
     @State private var courseToDelete: Course?
+    @State private var userName: String = "User"
     
     var body: some View {
         NavigationView {
             VStack {
                 ScrollView {
-                    VStack {
-                        Text("Home")
-                            .font(.largeTitle)
-                        
-                        ForEach(firebase.courses, id: \.id) { course in
-                            NavigationLink(destination: CourseView(course: course)) {
-                                Text(course.courseName)
-                                    .font(.headline)
+                    VStack(alignment: .leading, spacing: 24) {
+                        Spacer().frame(height: 40)
+
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading) {
+                                Text("Welcome back,")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                Text(userName)
+                                    .font(.title)
+                                    .fontWeight(.bold)
                                     .foregroundColor(.blue)
-                                    .padding()
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(8)
-                                    .padding(.vertical, 2)
                             }
-                            .simultaneousGesture(
-                                LongPressGesture()
-                                    .onEnded { _ in
-                                        courseToDelete = course
-                                        showDeleteAlert = true
-                                    }
-                            )
+                            Spacer()
+                            NavigationLink(destination: SettingsView()) {
+                                Image(systemName: "gearshape")
+                                    .font(.title2)
+                                    .foregroundColor(.black)
+                            }
                         }
+                        .padding(.horizontal)
+                        
+                        HStack {
+                            Text("Classes")
+                                .font(.title3)
+                                .fontWeight(.medium)
+                           
+                            Button(action: {
+                                showAddCourseModal = true
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.title3)
+                                    .foregroundColor(.white)
+                                    .frame(width: 25, height: 25)
+                                    .background(Color.blue)
+                                    .clipShape(Circle())
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible(), spacing: 16),
+                            GridItem(.flexible(), spacing: 16)
+                        ], spacing: 16) {
+                            ForEach(firebase.courses, id: \.id) { course in
+                                NavigationLink(destination: CourseView(course: course)) {
+                                    Text(course.courseName)
+                                        .font(.headline)
+                                        .frame(height: 100)
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.blue.opacity(0.2))
+                                        .cornerRadius(12)
+                                        .foregroundColor(.primary)
+                                }
+                                .simultaneousGesture(
+                                    LongPressGesture()
+                                        .onEnded { _ in
+                                            courseToDelete = course
+                                            showDeleteAlert = true
+                                        }
+                                )
+                            }
+                        }
+                        .padding(.horizontal)
                     }
                 }
-                
-                Button(action: {
-                    showAddCourseModal = true
-                }) {
-                    Text("Add Course")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                }
-                .padding(.top, 20)
                 .sheet(isPresented: $showAddCourseModal) {
                     // Need onCourseCreated to refresh HomeView after course creation
                     AddCourseModal(onCourseCreated: firebase.getCourses, firebase: firebase)
@@ -63,6 +93,13 @@ struct HomeView: View {
                     firebase.getMCQuestions()
                     firebase.getNotifications()
                     firebase.getUsers()
+                    firebase.getFirstUser { user in
+                        if let user = user {
+                            userName = user.name
+                        } else {
+                            errorMessage = "Failed to fetch user."
+                        }
+                    }
                 }
             }
             .alert(isPresented: $showDeleteAlert) {
@@ -84,5 +121,3 @@ struct HomeView: View {
 #Preview {
     HomeView()
 }
-
-
