@@ -449,6 +449,112 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
         }
     }
   
-
+  func toggleNotesOnlyChatScope(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notesOnlyChatScope": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notesOnlyChatScope: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notesOnlyChatScope to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
+  
+  func toggleNotesOnlyQuizScope(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notesOnlyQuizScope": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notesOnlyQuizScope: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notesOnlyQuizScope to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
+  
+  func toggleNotificationsEnabled(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notificationsEnabled": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notificationsEnabled: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notifications to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
+  
+  func updateNotificationFrequency(_ frequency: String, completion: @escaping (Error?) -> Void) {
+      let validFrequencies = [
+          "3x per week",    // Mon/Wed/Fri pattern
+          "2x per week",          // Tue/Thu pattern
+          "Weekly",                  // For lighter study loads
+          "Daily"                    // For intensive study periods
+      ]
+      
+      guard validFrequencies.contains(frequency) else {
+          completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid frequency value"]))
+          return
+      }
+      
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notificationFrequency": frequency
+          ]) { error in
+              if let error = error {
+                  print("Error updating notificationFrequency: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully updated notification frequency to \(frequency)")
+                  completion(nil)
+              }
+          }
+      }
+  }
 
 }

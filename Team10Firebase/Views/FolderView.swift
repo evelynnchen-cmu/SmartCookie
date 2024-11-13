@@ -118,107 +118,110 @@ struct FolderView: View {
     @State private var showDeleteNoteAlert = false
 
     var body: some View {
-        VStack(alignment: .leading) {
+      VStack{
+        ScrollView {
+          VStack(alignment: .leading) {
             Text("Folder Name: \(folder.folderName)")
-                .font(.title)
-                .padding(.bottom, 2)
+              .font(.title)
+              .padding(.bottom, 2)
             
             Text("Course ID: \(folder.courseID)")
-                .font(.body)
+              .font(.body)
             
             if let userID = folder.userID {
-                Text("User ID: \(userID)")
-                    .font(.body)
+              Text("User ID: \(userID)")
+                .font(.body)
             }
             
             Text("File Location: \(folder.fileLocation)")
-                .font(.body)
+              .font(.body)
             
             if let recentNoteSummary = folder.recentNoteSummary {
-                Text("Recent Note Title: \(recentNoteSummary.title)")
-                    .font(.body)
-                Text("Summary: \(recentNoteSummary.summary)")
-                    .font(.body)
+              Text("Recent Note Title: \(recentNoteSummary.title)")
+                .font(.body)
+              Text("Summary: \(recentNoteSummary.summary)")
+                .font(.body)
             }
             
             Divider().padding(.vertical, 10)
             
             Text("Notes:")
-                .font(.headline)
+              .font(.headline)
             
             ForEach(notes, id: \.id) { note in
-                NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
-                    VStack(alignment: .leading) {
-                        Text(note.title)
-                            .font(.body)
-                            .foregroundColor(.blue)
-                        Text(note.summary)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 5)
+              NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
+                VStack(alignment: .leading) {
+                  Text(note.title)
+                    .font(.body)
+                    .foregroundColor(.blue)
+                  Text(note.summary)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                  Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
                 }
-                .contextMenu {
-                    Button(role: .destructive) {
-                        noteToDelete = note
-                        showDeleteNoteAlert = true
-                    } label: {
-                        Label("Delete Note", systemImage: "trash")
-                    }
+                .padding(.vertical, 5)
+              }
+              .contextMenu {
+                Button(role: .destructive) {
+                  noteToDelete = note
+                  showDeleteNoteAlert = true
+                } label: {
+                  Label("Delete Note", systemImage: "trash")
                 }
+              }
             }
             
             Spacer()
-            
-            Button(action: {
-                showAddNoteModal = true
-            }) {
-                Text("Create Note")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.blue)
-                    .cornerRadius(8)
-            }
-            .padding(.top, 20)
-            .sheet(isPresented: $showAddNoteModal) {
-                AddNoteModal(
-                    onNoteCreated: {
-                        fetchNotes()
-                    },
-                    firebase: firebase,
-                    course: course,
-                    folder: folder
-                )
-            }
+          }
         }
-        .padding()
-        .navigationTitle("Folder Details")
-        .onAppear {
-            fetchNotes()
+        Button(action: {
+            showAddNoteModal = true
+        }) {
+            Text("Create Note")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .cornerRadius(8)
         }
-        .alert(isPresented: $showDeleteNoteAlert) {
-            Alert(
-                title: Text("Delete Note"),
-                message: Text("Are you sure you want to delete this note?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    if let note = noteToDelete {
-                        firebase.deleteNote(note: note, folderID: folder.id ?? "") { error in
-                            if let error = error {
-                                print("Error deleting note: \(error.localizedDescription)")
-                            } else {
-                                fetchNotes() // Refresh the notes list after deletion
-                            }
-                        }
-                    }
+        .padding(.top, 20)
+        .sheet(isPresented: $showAddNoteModal) {
+            AddNoteModal(
+                onNoteCreated: {
+                    fetchNotes()
                 },
-                secondaryButton: .cancel()
+                firebase: firebase,
+                course: course,
+                folder: folder
             )
         }
+      }
+      .padding()
+      .navigationTitle("Folder Details")
+      .onAppear {
+          fetchNotes()
+      }
+      .alert(isPresented: $showDeleteNoteAlert) {
+          Alert(
+              title: Text("Delete Note"),
+              message: Text("Are you sure you want to delete this note?"),
+              primaryButton: .destructive(Text("Delete")) {
+                  if let note = noteToDelete {
+                      firebase.deleteNote(note: note, folderID: folder.id ?? "") { error in
+                          if let error = error {
+                              print("Error deleting note: \(error.localizedDescription)")
+                          } else {
+                              fetchNotes() // Refresh the notes list after deletion
+                          }
+                      }
+                  }
+              },
+              secondaryButton: .cancel()
+          )
+      }
     }
 
 //    private func fetchNotes() {
