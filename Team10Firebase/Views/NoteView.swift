@@ -37,6 +37,8 @@ struct NoteView: View {
                 .fill(Color.blue.opacity(0.2)) // Background color for the box
           )
           .frame(maxWidth: .infinity)
+          
+          Spacer()
 
           // Button to upload photos
           Button(action: {
