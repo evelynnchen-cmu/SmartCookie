@@ -185,8 +185,10 @@ struct CourseView: View {
                 NavigationLink(
                     destination: FolderView(
                         firebase: firebase,
-                        folder: folder,
-                        course: course
+//                        folder: folder,
+                        course: course,
+                        folderViewModel: FolderViewModel(folder: folder)
+                        
                     )
                 ) {
                     Text(folder.folderName)
