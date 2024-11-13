@@ -34,18 +34,51 @@ class FolderViewModel: ObservableObject {
     private var db = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>() // To manage subscriptions
 
-    init(firebase: Firebase, folder: Folder) {
+  init(firebase: Firebase, folder: Folder, notes: [Note]) {
         self.firebase = firebase
         self.folder = folder
         // Observe firebase.notes and filter them for this folder
-        firebase.$notes
-            .sink { [weak self] allNotes in
-                self?.notes = allNotes.filter { note in
-                    note.courseID == folder.courseID && folder.notes.contains(note.id ?? "")
-                }
-            }
-            .store(in: &cancellables)
+        self.notes = notes
+        fetchNotesByIDs()
+//        firebase.$notes
+//            .sink { [weak self] allNotes in
+//                self?.notes = allNotes.filter { note in
+//                    note.courseID == folder.courseID && folder.notes.contains(note.id ?? "")
+//                }
+//            }
+//            .store(in: &cancellables)
     }
+  
+  
+  private func fetchNotesByIDs() {
+    let noteIDs = folder.notes
+    var fetchedNotes: [Note] = []
+    
+    guard !noteIDs.isEmpty else {
+      return
+    }
+    
+    let dispatchGroup = DispatchGroup()
+    for noteID in noteIDs {
+      dispatchGroup.enter()
+      db.collection("notes").document(noteID).getDocument { [weak self] document, error in
+        defer { dispatchGroup.leave() }
+        if let error = error {
+          self?.errorMessage = "Error fetching note \(noteID): \(error.localizedDescription)"
+        } else if let document = document, document.exists, let note = try? document.data(as: Note.self) {
+          fetchedNotes.append(note)
+        }
+        
+      }
+    }
+    dispatchGroup.notify(queue: .main) { [weak self] in
+      self?.notes = fetchedNotes
+      print("Fetched \(self?.notes.count ?? 0) notes for folder \(self?.folder.id ?? "")")
+    }
+  }
+  
+  
+  
     
     // Create a note within this folder
     func createNote(
