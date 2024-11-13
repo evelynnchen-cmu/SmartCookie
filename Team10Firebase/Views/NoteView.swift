@@ -3,133 +3,156 @@ import SwiftUI
 import PhotosUI
 
 struct NoteView: View {
-  private var firebaseStorage: FirebaseStorage
-  @StateObject private var viewModel: NoteViewModel
+  @StateObject var viewModel: NoteViewModel
   @ObservedObject var firebase: Firebase
   @State private var isPickerPresented = false
-  @State private var selectedImage: UIImage? = nil
-  @State private var alertMessage = ""
+  @State private var showTextParserView = false
+  @State private var selectedImage: UIImage?
+  @State private var contentTab = true
   @State private var showAlert = false
+  @State private var alertMessage = ""
   var note: Note
   
+  
   init(firebase: Firebase, note: Note) {
+    self.firebase = firebase
     _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
     self.note = note
-    self.firebaseStorage = FirebaseStorage()
-    self.firebase = firebase
   }
   
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
         if let note = viewModel.note {
-            Text("Note ID: \(note.id ?? "N/A")")
-            .font(.body)
-            Text("User ID: \(note.userID ?? "N/A")")
-            .font(.body)
-            Text("Title: \(note.title)")
-            .font(.title)
-            .fontWeight(.bold)
-            Text("Summary: \(note.summary)")
-            .font(.body)
-            .foregroundColor(.gray)
-            Text("Content: \(note.content)")
-            .font(.body)
-            Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
-            .font(.body)
+          VStack(spacing: 8) {
+            Text("Summary")
+                .font(.headline)
+                .foregroundColor(.primary)
+            Text(note.summary)
+                .font(.body) // Smaller font for the summary text
+          }
+          .padding(16) // Padding around the box
+          .background(
+              RoundedRectangle(cornerRadius: 10)
+                .fill(Color.blue.opacity(0.2)) // Background color for the box
+          )
+          .frame(maxWidth: .infinity)
+
+          // Button to upload photos
+          Button(action: {
+            isPickerPresented = true
+          }) {
+            Text("Upload Image from Photo Library")
+              .font(.headline)
+              .padding()
+              .frame(maxWidth: .infinity)
+              .background(Color.blue)
+              .foregroundColor(Color.white)
+              .cornerRadius(8)
+          }
+          
+          Spacer()
+
+          // Buttons to switch between tabs
+            HStack {
+                Button(action: {
+                    contentTab = true
+                }) {
+                    Text("Content")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(contentTab ? Color.blue : Color.clear)
+                        .foregroundColor(contentTab ? Color.white : Color.blue)
+                        .cornerRadius(8)
+                }
+                
+                Button(action: {
+                    contentTab = false
+                }) {
+                    Text("Images")
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(!contentTab ? Color.blue : Color.clear)
+                        .foregroundColor(!contentTab ? Color.white : Color.blue)
+                        .cornerRadius(8)
+                }
+            }
+            .frame(maxWidth: .infinity)
+
+          if (contentTab) {
+            Text(note.content)
+              .font(.body)
             Text("Created At: \(note.createdAt, formatter: dateFormatter)")
-            .font(.body)
-            Text("Course ID: \(note.courseID ?? "N/A")")
-            .font(.body)
-            Text("File Location: \(note.fileLocation)")
-            .font(.body)
+              .font(.body)
+              .foregroundColor(.secondary)
             Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
-            .font(.body)
-            .foregroundColor(.secondary)
-        } else {
+              .font(.body)
+              .foregroundColor(.secondary)
+          }
+          else {
+            if viewModel.isLoading {
+              ProgressView("Loading...")
+            } else if let errorMessage = viewModel.errorMessage {
+              Text(errorMessage)
+                .foregroundColor(.red)
+            } else if viewModel.images.isEmpty {
+              Text("No images available")
+            } else {
+              VStack {
+                ForEach(viewModel.images, id: \.self) { image in
+                  Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+              }
+            }
+        }
+          } else {
             Text("Loading note...")
-        }
-        
-        // Displays images associated with this note - should probably change to onAppear
-        // and refactor firebaseStorage to not store its state
-        if viewModel.isLoading {
-          ProgressView("Loading...")
-        } else if let errorMessage = viewModel.errorMessage {
-          Text(errorMessage)
-            .foregroundColor(.red)
-        } else if viewModel.images.isEmpty {
-          Text("No images available")
-        } else {
-          VStack {
-              ForEach(viewModel.images, id: \.self) { image in
-                Image(uiImage: image)
-                  .resizable()
-                  .aspectRatio(contentMode: .fit)
-                  .frame(width: 200, height: 200)
-                  .padding()
-              }
-            }
-        }
-        
-        // Button to upload photos
-        Button(action: {
-          isPickerPresented = true
-        }) {
-          Text("Upload Image from Photo Library")
-            .font(.body)
-            .foregroundColor(.blue)
-        }
-      }
-        .padding(.leading)
-        .sheet(isPresented: $isPickerPresented) {
-          ImagePicker(sourceType: .photoLibrary) { image in
-            self.selectedImage = image
-            
-            firebaseStorage.uploadImageToFirebase(image) { path in
-              if let imagePath = path {
-                print("Image path: \(imagePath)")
-                alertMessage = "Image uploaded successfully! Path: \(imagePath)"
-                // Update the note document in firebase with the new file path
-                firebase.updateNoteImages(note: note, imagePath: imagePath) { updatedNote in
-                    if let updatedNote = updatedNote {
-                        viewModel.note = updatedNote
-                        viewModel.loadImages() // Fetch images again to update the view
-                    } else {
-                        print("Failed to update note with image path")
-                    }
-                }
-              } else {
-                print("Failed to upload image")
-                alertMessage = "Failed to upload image"
-              }
-              showAlert = true
-            }
-            viewModel.parseImage(image) { parsedText in
-              if let content = parsedText {
-                print("Parsed image content: \(content)")
-                firebase.updateNoteContentCompletion(note: note, newContent: content) { updatedNote in
-                  if let updatedNote = updatedNote {
-                    viewModel.note = updatedNote
-                  } else {
-                    print("Failed to update note with parsed image content")
-                  }
-                }
-              }
-              else {
-                print("Failed to parse image")
-              }
-            }
           }
         }
-        .alert(isPresented: $showAlert) {
-          Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
-        }
-        // To avoid reloading images more than once
-        .onAppear {
-            if (!viewModel.imagesLoaded) {
-                viewModel.loadImages()
+        .padding(.horizontal)
+          .sheet(isPresented: $isPickerPresented) {
+              ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
+          }
+          .onChange(of: selectedImage) {
+            if selectedImage != nil {
+                showTextParserView = true
             }
+          }
+      .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
+        if alertMessage != "" {
+          showAlert = true
         }
+        }) {
+        if let image = self.selectedImage {
+          TextParserView(
+            image: image,
+            viewModel: viewModel,
+            firebase: firebase,
+            isPresented: $showTextParserView,
+            note: note
+          ) { message in
+              alertMessage = message
+          }
+        }
+        else {
+          Text("Nil image")
+        }
+      }
+
+         .alert(isPresented: $showAlert) {
+            Alert(title: Text("Image Selection"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+
+      // To avoid reloading images more than once
+      .onAppear {
+        if (!viewModel.imagesLoaded) {
+          viewModel.loadImages()
+        }
+      }
       }
       .navigationTitle(note.title)
     }
@@ -141,6 +164,3 @@ struct NoteView: View {
     formatter.timeStyle = .short
     return formatter
   }()
-
-
-

@@ -12,7 +12,7 @@ struct ChatView: View {
     @State private var userInput: String = ""
     @State private var isLoading = false
     @State private var messagesHistory: [[String: String]] = []
-    @State private var selectedScope: String = "General"
+    @State private var selectedScope: String
     @State private var courseNotes: [Note] = []
     @State private var selectedCourse: Course?
     @State private var selectedFolder: Folder?
@@ -25,6 +25,7 @@ struct ChatView: View {
     @State private var saveConfirmationMessage = ""
     
     @ObservedObject private var firebase = Firebase()
+    @Binding var isChatViewPresented: Bool?
   
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
@@ -38,7 +39,24 @@ struct ChatView: View {
         }
         return key
     }()
-
+    
+  init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil) {
+    if let isPresented = isChatViewPresented {
+      self._isChatViewPresented = isPresented
+    }
+    else {
+      self._isChatViewPresented = .constant(nil)
+    }
+    if let course = selectedCourse {
+      print(course)
+      self.selectedCourse = course
+      self.selectedScope = course.id ?? "General"
+    }
+    else {
+      print("no course")
+      self.selectedScope = "General"
+    }
+  }
 
     var body: some View {
         ZStack {
@@ -68,7 +86,7 @@ struct ChatView: View {
                         }
                     } label: {
                         HStack {
-                            Text(selectedScope == "General" ? "General" : firebase.courses.first { $0.id == selectedScope }?.courseName ?? "General")
+                          Text(self.selectedScope == "General" ? "General" : firebase.courses.first { $0.id == self.selectedScope }?.courseName ?? "General")
                             Image(systemName: "chevron.down")
                         }
                         .padding(.horizontal, 16)
@@ -78,6 +96,15 @@ struct ChatView: View {
                     }
 
                     Spacer()
+
+                  if isChatViewPresented != nil {
+                    Button(action: {
+                      isChatViewPresented = false
+                    }) {
+                      Image(systemName: "xmark")
+                        .foregroundColor(.black)
+                    }
+                  }
 
                 }
                 .padding()

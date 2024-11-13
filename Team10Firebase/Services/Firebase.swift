@@ -472,6 +472,30 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
           }
       }
   }
+
+  func getCourse(courseID: String, completion: @escaping (Course?) -> Void) {
+      db.collection(courseCollection).document(courseID).addSnapshotListener { documentSnapshot, error in
+          if let error = error {
+              print("Error fetching course by ID: \(error.localizedDescription)")
+              completion(nil)
+              return
+          }
+          
+          guard let document = documentSnapshot, document.exists else {
+              print("Course not found for ID: \(courseID)")
+              completion(nil)
+              return
+          }
+          
+          if let course = try? document.data(as: Course.self) {
+              print("Course fetched with ID: \(course.id ?? "No ID")")
+              completion(course)
+          } else {
+              print("Failed to parse course data for ID: \(courseID)")
+              completion(nil)
+          }
+      }
+  }
   
   func toggleNotesOnlyQuizScope(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
       self.getFirstUser { user in
