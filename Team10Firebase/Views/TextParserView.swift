@@ -18,7 +18,9 @@ struct TextParserView: View {
   @State private var showAlert = false
   @State private var navigateToNoteView = false
   @State private var parsedText: String? = nil
+  @State private var isChatViewPresented: Bool? = false
   var note: Note
+  var completion: ((String) -> Void)?
   
     var body: some View {
       VStack {
@@ -66,23 +68,28 @@ struct TextParserView: View {
                             firebase.updateNoteContentCompletion(note: note, newContent: content) { updatedNote in
                               if let updatedNote = updatedNote {
                                 viewModel.note = updatedNote
-                                alertMessage += "\nNote updated successfully!"
+                                completion?("\nNote updated successfully!")
+                                showAlert = false
                                 isPresented = false
                               } else {
                                 print("Failed to update note with parsed image content")
+                                alertMessage = "Failed to update note with parsed image content"
+                                showAlert = true
                               }
                             }
                           }
                         } else {
                             print("Failed to update note with image path")
+                            alertMessage = "Failed to update note with image"
+                            showAlert = true
                         }
                     }
                   } else {
                     print("Failed to upload image")
                     alertMessage = "Failed to upload image"
+                    showAlert = true
                   }
                 }
-                showAlert = true
             }) {
                 Text("Save")
                     .padding()
@@ -93,6 +100,16 @@ struct TextParserView: View {
             
             Button(action: {
                 // Action to re-extract the text
+                self.parsedText = nil
+                viewModel.parseImage(image) { text in
+                  if let content = text {
+                    print("Parsed image content: \(content)")
+                    self.parsedText = content
+                  }
+                  else {
+                    print("Failed to parse image")
+                  }
+                }
             }) {
                 Text("Re-extract")
                     .padding()
@@ -102,13 +119,7 @@ struct TextParserView: View {
             }
             
             Button(action: {
-//              firebase.getCourse(courseID: note.courseID ?? "") {foundCourse in
-//                if let course = foundCourse {
-//                  ChatView(course)
-//                } else {
-//                  print("Failed to get course")
-//                }
-//              }
+              isChatViewPresented = true
             }) {
                 Text("Chat Now")
                     .padding()
@@ -120,18 +131,29 @@ struct TextParserView: View {
           .padding()
     }
     .onAppear {
-      // viewModel.parseImage(image) { text in
-      //   if let content = text {
-      //     print("Parsed image content: \(content)")
-      //     self.parsedText = content
-      //   }
-      //   else {
-      //     print("Failed to parse image")
-      //   }
-      // }
+       viewModel.parseImage(image) { text in
+         if let content = text {
+           print("Parsed image content: \(content)")
+           self.parsedText = content
+         }
+         else {
+           print("Failed to parse image")
+         }
+       }
     }
     .alert(isPresented: $showAlert) {
         Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+    }
+    .fullScreenCover(isPresented: Binding(
+        get: { isChatViewPresented ?? false },
+        set: { isChatViewPresented = $0 ? true : nil }
+    )) {
+      if let course = viewModel.course {
+        ChatView(selectedCourse: course, isChatViewPresented: $isChatViewPresented)
+      }
+      else {
+        Text("Failed to load course")
+      }
     }
   }
 }

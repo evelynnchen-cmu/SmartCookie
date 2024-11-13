@@ -25,7 +25,8 @@ struct ChatView: View {
     @State private var saveConfirmationMessage = ""
     
     @ObservedObject private var firebase = Firebase()
-    
+    @Binding var isChatViewPresented: Bool?
+  
     //  The OpenAI API key loaded from the Secrets.plist file.
     let openAIKey: String = {
         guard let filePath = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
@@ -38,6 +39,23 @@ struct ChatView: View {
     
     // System prompt defining the behavior and tone of the AI.
     let systemPrompt = "You are an expert study assistant who is knowledgeable in any subject matter and can breakdown and explain concepts better than anyone else. Today's date and time are \(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .short)). You will only converse about topics related to the courses. Do not ask or answer any questions about personal matters or unrelated topics. You will do your best to provide accurate and helpful information to the user. You will ask clarifying questions if need be. You will be concise in your answers and know that your entire message could be saved to notes for later, so don't add any extra fluff. You will always refer to your context and knowledge base first, and cite from the user's courseNotes when possible. You will be encouraging but not too overexcited. You will do this because you care very much about the user's learning and productivity, and your entire objective is to teach the user and assist them with their problems."
+  
+  init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil) {
+    if let isPresented = isChatViewPresented {
+      self._isChatViewPresented = isPresented
+    }
+    else {
+      self._isChatViewPresented = .constant(nil)
+    }
+    if let course = selectedCourse {
+      self.selectedCourse = course
+      self.selectedScope = course.id ?? "General"
+      print("courseSelected \(self.selectedScope)")
+    }
+    else {
+      print("no course")
+    }
+  }
 
     var body: some View {
         ZStack {
@@ -77,6 +95,15 @@ struct ChatView: View {
                     }
 
                     Spacer()
+
+                  if isChatViewPresented != nil {
+                    Button(action: {
+                      isChatViewPresented = false
+                    }) {
+                      Image(systemName: "xmark")
+                        .foregroundColor(.black)
+                    }
+                  }
 
                 }
                 .padding()

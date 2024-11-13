@@ -121,7 +121,6 @@ struct NoteView: View {
                   Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-    //                .frame(width: 200, height: 200)
                     .frame(maxWidth: .infinity)
                     .padding()
                 }
@@ -134,46 +133,6 @@ struct NoteView: View {
           }
         }
         .padding(.horizontal)
-//           .fullScreenCover(isPresented: $isPickerPresented) {
-//            if !showTextParserView {
-//              ImagePicker(sourceType: .photoLibrary, isPresented: $isPickerPresented) { image in
-//              self.selectedImage = image
-//               if let checkImage = selectedImage {
-//                   self.showTextParserView = true
-//   //              self.isPickerPresented = false
-//               }
-//               // } else {
-//               //     self.alertMessage = "No image selected"
-//               //     self.showAlert = true
-//               //     self.isPickerPresented = false
-//               // }
-//              }
-//            }
-//            else {
-// //            self.selectedImage = nil
-//              if let image = self.selectedImage {
-//  //            Comment out textparser if want to call the OpenAI API
-//               TextParserView(
-//                   image: image,
-//                   viewModel: viewModel,
-//                   firebase: firebase,
-//                   isPresented: $showTextParserView,
-//                   note: note
-//               )
-//              }
-//            }
-//          }
-
-//       .sheet(isPresented: $isPickerPresented) {
-// //          ImagePicker(sourceType: .photoLibrary) { image in
-// //            self.selectedImage = image
-// //            // self.showTextParserView = true
-// //  //                    self.isPickerPresented = false
-// //          DispatchQueue.main.async {
-// //                    self.showTextParserView = true
-// //                }
-// //          }
-//         }
           .sheet(isPresented: $isPickerPresented) {
               ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
           }
@@ -182,7 +141,11 @@ struct NoteView: View {
                 showTextParserView = true
             }
           }
-      .fullScreenCover(isPresented: $showTextParserView) {
+      .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
+        if alertMessage != "" {
+          showAlert = true
+        }
+        }) {
         if let image = self.selectedImage {
           TextParserView(
             image: image,
@@ -190,7 +153,9 @@ struct NoteView: View {
             firebase: firebase,
             isPresented: $showTextParserView,
             note: note
-          )
+          ) { message in
+              alertMessage = message
+          }
         }
         else {
           Text("Nil image")
