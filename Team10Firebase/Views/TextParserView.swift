@@ -131,15 +131,15 @@ struct TextParserView: View {
           .padding()
     }
     .onAppear {
-//       viewModel.parseImage(image) { text in
-//         if let content = text {
-//           print("Parsed image content: \(content)")
-//           self.parsedText = content
-//         }
-//         else {
-//           print("Failed to parse image")
-//         }
-//       }
+       viewModel.parseImage(image) { text in
+         if let content = text {
+           print("Parsed image content: \(content)")
+           self.parsedText = content
+         }
+         else {
+           print("Failed to parse image")
+         }
+       }
     }
     .alert(isPresented: $showAlert) {
         Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
