@@ -39,7 +39,6 @@ class Firebase: ObservableObject {
       
       print("Total courses fetched: \(self.courses.count)")
       for course in self.courses {
-         print("Fetched course: \(course)")
       }
     }
   }
@@ -57,7 +56,6 @@ class Firebase: ObservableObject {
       
       print("Total notes fetched: \(self.notes.count)")
       for note in self.notes {
-        // print("Fetched note: \(note)")
       }
     }
   }
@@ -68,7 +66,7 @@ class Firebase: ObservableObject {
       db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
           if let error = error {
               print("Error fetching folders: \(error.localizedDescription)")
-              completion([]) // Return an empty array in case of an error
+              completion([])
               return
           }
 
@@ -78,7 +76,6 @@ class Firebase: ObservableObject {
 
           print("Total folders fetched: \(folders.count)")
           for folder in folders {
-            //   print("Fetched folder: \(folder)")
           }
 
           completion(folders)
@@ -99,7 +96,6 @@ class Firebase: ObservableObject {
       
       print("Total MCQuestions fetched: \(self.mcQuestions.count)")
       for mcQuestion in self.mcQuestions {
-        // print("Fetched MCQuestion: \(mcQuestion)")
       }
     }
   }
@@ -117,7 +113,6 @@ class Firebase: ObservableObject {
       
       print("Total notifications fetched: \(self.notifications.count)")
       for notification in self.notifications {
-        // print("Fetched notification: \(notification)")
       }
     }
   }
@@ -135,7 +130,6 @@ class Firebase: ObservableObject {
       
       print("Total users fetched: \(self.users.count)")
       for user in self.users {
-        // print("Fetched user: \(user)")
       }
     }
   }
@@ -217,48 +211,60 @@ class Firebase: ObservableObject {
   }
   
   
-      func createNote(
-          title: String,
-          summary: String,
-          content: String,
-          images: [String] = [],
-          folder: Folder,
-          course: Course,
-          completion: @escaping (Error?) -> Void
-      ) {
-          guard let courseID = course.id, let userID = folder.userID else {
-              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course or user ID"]))
-              return
-          }
+  
+  func createNote(
+      title: String,
+      summary: String,
+      content: String,
+      images: [String] = [],
+      course: Course,
+      folder: Folder? = nil,
+      completion: @escaping (Error?) -> Void
+  ) {
+      guard let courseID = course.id else {
+          completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course ID"]))
+          return
+      }
+      
+      let userID = folder?.userID ?? course.userID // Use userID from folder if available, else course userID
+      let note = Note(
+          id: nil,
+          userID: userID,
+          title: title,
+          summary: summary,
+          content: content,
+          images: images,
+          createdAt: Date(),
+          courseID: courseID,
+          fileLocation: "\(courseID)/\(folder?.id ?? "")",
+          lastAccessed: nil
+      )
+      
+      do {
+          let ref = try db.collection(noteCollection).addDocument(from: note)
           
-          let note = Note(
-              id: nil,
-              userID: userID,
-              title: title,
-              summary: summary,
-              content: content,
-              images: images,
-              createdAt: Date(),
-              courseID: courseID,
-              fileLocation: "\(courseID)/\(folder.id ?? "")",
-              lastAccessed: nil
-          )
-          
-          do {
-              let ref = try db.collection(noteCollection).addDocument(from: note)
+          if let folder = folder {
+              // Add note ID to the specified folder
               db.collection(folderCollection).document(folder.id ?? "").updateData([
                   "notes": FieldValue.arrayUnion([ref.documentID])
               ]) { error in
                   completion(error)
               }
-          } catch {
-              print("Error creating note: \(error)")
-              completion(error)
+          } else {
+              db.collection(courseCollection).document(courseID).updateData([
+                  "notes": FieldValue.arrayUnion([ref.documentID])
+              ]) { error in
+                  completion(error)
+              }
           }
+      } catch {
+          print("Error creating note: \(error)")
+          completion(error)
       }
+  }
 
-
-
+  
+  
   
   
       func deleteCourse(course: Course) {
@@ -350,31 +356,45 @@ class Firebase: ObservableObject {
               completion(error)
           }
       }
-
-      func deleteNote(note: Note, folderID: String, completion: @escaping (Error?) -> Void) {
-          guard let noteID = note.id else {
-              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Note ID is missing."]))
-              return
-          }
-          
-          let batch = db.batch()
+  
+  
+  
+  
+  func deleteNote(note: Note, folderID: String?, completion: @escaping (Error?) -> Void) {
+      guard let noteID = note.id else {
+          completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Note ID is missing."]))
+          return
+      }
+      
+      let batch = db.batch()
+      
+      if let folderID = folderID {
           let folderRef = db.collection(folderCollection).document(folderID)
           batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: folderRef)
-          
-          let noteRef = db.collection(noteCollection).document(noteID)
-          batch.deleteDocument(noteRef)
-          
-          batch.commit { error in
-              if let error = error {
-                  print("Error deleting note: \(error.localizedDescription)")
-              } else {
-                  print("Successfully deleted note \(noteID).")
-              }
-              completion(error)
+      } else {
+          // If no folderID, remove note from the course's notes field
+          guard let courseID = note.courseID else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Course ID is missing for direct note deletion."]))
+              return
           }
+          let courseRef = db.collection(courseCollection).document(courseID)
+          batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: courseRef)
       }
+      
+      let noteRef = db.collection(noteCollection).document(noteID)
+      batch.deleteDocument(noteRef)
+      
+      batch.commit { error in
+          if let error = error {
+              print("Error deleting note: \(error.localizedDescription)")
+          } else {
+              print("Successfully deleted note \(noteID).")
+          }
+          completion(error)
+      }
+  }
 
-        // update methods
+
     func updateNoteContent(noteID: String, newContent: String) {
         let noteRef = db.collection(noteCollection).document(noteID)
         
@@ -476,4 +496,89 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
           }
       }
   }
+  
+  func toggleNotesOnlyQuizScope(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notesOnlyQuizScope": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notesOnlyQuizScope: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notesOnlyQuizScope to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
+  
+  func toggleNotificationsEnabled(isEnabled: Bool, completion: @escaping (Error?) -> Void) {
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notificationsEnabled": isEnabled
+          ]) { error in
+              if let error = error {
+                  print("Error updating notificationsEnabled: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully toggled notifications to \(isEnabled)")
+                  completion(nil)
+              }
+          }
+      }
+  }
+  
+  func updateNotificationFrequency(_ frequency: String, completion: @escaping (Error?) -> Void) {
+      let validFrequencies = [
+          "3x per week",    // Mon/Wed/Fri pattern
+          "2x per week",          // Tue/Thu pattern
+          "Weekly",                  // For lighter study loads
+          "Daily"                    // For intensive study periods
+      ]
+      
+      guard validFrequencies.contains(frequency) else {
+          completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid frequency value"]))
+          return
+      }
+      
+      self.getFirstUser { user in
+          guard let user = user else {
+              print("No user found")
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          let userRef = self.db.collection(self.userCollection).document(user.id!)
+          
+          userRef.updateData([
+              "settings.notificationFrequency": frequency
+          ]) { error in
+              if let error = error {
+                  print("Error updating notificationFrequency: \(error.localizedDescription)")
+                  completion(error)
+              } else {
+                  print("Successfully updated notification frequency to \(frequency)")
+                  completion(nil)
+              }
+          }
+      }
+  }
+
 }

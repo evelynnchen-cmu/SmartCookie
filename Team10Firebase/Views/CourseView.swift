@@ -1,20 +1,38 @@
 
-
 import SwiftUI
+import Combine
 
 struct CourseView: View {
     @StateObject private var firebase = Firebase()
     var course: Course
     @State private var isAddingFolder = false
+    @State private var isAddingNote = false
     @State private var courseFolders: [Folder] = []
     @State private var folderToDelete: Folder?
     @State private var showDeleteFolderAlert = false
+    @State private var directCourseNotes: [Note] = []
+    @State private var noteToDelete: Note?
+  
+
+  enum ActiveAlert: Identifiable {
+    case deleteFolder, deleteNote
+    
+    var id: Int {
+      switch self {
+      case .deleteFolder: return 1
+      case .deleteNote: return 2
+      }
+    }
+  }
+  
+  @State private var activeAlert: ActiveAlert?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
                 courseDetailsSection
                 recentNoteSummarySection
+                directNotesSection
                 foldersSection
             }
             .padding(.leading)
@@ -28,34 +46,73 @@ struct CourseView: View {
                 course: course
             )
         }
+        .sheet(isPresented: $isAddingNote) {
+            AddNoteModal(
+                onNoteCreated: {
+                    fetchDirectNotesForCourse()
+                },
+                firebase: firebase,
+                course: course,
+                folder: nil
+            )
+        }
         .onAppear {
+            firebase.getNotes()
             fetchFoldersForCourse()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                  fetchDirectNotesForCourse()
+            }
+        }
+        .onReceive(firebase.$notes) { _ in
+            fetchDirectNotesForCourse()
         }
         .navigationTitle(course.courseName)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Add Folder") {
-                    isAddingFolder = true
+                HStack {
+                    Button("Add Note") {
+                        isAddingNote = true
+                    }
+                    Button("Add Folder") {
+                        isAddingFolder = true
+                    }
                 }
             }
         }
-        .alert(isPresented: $showDeleteFolderAlert) {
-            Alert(
-                title: Text("Delete Folder"),
-                message: Text("Are you sure you want to delete this folder and all its notes?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    if let folder = folderToDelete {
-                        firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
-                            if let error = error {
-                                print("Error deleting folder: \(error.localizedDescription)")
-                            } else {
-                                fetchFoldersForCourse() // Refresh folders after deletion
-                            }
-                        }
+        .alert(item: $activeAlert) { alert in
+          switch alert {
+          case .deleteFolder:
+            return Alert(
+              title: Text("Delete Folder"),
+              message: Text("Are you sure you want to delete this folder and all its notes?"),
+              primaryButton: .destructive(Text("Delete")) {
+                if let folder = folderToDelete {
+                  firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
+                    if let error = error {
+                      print("Error deleting folder: \(error.localizedDescription)")
+                    } else {
+                      courseFolders.removeAll { $0.id == folder.id }
+                      fetchFoldersForCourse()
                     }
-                },
-                secondaryButton: .cancel()
+                    
+                  }
+                }
+              },
+              secondaryButton: .cancel()
             )
+          case .deleteNote:
+            return Alert(
+              title: Text("Delete Note"),
+              message: Text("Are you sure you want to delete this note?"),
+              primaryButton: .destructive(Text("Delete")) {
+                if let note = noteToDelete {
+                  deleteDirectNote(note)
+                }
+              },
+              secondaryButton: .cancel()
+            )
+          }
+          
         }
     }
 
@@ -86,8 +143,44 @@ struct CourseView: View {
         }
     }
 
+    private var directNotesSection: some View {
+        VStack(alignment: .leading) {
+            Text("Notes in Course")
+                .font(.headline)
+            
+            ForEach(directCourseNotes, id: \.id) { note in
+                NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
+                    VStack(alignment: .leading) {
+                        Text(note.title)
+                            .font(.body)
+                            .foregroundColor(.blue)
+                        Text(note.summary)
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                        Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 5)
+                }
+                .contextMenu {
+                    Button(role: .destructive) {
+                        noteToDelete = note
+                        activeAlert = .deleteNote
+                    } label: {
+                        Label("Delete Note", systemImage: "trash")
+                    }
+                }
+            }
+        }
+        .padding(.top, 10)
+    }
+
     private var foldersSection: some View {
         VStack(alignment: .leading) {
+            Text("Folders")
+                .font(.headline)
+
             ForEach(courseFolders, id: \.id) { folder in
                 NavigationLink(
                     destination: FolderView(
@@ -107,7 +200,10 @@ struct CourseView: View {
                 .contextMenu {
                     Button(role: .destructive) {
                         folderToDelete = folder
-                        showDeleteFolderAlert = true
+                        print("Vicky hits delete here")
+//                        showDeleteFolderAlert = true
+                        activeAlert = .deleteFolder
+                        print("Delete Folder button tapped")
                     } label: {
                         Label("Delete Folder", systemImage: "trash")
                     }
@@ -125,10 +221,36 @@ struct CourseView: View {
         }
     }
 
+  private func fetchDirectNotesForCourse() {
+      directCourseNotes = firebase.notes.filter { note in
+          let containsNote = course.notes.contains(note.id ?? "")
+          return containsNote
+      }
+      print("Filtered directCourseNotes count: \(directCourseNotes.count)")
+  }
+
+    private func deleteDirectNote(_ note: Note) {
+        guard let noteID = note.id else { return }
+        firebase.deleteNote(note: note, folderID: nil) { error in
+            if let error = error {
+                print("Error deleting note: \(error.localizedDescription)")
+            } else {
+                fetchDirectNotesForCourse()
+            }
+        }
+    }
+
     private func getMostRecentNoteForCourse(courseID: String) -> Note? {
-        let filteredNotes = firebase.notes.filter { $0.courseID == courseID }
+        let filteredNotes = directCourseNotes
         let sortedNotes = filteredNotes.sorted { $0.createdAt > $1.createdAt }
         return sortedNotes.first
     }
 }
+
+private let dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .short
+    formatter.timeStyle = .short
+    return formatter
+}()
 

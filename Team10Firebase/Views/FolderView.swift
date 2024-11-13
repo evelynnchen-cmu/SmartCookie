@@ -224,10 +224,14 @@ struct FolderView: View {
       }
     }
 
-    private func fetchNotes() {
-        firebase.getNotes()
-        notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
-    }
+//    private func fetchNotes() {
+//        firebase.getNotes()
+//        notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
+//    }
+  private func fetchNotes() {
+      firebase.getNotes()
+      notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
+  }
 }
 
 private let dateFormatter: DateFormatter = {
