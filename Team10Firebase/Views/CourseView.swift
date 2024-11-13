@@ -10,9 +10,22 @@ struct CourseView: View {
     @State private var courseFolders: [Folder] = []
     @State private var folderToDelete: Folder?
     @State private var showDeleteFolderAlert = false
-    @State private var directCourseNotes: [Note] = [] // Only notes directly in the course
-    @State private var noteToDelete: Note? // Track the note to be deleted
-    @State private var showDeleteNoteAlert = false // Alert for deleting note
+    @State private var directCourseNotes: [Note] = []
+    @State private var noteToDelete: Note?
+  
+
+  enum ActiveAlert: Identifiable {
+    case deleteFolder, deleteNote
+    
+    var id: Int {
+      switch self {
+      case .deleteFolder: return 1
+      case .deleteNote: return 2
+      }
+    }
+  }
+  
+  @State private var activeAlert: ActiveAlert?
 
     var body: some View {
         ScrollView {
@@ -66,35 +79,40 @@ struct CourseView: View {
                 }
             }
         }
-        .alert(isPresented: $showDeleteFolderAlert) {
-            Alert(
-                title: Text("Delete Folder"),
-                message: Text("Are you sure you want to delete this folder and all its notes?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    if let folder = folderToDelete {
-                        firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
-                            if let error = error {
-                                print("Error deleting folder: \(error.localizedDescription)")
-                            } else {
-                                fetchFoldersForCourse()
-                            }
-                        }
+        .alert(item: $activeAlert) { alert in
+          switch alert {
+          case .deleteFolder:
+            return Alert(
+              title: Text("Delete Folder"),
+              message: Text("Are you sure you want to delete this folder and all its notes?"),
+              primaryButton: .destructive(Text("Delete")) {
+                if let folder = folderToDelete {
+                  firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
+                    if let error = error {
+                      print("Error deleting folder: \(error.localizedDescription)")
+                    } else {
+                      courseFolders.removeAll { $0.id == folder.id }
+                      fetchFoldersForCourse()
                     }
-                },
-                secondaryButton: .cancel()
+                    
+                  }
+                }
+              },
+              secondaryButton: .cancel()
             )
-        }
-        .alert(isPresented: $showDeleteNoteAlert) {
-            Alert(
-                title: Text("Delete Note"),
-                message: Text("Are you sure you want to delete this note?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    if let note = noteToDelete {
-                        deleteDirectNote(note)
-                    }
-                },
-                secondaryButton: .cancel()
+          case .deleteNote:
+            return Alert(
+              title: Text("Delete Note"),
+              message: Text("Are you sure you want to delete this note?"),
+              primaryButton: .destructive(Text("Delete")) {
+                if let note = noteToDelete {
+                  deleteDirectNote(note)
+                }
+              },
+              secondaryButton: .cancel()
             )
+          }
+          
         }
     }
 
@@ -148,7 +166,7 @@ struct CourseView: View {
                 .contextMenu {
                     Button(role: .destructive) {
                         noteToDelete = note
-                        showDeleteNoteAlert = true
+                        activeAlert = .deleteNote
                     } label: {
                         Label("Delete Note", systemImage: "trash")
                     }
@@ -182,7 +200,10 @@ struct CourseView: View {
                 .contextMenu {
                     Button(role: .destructive) {
                         folderToDelete = folder
-                        showDeleteFolderAlert = true
+                        print("Vicky hits delete here")
+//                        showDeleteFolderAlert = true
+                        activeAlert = .deleteFolder
+                        print("Delete Folder button tapped")
                     } label: {
                         Label("Delete Folder", systemImage: "trash")
                     }
@@ -214,14 +235,13 @@ struct CourseView: View {
             if let error = error {
                 print("Error deleting note: \(error.localizedDescription)")
             } else {
-                // Update the notes list after deletion
                 fetchDirectNotesForCourse()
             }
         }
     }
 
     private func getMostRecentNoteForCourse(courseID: String) -> Note? {
-        let filteredNotes = directCourseNotes // Only consider notes directly in the course
+        let filteredNotes = directCourseNotes
         let sortedNotes = filteredNotes.sorted { $0.createdAt > $1.createdAt }
         return sortedNotes.first
     }

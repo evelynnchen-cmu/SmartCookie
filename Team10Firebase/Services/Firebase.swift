@@ -39,7 +39,6 @@ class Firebase: ObservableObject {
       
       print("Total courses fetched: \(self.courses.count)")
       for course in self.courses {
-        // print("Fetched course: \(course)")
       }
     }
   }
@@ -57,7 +56,6 @@ class Firebase: ObservableObject {
       
       print("Total notes fetched: \(self.notes.count)")
       for note in self.notes {
-        // print("Fetched note: \(note)")
       }
     }
   }
@@ -68,7 +66,7 @@ class Firebase: ObservableObject {
       db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
           if let error = error {
               print("Error fetching folders: \(error.localizedDescription)")
-              completion([]) // Return an empty array in case of an error
+              completion([])
               return
           }
 
@@ -78,7 +76,6 @@ class Firebase: ObservableObject {
 
           print("Total folders fetched: \(folders.count)")
           for folder in folders {
-            //   print("Fetched folder: \(folder)")
           }
 
           completion(folders)
@@ -99,7 +96,6 @@ class Firebase: ObservableObject {
       
       print("Total MCQuestions fetched: \(self.mcQuestions.count)")
       for mcQuestion in self.mcQuestions {
-        // print("Fetched MCQuestion: \(mcQuestion)")
       }
     }
   }
@@ -117,7 +113,6 @@ class Firebase: ObservableObject {
       
       print("Total notifications fetched: \(self.notifications.count)")
       for notification in self.notifications {
-        // print("Fetched notification: \(notification)")
       }
     }
   }
@@ -135,7 +130,6 @@ class Firebase: ObservableObject {
       
       print("Total users fetched: \(self.users.count)")
       for user in self.users {
-        // print("Fetched user: \(user)")
       }
     }
   }
@@ -257,7 +251,6 @@ class Firebase: ObservableObject {
                   completion(error)
               }
           } else {
-              // Add note ID directly to the course
               db.collection(courseCollection).document(courseID).updateData([
                   "notes": FieldValue.arrayUnion([ref.documentID])
               ]) { error in
@@ -376,7 +369,6 @@ class Firebase: ObservableObject {
       let batch = db.batch()
       
       if let folderID = folderID {
-          // If folderID is provided, remove note from the folder's notes
           let folderRef = db.collection(folderCollection).document(folderID)
           batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: folderRef)
       } else {
@@ -389,11 +381,9 @@ class Firebase: ObservableObject {
           batch.updateData(["notes": FieldValue.arrayRemove([noteID])], forDocument: courseRef)
       }
       
-      // Delete the note document itself
       let noteRef = db.collection(noteCollection).document(noteID)
       batch.deleteDocument(noteRef)
       
-      // Commit the batch
       batch.commit { error in
           if let error = error {
               print("Error deleting note: \(error.localizedDescription)")
@@ -405,7 +395,6 @@ class Firebase: ObservableObject {
   }
 
 
-        // update methods
     func updateNoteContent(noteID: String, newContent: String) {
         let noteRef = db.collection(noteCollection).document(noteID)
         
