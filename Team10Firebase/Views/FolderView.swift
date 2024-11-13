@@ -7,7 +7,8 @@ struct FolderView: View {
     @ObservedObject var firebase: Firebase
 //    var folder: Folder
     var course: Course
-    @ObservedObject var folderViewModel: FolderViewModel
+//    @ObservedObject var folderViewModel: FolderViewModel
+    @State var folderViewModel: FolderViewModel
     
     @State private var showAddNoteModal = false
     @State private var notes: [Note] = []
@@ -20,22 +21,22 @@ struct FolderView: View {
           VStack(alignment: .leading) {
             
 //            Text("Folder Name: \(folder.folderName)")
-            Text("Folder Name: \(folderViewModel.folder?.folderName ?? "Unknown")")
+            Text("Folder Name: \(folderViewModel.folder.folderName ?? "Unknown")")
               .font(.title)
               .padding(.bottom, 2)
             
-            Text("Course ID: \(folderViewModel.folder?.courseID ?? "Unknown")")
+            Text("Course ID: \(folderViewModel.folder.courseID ?? "Unknown")")
               .font(.body)
             
-            if let userID = folderViewModel.folder?.userID {
+            if let userID = folderViewModel.folder.userID {
               Text("User ID: \(userID)")
                 .font(.body)
             }
             
-            Text("File Location: \(folderViewModel.folder?.fileLocation ?? "Unknown")")
+            Text("File Location: \(folderViewModel.folder.fileLocation ?? "Unknown")")
               .font(.body)
             
-            if let recentNoteSummary = folderViewModel.folder?.recentNoteSummary {
+            if let recentNoteSummary = folderViewModel.folder.recentNoteSummary {
               Text("Recent Note Title: \(recentNoteSummary.title)")
                 .font(.body)
               Text("Summary: \(recentNoteSummary.summary)")
@@ -94,7 +95,7 @@ struct FolderView: View {
                 },
                 firebase: firebase,
                 course: course,
-                folder: folderViewModel.folder!
+                folder: folderViewModel.folder
             )
         }
       }
@@ -109,7 +110,7 @@ struct FolderView: View {
               message: Text("Are you sure you want to delete this note?"),
               primaryButton: .destructive(Text("Delete")) {
                   if let note = noteToDelete {
-                    firebase.deleteNote(note: note, folderID: folderViewModel.folder?.id ?? "") { error in
+                    firebase.deleteNote(note: note, folderID: folderViewModel.folder.id ?? "") { error in
                           if let error = error {
                               print("Error deleting note: \(error.localizedDescription)")
                           } else {
@@ -129,7 +130,7 @@ struct FolderView: View {
 //    }
   private func fetchNotes() {
       firebase.getNotes()
-      notes = firebase.notes.filter { $0.courseID == course.id && folderViewModel.folder?.notes.contains($0.id ?? "") == true}
+      notes = firebase.notes.filter { $0.courseID == course.id && folderViewModel.folder.notes.contains($0.id ?? "") == true}
   }
 }
 

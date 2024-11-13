@@ -187,7 +187,7 @@ struct CourseView: View {
                         firebase: firebase,
 //                        folder: folder,
                         course: course,
-                        folderViewModel: FolderViewModel(folder: folder)
+                        folderViewModel: FolderViewModel(firebase: firebase, folder: folder)
                         
                     )
                 ) {
