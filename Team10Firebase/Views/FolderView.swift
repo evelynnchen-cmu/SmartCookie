@@ -129,7 +129,7 @@ struct FolderView: View {
 //    }
   private func fetchNotes() {
       firebase.getNotes()
-    notes = firebase.notes.filter { $0.courseID == course.id && folderViewModel.folder?.notes.contains($0.id ?? "") == true}
+      notes = firebase.notes.filter { $0.courseID == course.id && folderViewModel.folder?.notes.contains($0.id ?? "") == true}
   }
 }
 

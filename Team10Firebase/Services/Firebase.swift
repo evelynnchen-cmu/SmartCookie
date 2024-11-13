@@ -38,8 +38,8 @@ class Firebase: ObservableObject {
       } ?? []
       
       print("Total courses fetched: \(self.courses.count)")
-      for course in self.courses {
-      }
+//      for course in self.courses {
+//      }
     }
   }
   
@@ -55,8 +55,8 @@ class Firebase: ObservableObject {
       } ?? []
       
       print("Total notes fetched: \(self.notes.count)")
-      for note in self.notes {
-      }
+//      for note in self.notes {
+//      }
     }
   }
   
@@ -75,8 +75,8 @@ class Firebase: ObservableObject {
           } ?? []
 
           print("Total folders fetched: \(folders.count)")
-          for folder in folders {
-          }
+//          for folder in folders {
+//          }
 
           completion(folders)
       }
