@@ -133,6 +133,7 @@ struct AddNoteModal: View {
     @State private var errorMessage: String = ""
     
     var onNoteCreated: () -> Void
+//    var updateFolderNotes: () -> Void
     @ObservedObject var firebase: Firebase
     var course: Course
     var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
@@ -184,10 +185,23 @@ struct AddNoteModal: View {
                     errorMessage = error.localizedDescription
                     showError = true
                 } else {
+//                    updateFolderNotes()
                     onNoteCreated()
                     dismiss()
                 }
             }
+            // ) { result in
+            //     switch result {
+            //     case .success(let documentID):
+            //         print("Note created with ID: \(documentID)")
+            //         updateFolderNotes()
+            //         onNoteCreated()
+            //         dismiss()
+            //     case .failure(let error):
+            //         errorMessage = error.localizedDescription
+            //         showError = true
+            //     }
+            // }
         } catch {
             errorMessage = error.localizedDescription
             showError = true

@@ -28,18 +28,20 @@ import Combine
 
 class FolderViewModel: ObservableObject {
     @Published var folder: Folder
+    @Published var course: Course
     @Published var notes: [Note] = [] // Will store only filtered notes for this folder
     @Published var errorMessage: String?
     private var firebase: Firebase
     private var db = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>() // To manage subscriptions
 
-  init(firebase: Firebase, folder: Folder, notes: [Note]) {
-        self.firebase = firebase
-        self.folder = folder
-        // Observe firebase.notes and filter them for this folder
-        self.notes = notes
-        fetchNotesByIDs()
+  init(firebase: Firebase, folder: Folder, course: Course) {
+      self.firebase = firebase
+      self.folder = folder
+      self.course = course
+      // Observe firebase.notes and filter them for this folder
+      self.notes = []
+      fetchNotesByIDs()
 //        firebase.$notes
 //            .sink { [weak self] allNotes in
 //                self?.notes = allNotes.filter { note in
@@ -52,29 +54,35 @@ class FolderViewModel: ObservableObject {
   
   private func fetchNotesByIDs() {
     let noteIDs = folder.notes
-    var fetchedNotes: [Note] = []
-    
-    guard !noteIDs.isEmpty else {
-      return
+    // var fetchedNotes: [Note] = []
+    print("Note IDS to fetch", folder.notes)
+
+    firebase.getNotesById(noteIDs: noteIDs) { notes in
+      self.notes = notes
+      print("Fetched \(self.notes.count) notes for folder \(self.folder.id ?? "")")
     }
     
-    let dispatchGroup = DispatchGroup()
-    for noteID in noteIDs {
-      dispatchGroup.enter()
-      db.collection("notes").document(noteID).getDocument { [weak self] document, error in
-        defer { dispatchGroup.leave() }
-        if let error = error {
-          self?.errorMessage = "Error fetching note \(noteID): \(error.localizedDescription)"
-        } else if let document = document, document.exists, let note = try? document.data(as: Note.self) {
-          fetchedNotes.append(note)
-        }
+    // guard !noteIDs.isEmpty else {
+    //   return
+    // }
+    
+    // let dispatchGroup = DispatchGroup()
+    // for noteID in noteIDs {
+    //   dispatchGroup.enter()
+    //   db.collection("notes").document(noteID).getDocument { [weak self] document, error in
+    //     defer { dispatchGroup.leave() }
+    //     if let error = error {
+    //       self?.errorMessage = "Error fetching note \(noteID): \(error.localizedDescription)"
+    //     } else if let document = document, document.exists, let note = try? document.data(as: Note.self) {
+    //       fetchedNotes.append(note)
+    //     }
         
-      }
-    }
-    dispatchGroup.notify(queue: .main) { [weak self] in
-      self?.notes = fetchedNotes
-      print("Fetched \(self?.notes.count ?? 0) notes for folder \(self?.folder.id ?? "")")
-    }
+    //   }
+    // }
+    // dispatchGroup.notify(queue: .main) { [weak self] in
+    //   self?.notes = fetchedNotes
+    //   print("Fetched \(self?.notes.count ?? 0) notes for folder \(self?.folder.id ?? "")")
+    // }
   }
   
   
@@ -155,5 +163,29 @@ class FolderViewModel: ObservableObject {
             }
         }
     }
+  
+  func fetchNotes() {
+    updateFolderNotes()
+    firebase.getNotes()
+    notes = firebase.notes.filter { $0.courseID == course.id &&
+      folder.notes.contains($0.id ?? "") == true}
+  }
+
+  func updateFolderNotes() {
+    firebase.getFolder(folderID: folder.id ?? "") { folder in
+      self.folder = folder ?? self.folder
+    }
+  }
+
+  // func updateFolderNotes(documentID: String) {
+  //     folder.notes.append(documentID)
+  //     db.collection("Folder").document(folder.id).updateData([
+  //         "notes": folder.notes
+  //     ]) { error in
+  //         if let error = error {
+  //             self.errorMessage = "Error updating folder notes: \(error.localizedDescription)"
+  //         }
+  //     }
+  // }
 }
 

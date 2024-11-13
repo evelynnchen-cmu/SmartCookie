@@ -11,7 +11,7 @@ struct FolderView: View {
     @StateObject var folderViewModel: FolderViewModel
     
     @State private var showAddNoteModal = false
-    @State private var notes: [Note] = []
+//    @State private var notes: [Note] = []
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
 
@@ -48,7 +48,7 @@ struct FolderView: View {
             Text("Notes:")
               .font(.headline)
             
-            ForEach(notes, id: \.id) { note in
+            ForEach(folderViewModel.notes, id: \.id) { note in
               NavigationLink(destination: NoteView(firebase: firebase, note: note)) {
                 VStack(alignment: .leading) {
                   Text(note.title)
@@ -91,8 +91,11 @@ struct FolderView: View {
         .sheet(isPresented: $showAddNoteModal) {
             AddNoteModal(
                 onNoteCreated: {
-                    fetchNotes()
+                  folderViewModel.fetchNotes()
                 },
+                // updateFolderNotes: {
+                //   folderViewModel.updateFolderNotes()
+                // },
                 firebase: firebase,
                 course: course,
                 folder: folderViewModel.folder
@@ -102,7 +105,7 @@ struct FolderView: View {
       .padding()
       .navigationTitle("Folder Details")
       .onAppear {
-          fetchNotes()
+        folderViewModel.fetchNotes()
       }
       .alert(isPresented: $showDeleteNoteAlert) {
           Alert(
@@ -114,7 +117,7 @@ struct FolderView: View {
                           if let error = error {
                               print("Error deleting note: \(error.localizedDescription)")
                           } else {
-                              fetchNotes() // Refresh the notes list after deletion
+                            folderViewModel.fetchNotes() // Refresh the notes list after deletion
                           }
                       }
                   }
@@ -128,10 +131,10 @@ struct FolderView: View {
 //        firebase.getNotes()
 //        notes = firebase.notes.filter { $0.courseID == course.id && folder.notes.contains($0.id ?? "") }
 //    }
-  private func fetchNotes() {
-      firebase.getNotes()
-      notes = firebase.notes.filter { $0.courseID == course.id && folderViewModel.folder.notes.contains($0.id ?? "") == true}
-  }
+//  private func fetchNotes() {
+//      firebase.getNotes()
+//      notes = firebase.notes.filter { $0.courseID == course.id && folderViewModel.folder.notes.contains($0.id ?? "") == true}
+//  }
 }
 
 private let dateFormatter: DateFormatter = {
