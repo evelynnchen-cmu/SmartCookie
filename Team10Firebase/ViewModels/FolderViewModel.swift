@@ -37,7 +37,6 @@ class FolderViewModel: ObservableObject {
     init(firebase: Firebase, folder: Folder) {
         self.firebase = firebase
         self.folder = folder
-        
         // Observe firebase.notes and filter them for this folder
         firebase.$notes
             .sink { [weak self] allNotes in

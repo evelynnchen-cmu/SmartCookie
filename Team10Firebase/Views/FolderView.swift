@@ -8,7 +8,7 @@ struct FolderView: View {
 //    var folder: Folder
     var course: Course
 //    @ObservedObject var folderViewModel: FolderViewModel
-    @State var folderViewModel: FolderViewModel
+    @StateObject var folderViewModel: FolderViewModel
     
     @State private var showAddNoteModal = false
     @State private var notes: [Note] = []
