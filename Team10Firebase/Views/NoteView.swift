@@ -26,18 +26,16 @@ struct NoteView: View {
         if let note = viewModel.note {
           VStack(spacing: 8) {
             Text("Summary")
-                .font(.headline) // Larger font for the summary title
+                .font(.headline)
                 .foregroundColor(.primary)
             Text(note.summary)
                 .font(.body) // Smaller font for the summary text
-                // .padding(8) // Padding inside the box
           }
+          .padding(16) // Padding around the box
           .background(
               RoundedRectangle(cornerRadius: 10)
-                  .fill(Color(UIColor.systemGray6)) // Background color for the box
-                  .frame(maxWidth: .infinity)
+                .fill(Color.blue.opacity(0.2)) // Background color for the box
           )
-          .padding(8) // Padding around the box
           .frame(maxWidth: .infinity)
 
           // Button to upload photos
