@@ -15,22 +15,15 @@ struct NoteView: View {
   
   
   init(firebase: Firebase, note: Note) {
+    self.firebase = firebase
     _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
     self.note = note
-    self.firebase = firebase
   }
   
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 8) {
         if let note = viewModel.note {
-//          Text("Note ID: \(note.id ?? "N/A")")
-//            .font(.body)
-//          Text("User ID: \(note.userID ?? "N/A")")
-//            .font(.body)
-//          Text("Title: \(note.title)")
-//            .font(.title)
-//            .fontWeight(.bold)
           VStack(spacing: 8) {
             Text("Summary")
                 .font(.headline) // Larger font for the summary title
@@ -91,23 +84,14 @@ struct NoteView: View {
           if (contentTab) {
             Text(note.content)
               .font(.body)
-  //          Text("Images: \(note.images.isEmpty ? "No images" : "\(note.images.count) image(s)")")
-  //            .font(.body)
             Text("Created At: \(note.createdAt, formatter: dateFormatter)")
               .font(.body)
               .foregroundColor(.secondary)
-  //          Text("Course ID: \(note.courseID ?? "N/A")")
-  //            .font(.body)
-  //          Text("File Location: \(note.fileLocation)")
-  //            .font(.body)
             Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
               .font(.body)
               .foregroundColor(.secondary)
           }
           else {
-
-          // Displays images associated with this note - should probably change to onAppear
-        // and refactor firebaseStorage to not store its state
             if viewModel.isLoading {
               ProgressView("Loading...")
             } else if let errorMessage = viewModel.errorMessage {
@@ -127,7 +111,6 @@ struct NoteView: View {
               }
             }
         }
-
           } else {
             Text("Loading note...")
           }

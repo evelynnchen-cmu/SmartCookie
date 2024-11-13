@@ -12,7 +12,7 @@ struct ChatView: View {
     @State private var userInput: String = ""
     @State private var isLoading = false
     @State private var messagesHistory: [[String: String]] = []
-    @State private var selectedScope: String = "General"
+    @State private var selectedScope: String
     @State private var courseNotes: [Note] = []
     @State private var selectedCourse: Course?
     @State private var selectedFolder: Folder?
@@ -48,12 +48,13 @@ struct ChatView: View {
       self._isChatViewPresented = .constant(nil)
     }
     if let course = selectedCourse {
+      print(course)
       self.selectedCourse = course
       self.selectedScope = course.id ?? "General"
-      print("courseSelected \(self.selectedScope)")
     }
     else {
       print("no course")
+      self.selectedScope = "General"
     }
   }
 
@@ -85,7 +86,7 @@ struct ChatView: View {
                         }
                     } label: {
                         HStack {
-                            Text(selectedScope == "General" ? "General" : firebase.courses.first { $0.id == selectedScope }?.courseName ?? "General")
+                          Text(self.selectedScope == "General" ? "General" : firebase.courses.first { $0.id == self.selectedScope }?.courseName ?? "General")
                             Image(systemName: "chevron.down")
                         }
                         .padding(.horizontal, 16)

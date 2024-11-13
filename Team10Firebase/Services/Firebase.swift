@@ -39,7 +39,7 @@ class Firebase: ObservableObject {
       
       print("Total courses fetched: \(self.courses.count)")
       for course in self.courses {
-        // print("Fetched course: \(course)")
+         print("Fetched course: \(course)")
       }
     }
   }
@@ -453,33 +453,70 @@ func updateNoteContentCompletion(note: Note, newContent: String, completion: @es
       }
   }
 
-func getCourse(courseID: String, completion: @escaping (Course?) -> Void) {
-    db.collection(courseCollection).document(courseID).getDocument { document, error in
-        if let error = error {
-            print("Error fetching course by ID: \(error.localizedDescription)")
-            completion(nil)
-            return
-        }
-        
-        guard let document = document, document.exists else {
-            print("Course not found")
-            completion(nil)
-            return
-        }
-        
-        if let course = try? document.data(as: Course.self) {
-            completion(course)
-        } else {
-            print("Failed to parse course")
-            completion(nil)
-        }
-    }
-}
+  func getCourse(courseID: String, completion: @escaping (Course?) -> Void) {
+      // Add a snapshot listener to listen for real-time updates on the document
+      db.collection(courseCollection).document(courseID).addSnapshotListener { documentSnapshot, error in
+          if let error = error {
+              print("Error fetching course by ID: \(error.localizedDescription)")
+              completion(nil)
+              return
+          }
+          
+          guard let document = documentSnapshot, document.exists else {
+              print("Course not found for ID: \(courseID)")
+              completion(nil)
+              return
+          }
+          
+          // Parse the document data as a Course object
+          if let course = try? document.data(as: Course.self) {
+              // The Firestore document ID can be accessed via `document.documentID`
+              print("Course fetched with ID: \(course.id ?? "No ID")")
+              completion(course)
+          } else {
+              print("Failed to parse course data for ID: \(courseID)")
+              completion(nil)
+          }
+      }
+  }
+
   
+//  func getCourse(courseID: String, completion: @escaping (Course?) -> Void) {
+//      db.collection(courseCollection).document(courseID).getDocument { document, error in
+//          if let error = error {
+//              print("Error fetching course by ID: \(error.localizedDescription)")
+//              completion(nil)
+//              return
+//          }
+//          
+//          guard let document = document, document.exists else {
+//              print("Course not found for ID: \(courseID)")
+//              completion(nil)
+//              return
+//          }
+//          
+//          // Parse the document data as a Course object
+//          if let course = try? document.data(as: Course.self) {
+//              // The Firestore document ID can be accessed via `document.documentID`
+////              course.id = document.documentID
+//              print("Course fetched with ID: \(course.id ?? "No ID")")
+//              completion(course)
+//          } else {
+//              print("Failed to parse course data for ID: \(courseID)")
+//              completion(nil)
+//          }
+//      }
+//  }
   
-
-
-
-
-
+  //  // Assuming `self.courses` is a list of courses loaded from Firestore or elsewhere
+  //  func getCourse(courseID: String) -> Course? {
+  //      // Search for the course in the local courses array
+  //    print(self.courses)
+  //      if let course = self.courses.first(where: { $0.id == courseID }) {
+  //          return course
+  //      } else {
+  //          print("Course not found in local array for ID: \(courseID)")
+  //          return nil
+  //      }
+  //  }
 }
