@@ -17,7 +17,7 @@ struct AddNoteModalCourse: View {
     @State var course: Course?
     var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
   
-    var completion: ((Course?) -> Void)
+    var completion: ((String, Course?) -> Void)
 
     var body: some View {
         NavigationView {
@@ -33,7 +33,7 @@ struct AddNoteModalCourse: View {
                   if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
                       self.course = selectedCourse
                   }
-                completion(course)
+                completion(title, course)
                   isPresented = false
                 //   dismiss()
               }

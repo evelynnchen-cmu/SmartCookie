@@ -25,6 +25,7 @@ struct ScanView: View {
     @State private var course: Course? = nil
     @State private var showSaveForm = false
     @State private var courseName = ""
+    @State private var noteTitle = ""
 
     var body: some View {
         NavigationStack {
@@ -83,7 +84,8 @@ struct ScanView: View {
                     image: image,
                     firebase: firebase,
                     isPresented: $showTextParserView,
-                    course: course
+                    course: course,
+                    title: noteTitle
                   ) { message in
                     alertMessage = message
                     showAlert = true
@@ -113,10 +115,11 @@ struct ScanView: View {
 //                }
 //              }
             .sheet(isPresented: $showSaveForm) {
-              AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { course in
+              AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
                 if let courseObj = course {
                   self.course = courseObj
                 }
+                self.noteTitle = title
               }
             //   .onDisappear {
             //     print("dismissed")
@@ -131,13 +134,8 @@ struct ScanView: View {
           }
             .onChange(of: showSaveForm) {
                print("showSaveForm changed")
-           //    showTextParserView = true
               if course != nil {
-               print("showTextParserView")
                   showTextParserView = true
-              }
-              else {
-                print("sad")
               }
             }
             .onAppear() {
