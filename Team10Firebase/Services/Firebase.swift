@@ -81,17 +81,6 @@ class Firebase: ObservableObject {
 
           completion(folders)
       }
-      
-      let folders = querySnapshot?.documents.compactMap { document in
-        try? document.data(as: Folder.self)
-      } ?? []
-      
-      print("Total folders fetched: \(folders.count)")
-      for folder in folders {
-      }
-      
-      completion(folders)
-    }
   }
   
   
@@ -465,20 +454,23 @@ class Firebase: ObservableObject {
     }
   }
   
-  func updateNoteSummary(noteID: String, newSummary: String) {
+  func updateNoteSummary(note: Note, newSummary: String, completion: @escaping (Note?) -> Void) {
+    let noteID = note.id ?? ""
     let noteRef = db.collection(noteCollection).document(noteID)
     
     noteRef.updateData(["summary": newSummary]) { error in
-      if let error = error {
-        print("Error updating note summary: \(error.localizedDescription)")
-      } else {
-        print("Note summary successfully updated")
-        if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
-          self.notes[index].summary = newSummary
+        if let error = error {
+            print("Error updating note summary: \(error.localizedDescription)")
+            completion(nil)
+        } else {
+            print("Note summary successfully updated")
+            if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+                self.notes[index].summary = newSummary
+                completion(self.notes[index])
+            }
         }
-      }
     }
-  }
+}
     
     
     func updateNoteContent(noteID: String, newContent: String) {
@@ -667,7 +659,6 @@ class Firebase: ObservableObject {
       }
     }
     
-  }
 
   func getFolder(folderID: String, completion: @escaping (Folder?) -> Void) {
         db.collection(folderCollection).document(folderID).addSnapshotListener { documentSnapshot, error in

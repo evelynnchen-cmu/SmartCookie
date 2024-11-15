@@ -146,6 +146,7 @@ struct AddNoteModal: View {
             Form {
                 Section(header: Text("Note Information")) {
                     TextField("Title", text: $title)
+                    TextField("Content", text: $content)
                   
 //                    if let selectedImage = selectedImage {
 //                        Image(uiImage: selectedImage)
