@@ -71,6 +71,18 @@ struct TextParserView: View {
                                 completion?("\nNote updated successfully!")
                                 showAlert = false
                                 isPresented = false
+                                
+//                                firebase.updateNoteSummary(note: updatedNote, newSummary: content) { updatedNote in
+//                                  if let updatedNote = updatedNote {
+//                                    viewModel.note = updatedNote
+//                                    
+//                                  }
+//                                  else {
+//                                    print("Failed to update summary")
+//                                    alertMessage = "Failed to update summary"
+//                                    showAlert = true
+//                                  }
+//                                }
                               } else {
                                 print("Failed to update note with parsed image content")
                                 alertMessage = "Failed to update note with parsed image content"

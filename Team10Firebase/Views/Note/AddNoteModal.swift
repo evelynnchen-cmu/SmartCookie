@@ -131,6 +131,9 @@ struct AddNoteModal: View {
     @State private var images: [String] = []
     @State private var showError = false
     @State private var errorMessage: String = ""
+    @State private var selectedImage: UIImage?
+    @State private var showImagePicker = false
+    @State private var showTextParserView = false
     
     var onNoteCreated: () -> Void
     @ObservedObject var firebase: Firebase
@@ -142,23 +145,39 @@ struct AddNoteModal: View {
             Form {
                 Section(header: Text("Note Information")) {
                     TextField("Title", text: $title)
-                    TextField("Content", text: $content)
-                    // UI for adding images, if required
+                  
+//                    if let selectedImage = selectedImage {
+//                        Image(uiImage: selectedImage)
+//                            .resizable()
+//                            .scaledToFit()
+//                            .frame(height: 200)
+//                    }
+//
+//                    Button(action: {
+//                        showImagePicker = true
+//                    }) {
+//                        Text("Select Image")
+//                    }
                 }
                 
                 Button(action: {
                     Task {
                         await createNote()
                     }
+                    self.showTextParserView = true
+                    dismiss()
                 }) {
                     Text("Create Note")
                 }
-                .disabled(title.isEmpty || content.isEmpty)
+                .disabled(title.isEmpty)
             }
             .navigationTitle("New Note")
             .navigationBarItems(trailing: Button("Cancel") {
                 dismiss()
             })
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
+            }
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -185,7 +204,7 @@ struct AddNoteModal: View {
                     showError = true
                 } else {
                     onNoteCreated()
-                    dismiss()
+//                    dismiss()
                 }
             }
         } catch {
