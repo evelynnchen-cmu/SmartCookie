@@ -12,7 +12,8 @@ import UIKit
 
 struct ImagePicker: UIViewControllerRepresentable {
     var sourceType: UIImagePickerController.SourceType
-    var completionHandler: (UIImage) -> Void
+    var completionHandler: (() -> Void)?
+    @Binding var selectedImage: UIImage?
 
     func makeUIViewController(context: Context) -> UIImagePickerController {
         let picker = UIImagePickerController()
@@ -36,7 +37,8 @@ struct ImagePicker: UIViewControllerRepresentable {
 
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             if let image = info[.originalImage] as? UIImage {
-                parent.completionHandler(image)
+                parent.selectedImage = image
+                parent.completionHandler?()
             }
             picker.dismiss(animated: true)
         }

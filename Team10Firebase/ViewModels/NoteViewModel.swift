@@ -21,9 +21,19 @@ class NoteViewModel: ObservableObject {
     private var db = Firestore.firestore()
     private var storage = Storage.storage()
     private var cancellables = Set<AnyCancellable>()
+    @Published var course: Course?
+    private var firebase = Firebase()
 
     init(note: Note) {
       self.note = note
+      firebase.getCourse(courseID: note.courseID ?? "") {foundCourse in
+        if let course = foundCourse {
+          self.course = course
+        } else {
+          print("Failed to get course")
+          self.course = nil
+        }
+    }
     }
 
     func loadImages() {
