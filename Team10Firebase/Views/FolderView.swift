@@ -21,29 +21,29 @@ struct FolderView: View {
           VStack(alignment: .leading) {
             
 //            Text("Folder Name: \(folder.folderName)")
-            Text("Folder Name: \(folderViewModel.folder.folderName ?? "Unknown")")
-              .font(.title)
-              .padding(.bottom, 2)
-            
-            Text("Course ID: \(folderViewModel.folder.courseID ?? "Unknown")")
-              .font(.body)
-            
-            if let userID = folderViewModel.folder.userID {
-              Text("User ID: \(userID)")
-                .font(.body)
-            }
-            
-            Text("File Location: \(folderViewModel.folder.fileLocation ?? "Unknown")")
-              .font(.body)
-            
-            if let recentNoteSummary = folderViewModel.folder.recentNoteSummary {
-              Text("Recent Note Title: \(recentNoteSummary.title)")
-                .font(.body)
-              Text("Summary: \(recentNoteSummary.summary)")
-                .font(.body)
-            }
-            
-            Divider().padding(.vertical, 10)
+//            Text("Folder Name: \(folderViewModel.folder.folderName ?? "Unknown")")
+//              .font(.title)
+//              .padding(.bottom, 2)
+//            
+//            Text("Course ID: \(folderViewModel.folder.courseID ?? "Unknown")")
+//              .font(.body)
+//            
+//            if let userID = folderViewModel.folder.userID {
+//              Text("User ID: \(userID)")
+//                .font(.body)
+//            }
+//            
+//            Text("File Location: \(folderViewModel.folder.fileLocation ?? "Unknown")")
+//              .font(.body)
+//            
+//            if let recentNoteSummary = folderViewModel.folder.recentNoteSummary {
+//              Text("Recent Note Title: \(recentNoteSummary.title)")
+//                .font(.body)
+//              Text("Summary: \(recentNoteSummary.summary)")
+//                .font(.body)
+//            }
+//            
+//            Divider().padding(.vertical, 10)
             
             Text("Notes:")
               .font(.headline)
