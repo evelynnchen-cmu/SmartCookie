@@ -39,8 +39,8 @@ class Firebase: ObservableObject {
       } ?? []
       
       print("Total courses fetched: \(self.courses.count)")
-//      for course in self.courses {
-//      }
+      for course in self.courses {
+      }
     }
   }
   
@@ -56,30 +56,19 @@ class Firebase: ObservableObject {
       } ?? []
       
       print("Total notes fetched: \(self.notes.count)")
-//      for note in self.notes {
-//      }
+      for note in self.notes {
+      }
     }
   }
   
   
   
   func getFolders(completion: @escaping ([Folder]) -> Void) {
-      db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
-          if let error = error {
-              print("Error fetching folders: \(error.localizedDescription)")
-              completion([])
-              return
-          }
-
-          let folders = querySnapshot?.documents.compactMap { document in
-              try? document.data(as: Folder.self)
-          } ?? []
-
-          print("Total folders fetched: \(folders.count)")
-//          for folder in folders {
-//          }
-
-          completion(folders)
+    db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
+      if let error = error {
+        print("Error fetching folders: \(error.localizedDescription)")
+        completion([])
+        return
       }
       
       let folders = querySnapshot?.documents.compactMap { document in
@@ -225,14 +214,13 @@ class Firebase: ObservableObject {
   
   
   func createNote(
-      title: String,
-      summary: String,
-      content: String,
-      images: [String] = [],
-      course: Course,
-      folder: Folder? = nil,
-      completion: @escaping (Error?) -> Void
-    // completion: @escaping (Result<String, Error>) -> Void
+    title: String,
+    summary: String,
+    content: String,
+    images: [String] = [],
+    course: Course,
+    folder: Folder? = nil,
+    completion: @escaping (Error?) -> Void
   ) {
     guard let courseID = course.id else {
       completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course ID"]))
@@ -668,58 +656,3 @@ class Firebase: ObservableObject {
     }
     
   }
-
-  func getFolder(folderID: String, completion: @escaping (Folder?) -> Void) {
-        db.collection(folderCollection).document(folderID).addSnapshotListener { documentSnapshot, error in
-            if let error = error {
-                print("Error fetching folder by ID: \(error.localizedDescription)")
-                completion(nil)
-                return
-            }
-            
-            guard let document = documentSnapshot, document.exists else {
-                print("Folder not found for ID: \(folderID)")
-                completion(nil)
-                return
-            }
-            
-            if let folder = try? document.data(as: Folder.self) {
-                print("Folder fetched with ID: \(folder.id ?? "No ID")")
-                completion(folder)
-            } else {
-                print("Failed to parse folder data for ID: \(folderID)")
-                completion(nil)
-            }
-        }
-    }
-
-    func getNotesById(noteIDs: [String], completion: @escaping ([Note]) -> Void) {
-        let notesRef = db.collection(noteCollection)
-        var notes: [Note] = []
-        
-        for noteID in noteIDs {
-            notesRef.document(noteID).getDocument { documentSnapshot, error in
-                if let error = error {
-                    print("Error fetching note by ID: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let document = documentSnapshot, document.exists else {
-                    print("Note not found for ID: \(noteID)")
-                    return
-                }
-                
-                if let note = try? document.data(as: Note.self) {
-                    notes.append(note)
-                } else {
-                    print("Failed to parse note data for ID: \(noteID)")
-                }
-                
-                if notes.count == noteIDs.count {
-                    completion(notes)
-                }
-            }
-        }
-    }
-
-}

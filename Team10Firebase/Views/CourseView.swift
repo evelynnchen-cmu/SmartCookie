@@ -26,18 +26,16 @@ struct CourseView: View {
   }
   
   @State private var activeAlert: ActiveAlert?
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
-//                courseDetailsSection
+                courseDetailsSection
                 recentNoteSummarySection
                 directNotesSection
                 foldersSection
             }
-            .padding(.leading, 20) 
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            
+            .padding(.leading)
         }
         .sheet(isPresented: $isAddingFolder) {
             FolderModal(
@@ -187,10 +185,8 @@ struct CourseView: View {
                 NavigationLink(
                     destination: FolderView(
                         firebase: firebase,
-//                        folder: folder,
-                        course: course,
-                        folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course)
-                        
+                        folder: folder,
+                        course: course
                     )
                 ) {
                     Text(folder.folderName)
@@ -215,8 +211,6 @@ struct CourseView: View {
             }
         }
     }
-    
-    
     
     private func fetchFoldersForCourse() {
         firebase.getNotes()
