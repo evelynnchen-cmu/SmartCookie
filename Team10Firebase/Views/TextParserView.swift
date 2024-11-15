@@ -65,12 +65,23 @@ struct TextParserView: View {
                           viewModel.note = updatedNote
                           viewModel.loadImages() // Fetch images again to update the view
                           if let content = parsedText {
-                            firebase.updateNoteContentCompletion(note: note, newContent: content) { updatedNote in
+                            var combinedContent = (viewModel.note?.content ?? "") + "\n" + content
+                            firebase.updateNoteContentCompletion(note: note, newContent: combinedContent) { updatedNote in
                               if let updatedNote = updatedNote {
                                 viewModel.note = updatedNote
-                                completion?("\nNote updated successfully!")
-                                showAlert = false
-                                isPresented = false
+                                firebase.updateNoteSummary(note: updatedNote, newSummary: content) { updatedNote in
+                                  if let updatedNote = updatedNote {
+                                    viewModel.note = updatedNote
+                                    completion?("\nNote updated successfully!")
+                                    showAlert = false
+                                    isPresented = false
+                                  }
+                                  else {
+                                    print("Failed to update summary")
+                                    alertMessage = "Failed to update summary"
+                                    showAlert = true
+                                  }
+                                }
                               } else {
                                 print("Failed to update note with parsed image content")
                                 alertMessage = "Failed to update note with parsed image content"
