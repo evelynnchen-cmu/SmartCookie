@@ -168,6 +168,14 @@ struct ChatView: View {
                             .padding(.horizontal, 12)
                             .background(Color(.systemGray6))
                             .cornerRadius(8)
+                            .gesture(
+                                DragGesture(minimumDistance: 30)
+                                    .onEnded { value in
+                                        if value.translation.height > 100 {
+                                            dismissKeyboard()
+                                        }
+                                    }
+                            )
                         
                         Button(action: sendMessage) {
                             Image(systemName: "arrow.right")
@@ -237,6 +245,10 @@ struct ChatView: View {
         if let noteID = note.id {
             firebase.updateNoteContent(noteID: noteID, newContent: newContent)
         }
+    }
+    
+    private func dismissKeyboard() {
+            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     // Handles the user's input message, appends it to chat, and sends it to the API.
