@@ -10,11 +10,18 @@ import UIKit
 
 class OpenAI {
 
-  func generateQuizQuestions(content: String) async throws -> [MCQuestion] {
+  // First create a temporary struct for parsing the OpenAI response
+  private struct MCQuestionResponse: Codable {
+      var question: String
+      var potentialAnswers: [String]
+      var correctAnswer: Int
+  }
+
+  func generateQuizQuestions(content: String, numQuestions: Int = 5) async throws -> [MCQuestion] {
       guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
           throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
       }
-    
+
       let openAIKey: String = {
           guard let filePath = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
                 let plist = NSDictionary(contentsOfFile: filePath),
@@ -25,7 +32,7 @@ class OpenAI {
       }()
 
       let prompt = """
-      Generate 5 multiple choice questions based on this content. The questions should be able to be answered without referencing the original image. Format your response as a JSON array of objects.
+      Generate \(numQuestions) multiple choice questions based on this content. The questions should be able to be answered without referencing the original image. Format your response as a JSON array of objects.
       Each object should have these fields:
       - question (string)
       - potentialAnswers (array of 4 strings)
@@ -72,14 +79,23 @@ class OpenAI {
 
       let jsonResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
       if let questionsJson = jsonResponse.choices.first?.message.content {
-          
           guard let jsonData = questionsJson.data(using: .utf8) else {
               throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert response to data"])
           }
           
           do {
-              let questions = try JSONDecoder().decode([MCQuestion].self, from: jsonData)
-              return questions
+              // First decode into the temporary response struct
+              let responseQuestions = try JSONDecoder().decode([MCQuestionResponse].self, from: jsonData)
+              
+              // Then convert to MCQuestion objects
+              return responseQuestions.map { response in
+                  MCQuestion(
+                      id: nil,
+                      question: response.question,
+                      potentialAnswers: response.potentialAnswers,
+                      correctAnswer: response.correctAnswer
+                  )
+              }
           } catch {
               print("JSON Parsing Error: \(error)")
               throw error

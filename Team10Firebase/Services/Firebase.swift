@@ -712,5 +712,62 @@ class Firebase: ObservableObject {
             }
         }
     }
+  
+  func saveWrongQuestions(noteID: String, wrongQuestions: [MCQuestion], completion: @escaping (Error?) -> Void) {
+      let batch = self.db.batch()
+      
+      for question in wrongQuestions {
+          let questionRef = self.db.collection(self.mcQuestionCollection).document()
+          
+          let data: [String: Any] = [
+              "question": question.question,
+              "potentialAnswers": question.potentialAnswers,
+              "correctAnswer": question.correctAnswer,
+              "noteID": noteID,
+              "timestamp": Date()
+          ]
+          
+          batch.setData(data, forDocument: questionRef)
+      }
+      
+      batch.commit { error in
+          if let error = error {
+              print("Error saving wrong questions: \(error.localizedDescription)")
+              completion(error)
+          } else {
+              print("Wrong questions successfully saved")
+              completion(nil)
+          }
+      }
+  }
+  
+  func getWrongQuestions(noteID: String, completion: @escaping ([MCQuestion]) -> Void) {
+      self.db.collection(self.mcQuestionCollection)
+          .whereField("noteID", isEqualTo: noteID)
+          .getDocuments { querySnapshot, error in
+              if let error = error {
+                  print("Error fetching wrong questions: \(error.localizedDescription)")
+                  completion([])
+                  return
+              }
+              
+              let wrongQuestions = querySnapshot?.documents.compactMap { document -> MCQuestion? in
+                  guard let question = document.get("question") as? String,
+                        let potentialAnswers = document.get("potentialAnswers") as? [String],
+                        let correctAnswer = document.get("correctAnswer") as? Int else {
+                      return nil
+                  }
+                  
+                  return MCQuestion(
+                      id: document.documentID,
+                      question: question,
+                      potentialAnswers: potentialAnswers,
+                      correctAnswer: correctAnswer
+                  )
+              } ?? []
+              
+              completion(wrongQuestions)
+          }
+  }
 
 }
