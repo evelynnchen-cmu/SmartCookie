@@ -9,6 +9,86 @@ import Foundation
 import UIKit
 
 class OpenAI {
+
+  func generateQuizQuestions(content: String) async throws -> [MCQuestion] {
+      guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+          throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+      }
+    
+      let openAIKey: String = {
+          guard let filePath = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
+                let plist = NSDictionary(contentsOfFile: filePath),
+                let key = plist["OpenAIKey"] as? String else {
+              fatalError("Couldn't find key 'OpenAIKey' in 'Secrets.plist'.")
+          }
+          return key
+      }()
+
+      let prompt = """
+      Generate 5 multiple choice questions based on this content. Format your response as a JSON array of objects.
+      Each object should have these fields:
+      - question (string)
+      - potentialAnswers (array of 4 strings)
+      - correctAnswer (number 0-3 indicating which answer is correct)
+      
+      Content: \(content)
+      
+      Response format example:
+      [
+        {
+          "question": "What is...",
+          "potentialAnswers": ["answer1", "answer2", "answer3", "answer4"],
+          "correctAnswer": 2
+        }
+      ]
+      
+      Only return the JSON array, no other text.
+      """
+
+      var request = URLRequest(url: url)
+      request.httpMethod = "POST"
+      request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
+      request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+      let requestBody = OpenAIRequest(
+          model: "gpt-4o-mini",
+          messages: [
+              Message(role: "system", content: [MessageContent(type: "text", text: prompt, imageURL: nil)])
+          ],
+          maxTokens: 1000
+      )
+
+      guard let jsonData = try? JSONEncoder().encode(requestBody) else {
+          throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create JSON payload"])
+      }
+
+      request.httpBody = jsonData
+
+      let (data, response) = try await URLSession.shared.data(for: request)
+      
+      if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+          throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to connect to the API"])
+      }
+
+      let jsonResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
+      if let questionsJson = jsonResponse.choices.first?.message.content {
+          
+          guard let jsonData = questionsJson.data(using: .utf8) else {
+              throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert response to data"])
+          }
+          
+          do {
+              let questions = try JSONDecoder().decode([MCQuestion].self, from: jsonData)
+              return questions
+          } catch {
+              print("JSON Parsing Error: \(error)")
+              throw error
+          }
+      } else {
+          throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "No content in response"])
+      }
+  }
+  
   func summarizeContent(content: String) async throws -> String {
       guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
           throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])

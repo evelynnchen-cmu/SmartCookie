@@ -8,16 +8,8 @@
 import Foundation
 import FirebaseFirestore
 
-struct MCQuestion: Codable, Identifiable {
-    @DocumentID var id: String?
+struct MCQuestion: Codable {
     var question: String
     var potentialAnswers: [String]
     var correctAnswer: Int
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case question
-        case potentialAnswers
-        case correctAnswer
-    }
 }
