@@ -25,7 +25,7 @@ class OpenAI {
       }()
 
       let prompt = """
-      Generate 5 multiple choice questions based on this content. Format your response as a JSON array of objects.
+      Generate 5 multiple choice questions based on this content. The questions should be able to be answered without referencing the original image. Format your response as a JSON array of objects.
       Each object should have these fields:
       - question (string)
       - potentialAnswers (array of 4 strings)
