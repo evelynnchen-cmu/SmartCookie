@@ -702,5 +702,79 @@ class Firebase: ObservableObject {
             }
         }
     }
+  
+  func handleQuestionResult(
+      question: MCQuestion,
+      isCorrect: Bool,
+      userID: String,
+      noteID: String,
+      completion: @escaping (Error?) -> Void
+  ) {
+      let query = db.collection(mcQuestionCollection)
+          .whereField("userID", isEqualTo: userID)
+          .whereField("noteID", isEqualTo: noteID)
+          .whereField("question", isEqualTo: question.question)
+      
+      query.getDocuments { [weak self] (snapshot, error) in
+          if let error = error {
+              completion(error)
+              return
+          }
+          
+          if let existingDoc = snapshot?.documents.first {
+              if isCorrect {
+                  // Delete question if answered correctly
+                  existingDoc.reference.delete { error in
+                      completion(error)
+                  }
+              } else {
+                  // Increment attempt count if answered incorrectly
+                  let currentAttempts = (try? existingDoc.data(as: MCQuestion.self))?.attemptCount ?? 0
+                  existingDoc.reference.updateData([
+                      "attemptCount": currentAttempts + 1,
+                      "lastAttemptDate": Date()
+                  ]) { error in
+                      completion(error)
+                  }
+              }
+          } else if !isCorrect {
+              // Only save new incorrect questions
+              var newQuestion = question
+              newQuestion.userID = userID
+              newQuestion.noteID = noteID
+              newQuestion.attemptCount = 1
+              newQuestion.lastAttemptDate = Date()
+              
+              do {
+                  try self?.db.collection(self?.mcQuestionCollection ?? "").addDocument(from: newQuestion)
+                  completion(nil)
+              } catch {
+                  completion(error)
+              }
+          } else {
+              // Correct answer for new question, no action needed
+              completion(nil)
+          }
+      }
+  }
+  
+  func getIncorrectQuestions(userID: String, noteID: String, completion: @escaping ([MCQuestion]) -> Void) {
+      db.collection(mcQuestionCollection)
+          .whereField("userID", isEqualTo: userID)
+          .whereField("noteID", isEqualTo: noteID)
+          .getDocuments { (snapshot, error) in
+              if let error = error {
+                  print("Error fetching incorrect questions: \(error)")
+                  completion([])
+                  return
+              }
+              
+              let questions = snapshot?.documents.compactMap { doc -> MCQuestion? in
+                  try? doc.data(as: MCQuestion.self)
+              } ?? []
+              
+              completion(questions)
+          }
+  }
 
 }
