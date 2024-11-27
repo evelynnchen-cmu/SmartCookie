@@ -84,6 +84,7 @@ class QuizViewModel: ObservableObject {
         }
     }
     
+    // saves new incorrect questions, deletes previously-incorrect questions that the user got right, updates attempt count of previously-incorrect questions that the user still got wrong, upserts streak
     func checkAnswerWithPersistence(userID: String, firebase: Firebase) {
         guard let selected = selectedAnswer else { return }
         let currentQuestion = questions[currentQuestionIndex]
@@ -112,6 +113,13 @@ class QuizViewModel: ObservableObject {
                         self.selectedAnswer = nil
                     } else {
                         self.showScore = true
+                      
+                      // try to update streak
+                      firebase.updateUserStreak(userID: userID, quizScore: self.score) { error in
+                          if let error = error {
+                              self.errorMessage = "Error updating streak: \(error.localizedDescription)"
+                          }
+                      }
                     }
                 }
             }

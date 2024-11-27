@@ -58,7 +58,7 @@ struct QuizView: View {
     }
 }
 
-// Enhanced Loading View with animation
+// Loading View
 private struct LoadingView: View {
     @State private var isAnimating = false
     

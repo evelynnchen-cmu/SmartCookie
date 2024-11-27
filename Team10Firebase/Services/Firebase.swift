@@ -776,5 +776,70 @@ class Firebase: ObservableObject {
               completion(questions)
           }
   }
+  
+  func updateUserStreak(userID: String, quizScore: Int, completion: @escaping (Error?) -> Void) {
+      let userRef = db.collection(userCollection).document(userID)
+      
+      userRef.getDocument { (document, error) in
+          if let error = error {
+              completion(error)
+              return
+          }
+          
+          guard let document = document,
+                let user = try? document.data(as: User.self) else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          guard quizScore >= 80 else {
+              // don't need to update if quiz score is < 80
+              completion(nil)
+              return
+          }
+          
+          let currentDate = Date()
+          
+          // If this is the first quiz completion
+          if user.streak.lastQuizCompletedAt == nil {
+              userRef.updateData([
+                  "streak.currentStreakLength": 1,
+                  "streak.lastQuizCompletedAt": currentDate
+              ]) { error in
+                  completion(error)
+              }
+              return
+          }
+          
+          // to compare dates
+          let calendar = Calendar.current
+          
+          guard let lastQuizDate = user.streak.lastQuizCompletedAt else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid last quiz date"]))
+              return
+          }
+          
+          // Check if the last quiz was completed today
+          let isToday = calendar.isDate(lastQuizDate, inSameDayAs: currentDate)
+          if isToday {
+              completion(nil) // no need to update streak
+              return
+          }
+          
+          // Check if the last quiz was completed yesterday
+          let yesterday = calendar.date(byAdding: .day, value: -1, to: currentDate)!
+          let wasYesterday = calendar.isDate(lastQuizDate, inSameDayAs: yesterday)
+          
+          // Update streak based on timing
+          let newStreakLength = wasYesterday ? user.streak.currentStreakLength + 1 : 1
+          
+          userRef.updateData([
+              "streak.currentStreakLength": newStreakLength,
+              "streak.lastQuizCompletedAt": currentDate
+          ]) { error in
+              completion(error)
+          }
+      }
+  }
 
 }
