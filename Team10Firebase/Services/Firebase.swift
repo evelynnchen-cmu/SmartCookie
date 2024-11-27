@@ -323,68 +323,58 @@ class Firebase: ObservableObject {
     }
   }
   
-  
-  
-  
-  
-  func deleteCourse(course: Course) {
-    guard let courseID = course.id else {
-      print("Course ID is missing.")
-      return
-    }
-    
-    let batch = db.batch()
-    
-    var allNoteIDs: [String] = []
-    
-    allNoteIDs.append(contentsOf: course.notes)
-    
-    let folderQuery = db.collection("Folder").whereField("courseID", isEqualTo: courseID)
-    
-    folderQuery.getDocuments { (querySnapshot, error) in
-      if let error = error {
-        print("Error fetching folders: \(error.localizedDescription)")
-        return
+
+    func deleteCourse(course: Course) {
+      guard let courseID = course.id else {
+          print("Course ID is missing.")
+          return
       }
-      
-      guard let folderDocuments = querySnapshot?.documents else {
-        print("No folders found for course.")
-        return
+
+      let batch = db.batch()
+      var allNoteIDs: [String] = [] 
+
+      allNoteIDs.append(contentsOf: course.notes)
+      let folderQuery = db.collection("Folder").whereField("courseID", isEqualTo: courseID)
+
+      folderQuery.getDocuments { (querySnapshot, error) in
+          if let error = error {
+              print("Error fetching folders: \(error.localizedDescription)")
+              return
+          }
+
+          guard let folderDocuments = querySnapshot?.documents else {
+              print("No folders found for course.")
+              return
+          }
+          for folderDoc in folderDocuments {
+              let folderID = folderDoc.documentID
+
+              if let folder = try? folderDoc.data(as: Folder.self) {
+                  allNoteIDs.append(contentsOf: folder.notes) 
+              }
+
+              let folderRef = self.db.collection("Folder").document(folderID)
+              batch.deleteDocument(folderRef) 
+          }
+
+          for noteID in allNoteIDs {
+              let noteRef = self.db.collection("Note").document(noteID)
+              batch.deleteDocument(noteRef)
+          }
+
+          let courseRef = self.db.collection("Course").document(courseID)
+          batch.deleteDocument(courseRef)
+          batch.commit { error in
+              if let error = error {
+                  print("Error committing batch delete: \(error.localizedDescription)")
+              } else {
+                  print("Successfully deleted course \(courseID) and all associated data.")
+              }
+              self.getCourses()
+          }
       }
-      
-      var folderIDsToDelete: [String] = []
-      
-      for folderDoc in folderDocuments {
-        let folderID = folderDoc.documentID
-        folderIDsToDelete.append(folderID)
-        
-        if let folder = try? folderDoc.data(as: Folder.self) {
-          allNoteIDs.append(contentsOf: folder.notes)
-        }
-        
-        let folderRef = self.db.collection("Folder").document(folderID)
-        batch.deleteDocument(folderRef)
-      }
-      
-      for noteID in allNoteIDs {
-        let noteRef = self.db.collection("Note").document(noteID)
-        batch.deleteDocument(noteRef)
-      }
-      
-      let courseRef = self.db.collection("Course").document(courseID)
-      batch.deleteDocument(courseRef)
-      
-      batch.commit { error in
-        if let error = error {
-          print("Error committing batch delete: \(error.localizedDescription)")
-        } else {
-          print("Successfully deleted course \(courseID) and its related data.")
-        }
-        
-        self.getCourses()
-      }
-    }
   }
+
   
   
   
@@ -625,10 +615,10 @@ class Firebase: ObservableObject {
     
     func updateNotificationFrequency(_ frequency: String, completion: @escaping (Error?) -> Void) {
       let validFrequencies = [
-        "3x per week",    // Mon/Wed/Fri pattern
-        "2x per week",          // Tue/Thu pattern
-        "Weekly",                  // For lighter study loads
-        "Daily"                    // For intensive study periods
+        "3x per week",
+        "2x per week",
+        "Weekly",
+        "Daily"
       ]
       
       guard validFrequencies.contains(frequency) else {
