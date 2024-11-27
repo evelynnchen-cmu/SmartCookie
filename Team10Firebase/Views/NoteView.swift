@@ -159,7 +159,7 @@ struct NoteView: View {
       }
       
       // Review button outside ScrollView but inside ZStack
-      NavigationLink(destination: QuizView(note: note, noteContent: note.content)) {
+      NavigationLink(destination: QuizView(note: note, noteContent: note.content, firebase: firebase)) {
         HStack {
           Text("Review")
         }

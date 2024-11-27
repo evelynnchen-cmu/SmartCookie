@@ -5,15 +5,8 @@
 //  Created by Evelynn Chen on 11/22/24.
 //
 
-
-//
-//  QuizViewModel.swift
-//  Team10Firebase
-//
-//  Created by Evelynn Chen on 11/21/24.
-//
-
 import Foundation
+import FirebaseFirestore
 
 class QuizViewModel: ObservableObject {
     @Published var currentQuestionIndex = 0
@@ -23,17 +16,11 @@ class QuizViewModel: ObservableObject {
     @Published var correctAnswers = 0
     @Published var isLoadingQuestions = false
     @Published var errorMessage: String?
-  
-    var score: Int {
-        guard !questions.isEmpty else { return 0 }
-        return Int(Double(correctAnswers) / Double(questions.count) * 100)
-    }
     
     private let note: Note
     private let noteContent: String
     private let openAI = OpenAI()
-    private let firebase = Firebase()
-    private var wrongQuestions: [MCQuestion] = []
+    private let totalQuestions = 5
     
     init(note: Note, noteContent: String) {
         self.note = note
@@ -44,30 +31,43 @@ class QuizViewModel: ObservableObject {
         isLoadingQuestions = true
         errorMessage = nil
         
-        // First, get any existing wrong questions
-        guard let noteID = note.id else {
-            self.errorMessage = "Invalid note ID"
-            self.isLoadingQuestions = false
-            return
+        Task {
+            do {
+                let generatedQuestions = try await openAI.generateQuizQuestions(content: noteContent)
+                DispatchQueue.main.async {
+                    self.questions = generatedQuestions
+                    self.isLoadingQuestions = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.errorMessage = "Failed to generate questions: \(error.localizedDescription)"
+                    self.isLoadingQuestions = false
+                }
+            }
         }
+    }
+    
+    func generateAdditionalQuestions(neededCount: Int) async throws -> [MCQuestion] {
+        let generatedQuestions = try await openAI.generateQuizQuestions(content: noteContent)
+        // Take only the number of questions we need
+        return Array(generatedQuestions.prefix(neededCount))
+    }
+    
+    func loadQuestionsWithHistory(userID: String, firebase: Firebase) {
+        isLoadingQuestions = true
         
-        firebase.getWrongQuestions(noteID: noteID) { [weak self] wrongQuestions in
+        firebase.getIncorrectQuestions(userID: userID, noteID: note.id ?? "") { [weak self] incorrectQuestions in
             guard let self = self else { return }
             
             Task {
                 do {
-                    // Calculate how many new questions we need
-                    let numNewQuestions = max(5 - wrongQuestions.count, 0)
-                    var allQuestions = wrongQuestions
+                    var allQuestions = incorrectQuestions
+                    let additionalQuestionsNeeded = self.totalQuestions - incorrectQuestions.count
                     
-                    if numNewQuestions > 0 {
-                        // Generate additional questions if needed
-                        let newQuestions = try await self.openAI.generateQuizQuestions(content: self.noteContent, numQuestions: numNewQuestions)
-                        allQuestions.append(contentsOf: newQuestions.prefix(numNewQuestions))
+                    if additionalQuestionsNeeded > 0 {
+                        let newQuestions = try await self.generateAdditionalQuestions(neededCount: additionalQuestionsNeeded)
+                        allQuestions.append(contentsOf: newQuestions)
                     }
-                    
-                    // Shuffle the questions to mix wrong and new questions
-                    allQuestions.shuffle()
                     
                     DispatchQueue.main.async {
                         self.questions = allQuestions
@@ -75,7 +75,7 @@ class QuizViewModel: ObservableObject {
                     }
                 } catch {
                     DispatchQueue.main.async {
-                        self.errorMessage = "Failed to generate questions: \(error.localizedDescription)"
+                        self.errorMessage = "Failed to generate additional questions: \(error.localizedDescription)"
                         self.isLoadingQuestions = false
                     }
                 }
@@ -83,31 +83,41 @@ class QuizViewModel: ObservableObject {
         }
     }
     
-    func checkAnswer() {
-        if let selected = selectedAnswer {
-            let currentQuestion = questions[currentQuestionIndex]
-            let isCorrect = selected == currentQuestion.correctAnswer
-            
-            if !isCorrect {
-                // Save wrong question
-                guard let noteID = note.id else { return }
-                firebase.saveWrongQuestions(noteID: noteID, wrongQuestions: [currentQuestion]) { error in
-                    if let error = error {
-                        print("Error saving wrong question: \(error.localizedDescription)")
-                    }
+    func checkAnswerWithPersistence(userID: String, firebase: Firebase) {
+        guard let selected = selectedAnswer else { return }
+        let currentQuestion = questions[currentQuestionIndex]
+        let isCorrect = selected == currentQuestion.correctAnswer
+        
+        if isCorrect {
+            correctAnswers += 1
+        }
+        
+        firebase.handleQuestionResult(
+            question: currentQuestion,
+            isCorrect: isCorrect,
+            userID: userID,
+            noteID: note.id ?? ""
+        ) { [weak self] error in
+            if let error = error {
+                DispatchQueue.main.async {
+                    self?.errorMessage = "Error saving question result: \(error.localizedDescription)"
                 }
             }
             
-            if isCorrect {
-                correctAnswers += 1
-            }
-            
-            if currentQuestionIndex < questions.count - 1 {
-                currentQuestionIndex += 1
-                selectedAnswer = nil
-            } else {
-                showScore = true
+            DispatchQueue.main.async {
+                if let self = self {
+                    if self.currentQuestionIndex < self.questions.count - 1 {
+                        self.currentQuestionIndex += 1
+                        self.selectedAnswer = nil
+                    } else {
+                        self.showScore = true
+                    }
+                }
             }
         }
+    }
+    
+    var score: Int {
+        Int(Double(correctAnswers) / Double(questions.count) * 100)
     }
 }

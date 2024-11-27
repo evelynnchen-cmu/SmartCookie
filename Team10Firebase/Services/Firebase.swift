@@ -713,60 +713,77 @@ class Firebase: ObservableObject {
         }
     }
   
-  func saveWrongQuestions(noteID: String, wrongQuestions: [MCQuestion], completion: @escaping (Error?) -> Void) {
-      let batch = self.db.batch()
+  func handleQuestionResult(
+      question: MCQuestion,
+      isCorrect: Bool,
+      userID: String,
+      noteID: String,
+      completion: @escaping (Error?) -> Void
+  ) {
+      let query = db.collection(mcQuestionCollection)
+          .whereField("userID", isEqualTo: userID)
+          .whereField("noteID", isEqualTo: noteID)
+          .whereField("question", isEqualTo: question.question)
       
-      for question in wrongQuestions {
-          let questionRef = self.db.collection(self.mcQuestionCollection).document()
-          
-          let data: [String: Any] = [
-              "question": question.question,
-              "potentialAnswers": question.potentialAnswers,
-              "correctAnswer": question.correctAnswer,
-              "noteID": noteID,
-              "timestamp": Date()
-          ]
-          
-          batch.setData(data, forDocument: questionRef)
-      }
-      
-      batch.commit { error in
+      query.getDocuments { [weak self] (snapshot, error) in
           if let error = error {
-              print("Error saving wrong questions: \(error.localizedDescription)")
               completion(error)
+              return
+          }
+          
+          if let existingDoc = snapshot?.documents.first {
+              if isCorrect {
+                  // Delete question if answered correctly
+                  existingDoc.reference.delete { error in
+                      completion(error)
+                  }
+              } else {
+                  // Increment attempt count if answered incorrectly
+                  let currentAttempts = (try? existingDoc.data(as: MCQuestion.self))?.attemptCount ?? 0
+                  existingDoc.reference.updateData([
+                      "attemptCount": currentAttempts + 1,
+                      "lastAttemptDate": Date()
+                  ]) { error in
+                      completion(error)
+                  }
+              }
+          } else if !isCorrect {
+              // Only save new incorrect questions
+              var newQuestion = question
+              newQuestion.userID = userID
+              newQuestion.noteID = noteID
+              newQuestion.attemptCount = 1
+              newQuestion.lastAttemptDate = Date()
+              
+              do {
+                  try self?.db.collection(self?.mcQuestionCollection ?? "").addDocument(from: newQuestion)
+                  completion(nil)
+              } catch {
+                  completion(error)
+              }
           } else {
-              print("Wrong questions successfully saved")
+              // Correct answer for new question, no action needed
               completion(nil)
           }
       }
   }
   
-  func getWrongQuestions(noteID: String, completion: @escaping ([MCQuestion]) -> Void) {
-      self.db.collection(self.mcQuestionCollection)
+  func getIncorrectQuestions(userID: String, noteID: String, completion: @escaping ([MCQuestion]) -> Void) {
+      db.collection(mcQuestionCollection)
+          .whereField("userID", isEqualTo: userID)
           .whereField("noteID", isEqualTo: noteID)
-          .getDocuments { querySnapshot, error in
+          .getDocuments { (snapshot, error) in
               if let error = error {
-                  print("Error fetching wrong questions: \(error.localizedDescription)")
+                  print("Error fetching incorrect questions: \(error)")
                   completion([])
                   return
               }
               
-              let wrongQuestions = querySnapshot?.documents.compactMap { document -> MCQuestion? in
-                  guard let question = document.get("question") as? String,
-                        let potentialAnswers = document.get("potentialAnswers") as? [String],
-                        let correctAnswer = document.get("correctAnswer") as? Int else {
-                      return nil
-                  }
-                  
-                  return MCQuestion(
-                      id: document.documentID,
-                      question: question,
-                      potentialAnswers: potentialAnswers,
-                      correctAnswer: correctAnswer
-                  )
+              let questions = snapshot?.documents.compactMap { doc -> MCQuestion? in
+                  try? doc.data(as: MCQuestion.self)
               } ?? []
               
-              completion(wrongQuestions)
+              completion(questions)
           }
   }
 

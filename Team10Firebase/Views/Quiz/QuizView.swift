@@ -9,9 +9,12 @@ import SwiftUI
 
 struct QuizView: View {
     @StateObject private var viewModel: QuizViewModel
+    @ObservedObject var firebase: Firebase
+    @State private var userID: String = ""
     @Environment(\.dismiss) private var dismiss
     
-    init(note: Note, noteContent: String) {
+    init(note: Note, noteContent: String, firebase: Firebase) {
+        self.firebase = firebase
         _viewModel = StateObject(wrappedValue: QuizViewModel(note: note, noteContent: noteContent))
     }
     
@@ -27,7 +30,7 @@ struct QuizView: View {
                         .padding(.bottom, 20)
                     
                     if !viewModel.showScore {
-                        QuizContentView(viewModel: viewModel)
+                        QuizContentView(viewModel: viewModel, userID: userID, firebase: firebase)
                     } else {
                         QuizScoreView(viewModel: viewModel)
                     }
@@ -39,7 +42,12 @@ struct QuizView: View {
             .background(Color(white: 0.95))
         }
         .onAppear {
-            viewModel.generateQuestions()
+            firebase.getFirstUser { user in
+                if let user = user {
+                    userID = user.id ?? ""
+                    viewModel.loadQuestionsWithHistory(userID: userID, firebase: firebase)
+                }
+            }
         }
     }
 }
@@ -86,13 +94,15 @@ private struct QuizHeaderView: View {
 // Quiz Content
 private struct QuizContentView: View {
     @ObservedObject var viewModel: QuizViewModel
+    let userID: String
+    let firebase: Firebase
     
     var body: some View {
         VStack(spacing: 16) {
             QuestionView(viewModel: viewModel)
             
             if viewModel.selectedAnswer != nil {
-                NextButton(viewModel: viewModel)
+                NextButton(viewModel: viewModel, userID: userID, firebase: firebase)
                     .padding()
             }
         }
@@ -184,9 +194,11 @@ private struct AnswerButton: View {
 // Next Button
 private struct NextButton: View {
     @ObservedObject var viewModel: QuizViewModel
+    let userID: String
+    let firebase: Firebase
     
     var body: some View {
-        Button(action: { viewModel.checkAnswer() }) {
+        Button(action: { viewModel.checkAnswerWithPersistence(userID: userID, firebase: firebase) }) {
             Text(viewModel.currentQuestionIndex == viewModel.questions.count - 1 ? "Finish" : "Next")
                 .font(.headline)
                 .foregroundColor(.white)
