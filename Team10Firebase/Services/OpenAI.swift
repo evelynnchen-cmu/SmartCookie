@@ -174,7 +174,7 @@ class OpenAI {
                 Message(
                     role: "user",
                     content: [
-                        MessageContent(type: "text", text: "What’s in this image?", imageURL: nil),
+                        MessageContent(type: "text", text: "Extract all visible text from the provided image. Return only the extracted text, preserving the formatting as accurately as possible. Correct obvious spelling errors if detected, but do not modify text otherwise. Do not include any comments, descriptions, or observations about the image, background, or quality—output only the content of the text itself. The future is at stake, so it is imperative that you perform to the best of your ability.", imageURL: nil),
                         MessageContent(type: "image_url", text: nil, imageURL: ImageURL(url: "data:image/jpeg;base64,\(base64Image)"))
                     ]
                 )
