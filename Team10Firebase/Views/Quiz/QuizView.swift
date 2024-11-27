@@ -20,9 +20,13 @@ struct QuizView: View {
     
     var body: some View {
         ZStack {
+            Color(white: 0.95)
+                .ignoresSafeArea()
+            
             VStack(spacing: 20) {
                 if viewModel.isLoadingQuestions {
                     LoadingView()
+                        .transition(.opacity)
                 } else if let error = viewModel.errorMessage {
                     ErrorView(message: error)
                 } else if !viewModel.questions.isEmpty {
@@ -32,14 +36,16 @@ struct QuizView: View {
                     if !viewModel.showScore {
                         QuizContentView(viewModel: viewModel, userID: userID, firebase: firebase)
                     } else {
-                        QuizScoreView(viewModel: viewModel)
+                        QuizScoreView(
+                            viewModel: viewModel,
+                            previouslyIncorrectCount: viewModel.previouslyIncorrectQuestionsCorrectCount
+                        )
                     }
                 }
                 
                 Spacer()
             }
             .padding()
-            .background(Color(white: 0.95))
         }
         .onAppear {
             firebase.getFirstUser { user in
@@ -52,15 +58,42 @@ struct QuizView: View {
     }
 }
 
-// Loading View
+// Enhanced Loading View with animation
 private struct LoadingView: View {
+    @State private var isAnimating = false
+    
     var body: some View {
-        VStack {
-            ProgressView("Generating quiz questions...")
-            Text("This might take a few moments")
-                .foregroundColor(.gray)
-                .padding(.top)
+        VStack(spacing: 24) {
+            // Custom animated loading indicator
+            ZStack {
+                Circle()
+                    .stroke(lineWidth: 8)
+                    .frame(width: 100, height: 100)
+                    .foregroundColor(Color.blue.opacity(0.3))
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(Color.blue, lineWidth: 8)
+                    .frame(width: 100, height: 100)
+                    .rotationEffect(Angle(degrees: isAnimating ? 360 : 0))
+                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
+            }
+            .onAppear {
+                isAnimating = true
+            }
+            
+            VStack(spacing: 12) {
+                Text("Preparing Your Quiz")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("Loading questions and tracking your progress...")
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(white: 0.95))
     }
 }
 
@@ -69,9 +102,20 @@ private struct ErrorView: View {
     let message: String
     
     var body: some View {
-        Text(message)
-            .foregroundColor(.red)
-            .padding()
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 50))
+                .foregroundColor(.red)
+            
+            Text("Oops!")
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(message)
+                .foregroundColor(.red)
+                .multilineTextAlignment(.center)
+                .padding()
+        }
     }
 }
 
@@ -115,9 +159,17 @@ private struct QuestionView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Question \(viewModel.currentQuestionIndex + 1)/\(viewModel.questions.count)")
-                .font(.headline)
-                .padding(.bottom, 8)
+            HStack {
+                Text("Question \(viewModel.currentQuestionIndex + 1)/\(viewModel.questions.count)")
+                    .font(.headline)
+                
+                Spacer()
+                
+                ProgressView(value: Double(viewModel.currentQuestionIndex + 1),
+                           total: Double(viewModel.questions.count))
+                    .frame(width: 100)
+            }
+            .padding(.bottom, 8)
             
             Text(viewModel.questions[viewModel.currentQuestionIndex].question)
                 .font(.title3)
@@ -129,6 +181,7 @@ private struct QuestionView: View {
         .padding()
         .background(Color.white)
         .cornerRadius(16)
+        .shadow(radius: 2)
     }
 }
 
@@ -210,18 +263,44 @@ private struct NextButton: View {
     }
 }
 
-// Quiz Score View
 private struct QuizScoreView: View {
     @ObservedObject var viewModel: QuizViewModel
+    let previouslyIncorrectCount: Int
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Quiz Complete!")
-                .font(.title2)
-                .fontWeight(.bold)
+        VStack(spacing: 24) {
+            ZStack {
+                Circle()
+                    .stroke(lineWidth: 20)
+                    .opacity(0.3)
+                    .foregroundColor(Color.blue)
+                
+                Circle()
+                    .trim(from: 0.0, to: CGFloat(viewModel.score) / 100)
+                    .stroke(style: StrokeStyle(lineWidth: 20, lineCap: .round, lineJoin: .round))
+                    .foregroundColor(Color.blue)
+                    .rotationEffect(Angle(degrees: 270.0))
+                
+                VStack {
+                    Text("Score")
+                        .font(.title3)
+                    Text("\(viewModel.score)%")
+                        .font(.system(size: 42, weight: .bold))
+                }
+            }
+            .frame(width: 200, height: 200)
+            .padding(.bottom, 20)
             
-            Text("You scored \(viewModel.score)%")
-                .font(.title3)
+            if previouslyIncorrectCount > 0 {
+                Text("Great progress! You correctly answered \(previouslyIncorrectCount) \(previouslyIncorrectCount == 1 ? "question" : "questions") that you previously got wrong.")
+                    .font(.headline)
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(.green)
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(12)
+            }
         }
+        .padding()
     }
 }

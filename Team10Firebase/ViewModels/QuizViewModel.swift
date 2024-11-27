@@ -16,6 +16,7 @@ class QuizViewModel: ObservableObject {
     @Published var correctAnswers = 0
     @Published var isLoadingQuestions = false
     @Published var errorMessage: String?
+    @Published var previouslyIncorrectQuestionsCorrectCount: Int = 0
     
     private let note: Note
     private let noteContent: String
@@ -115,6 +116,10 @@ class QuizViewModel: ObservableObject {
                 }
             }
         }
+      
+      if isCorrect && currentQuestion.id != nil {
+          previouslyIncorrectQuestionsCorrectCount += 1
+      }
     }
     
     var score: Int {
