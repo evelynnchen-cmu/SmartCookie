@@ -346,6 +346,19 @@ struct ChatView: View {
         messagesHistory = [
             ["role": "system", "content": systemPrompt]
         ]
+        
+        let welcomeMessage: String
+        if selectedScope == "General" {
+            welcomeMessage = "Hello! You're in the general chat, where you can ask questions about any topic. If you'd like me to reference your specific course notes, please select a course from the dropdown menu above."
+        } else {
+            let courseName = firebase.courses.first(where: { $0.id == selectedScope })?.courseName ?? "selected course"
+            let sampleNotes = courseNotes.prefix(3).map { $0.title }.joined(separator: ", ")
+            
+            welcomeMessage = "Hello! You're in the \(courseName) chat, and I can see your notes including \(sampleNotes). Feel free to ask questions about this course material!"
+        }
+        
+        messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
+        messagesHistory.append(["role": "assistant", "content": welcomeMessage])
     }
 }
 
