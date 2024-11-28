@@ -80,7 +80,7 @@ struct ScanView: View {
             .fullScreenCover(isPresented: $showTextParserView) {
               if let image = self.capturedImage {
                 if let course = course {
-                  TextParserViewNewNote(
+                  TextParserView(
                     image: image,
                     firebase: firebase,
                     isPresented: $showTextParserView,
