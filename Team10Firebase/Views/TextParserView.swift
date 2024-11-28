@@ -76,55 +76,14 @@ struct TextParserView: View {
                   if let imagePath = path {
                     print("Image path: \(imagePath)")
                     if let thisNote = self.note {
-                        // Update the note document in firebase with the new file path
-                        firebase.updateNoteImages(note: thisNote, imagePath: imagePath) { updatedNote in
-                            if let updatedNote = updatedNote {
-                              self.note = updatedNote
-                              if let content = content {
-                                var combinedContent = (thisNote.content) + "\n" + content
-                                firebase.updateNoteContentCompletion(note: updatedNote, newContent: combinedContent) { updatedNote in
-                                  if let updatedNote = updatedNote {
-                                    self.note = updatedNote
-                                    // let summary = try await summarizeContent(content: content)
-//                                    var updatedSummary = combinedContent
-//                                     Task {
-//                                      print("doing task!")
-//                                      do {
-//                                        updatedSummary = try await openAI.summarizeContent(content: combinedContent)
-//                                        print("new summary done")
-//                                      } catch {
-//                                        print("Failed to summarize content")
-//                                        alertMessage = "Failed to summarize content"
-//                                        showAlert = true
-//                                      }
-//                                     }
-//                                    print("calling updateNoteSummary")
-                                     firebase.updateNoteSummary(note: updatedNote, newSummary: content) { updatedNote in
-//                                    firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
-                                      if let updatedNote = updatedNote {
-                                        self.note = updatedNote
-                                        completion?("\nNote updated successfully!")
-                                        showAlert = false
-                                        isPresented = false
-                                      }
-                                      else {
-                                        print("Failed to update summary")
-                                        alertMessage = "Failed to update summary"
-                                        showAlert = true
-                                      }
-                                    }
-                                  } else {
-                                    print("Failed to update note with parsed image content")
-                                    alertMessage = "Failed to update note with parsed image content"
-                                    showAlert = true
-                                  }
-                                }
-                              }
-                            } else {
-                                print("Failed to update note with image path")
-                                alertMessage = "Failed to update note with image"
-                                showAlert = true
-                            }
+                      Task {
+                        do {
+                          try await updateNote(thisNote: thisNote, imagePath: imagePath)
+                        } catch {
+                          print("Failed to update note")
+                          alertMessage = "Failed to update note"
+                          showAlert = true
+                        }
                       }
                     }
                     else {
@@ -237,5 +196,60 @@ struct TextParserView: View {
         Text("Failed to load course")
       }
     }
+  }
+  
+  private func updateNote(thisNote: Note, imagePath: String) async throws {
+        // Update the note document in firebase with the new file path
+        firebase.updateNoteImages(note: thisNote, imagePath: imagePath) { updatedNote in
+            if let updatedNote = updatedNote {
+              self.note = updatedNote
+              if let content = content {
+                var combinedContent = (thisNote.content) + "\n" + content
+                firebase.updateNoteContentCompletion(note: updatedNote, newContent: combinedContent) { updatedNote in
+                  if let updatedNote = updatedNote {
+                    self.note = updatedNote
+                    // let summary = try await summarizeContent(content: content)
+                    Task {
+                      var updatedSummary = combinedContent
+                      print("doing task!")
+                      do {
+                        updatedSummary = try await openAI.summarizeContent(content: combinedContent)
+                        print("new summary done")
+                      } catch {
+                        print("Failed to summarize content")
+                        alertMessage = "Failed to summarize content"
+                        showAlert = true
+                      }
+                      print("calling updateNoteSummary")
+//                     firebase.updateNoteSummary(note: updatedNote, newSummary: content) { updatedNote in
+                      firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
+                        if let updatedNote = updatedNote {
+                          self.note = updatedNote
+                          completion?("\nNote updated successfully!")
+                          showAlert = false
+                          isPresented = false
+                        }
+                        else {
+                          print("Failed to update summary")
+                          alertMessage = "Failed to update summary"
+                          showAlert = true
+                        }
+                      }
+                                      
+                                      
+                    }
+                  } else {
+                    print("Failed to update note with parsed image content")
+                    alertMessage = "Failed to update note with parsed image content"
+                    showAlert = true
+                  }
+                }
+              }
+            } else {
+                print("Failed to update note with image path")
+                alertMessage = "Failed to update note with image"
+                showAlert = true
+            }
+      }
   }
 }
