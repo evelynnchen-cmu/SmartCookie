@@ -54,12 +54,18 @@ struct TextParserView: View {
         
         ScrollView {
           if !isParsing {
-            if (text.isEmpty) {
-              Text("No text found")
-              .padding()
+            if let text = content {
+              if (text.isEmpty) {
+                Text("No text found")
+                    .padding()
+              }
+              else {
+                Text(text)
+                  .padding()
+              }
             }
             else {
-              Text(text)
+              Text("No text found")
                   .padding()
             }
           } else {
@@ -107,6 +113,7 @@ struct TextParserView: View {
                             if let note = note {
                               //                              print("Note created: \(note.id)")
                               newNote = note
+                              self.note = newNote
                               completion?("\nNote \(newNote?.title ?? "Unknown Name") created successfully!")
                               showAlert = false
                               isPresented = false

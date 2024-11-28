@@ -18,7 +18,14 @@ struct ScanView: View {
     @State private var showSaveForm = false
     @State private var courseName = ""
     @State private var noteTitle = ""
-    @State private var selectedTab = 0
+    @State private var selectedTab = 0 // For the images
+
+    // @State private var selectedTabIndex = 0 // For home
+    // @State private var navigateToCourse: Course?
+    // @State private var navigateToNote: Note?
+    @Binding var selectedTabIndex: Int
+    @Binding var navigateToCourse: Course?
+    @Binding var navigateToNote: Note?
 
     var body: some View {
       NavigationStack {
@@ -100,11 +107,15 @@ struct ScanView: View {
                 firebase: firebase,
                 isPresented: $showTextParserView,
                 course: course,
-                title: noteTitle
+                title: noteTitle,
+                note: $navigateToNote
               ) { message in
                 self.capturedImages = []
                 alertMessage = message
                 showAlert = true
+                self.selectedTabIndex = 0
+                self.navigateToCourse = course
+//                self.navigateToNote = newNote
               }
             }
             else {
@@ -150,6 +161,3 @@ struct ScanView: View {
     }
 }
 
-#Preview {
-    ScanView()
-}
