@@ -88,11 +88,11 @@ struct TextParserView: View {
                     }
                     else {
                       if let course = course {
-                        print("Course ID: \(course.id)")
+//                        print("Course ID: \(course.id)")
                         courseID = course.id ?? ""
                         userID = course.userID
                         
-                        var noteTitle = title.isEmpty ? "\(imagePath)" : title
+                        let noteTitle = title.isEmpty ? "\(imagePath)" : title
                         
                         Task {
                           await firebase.createNoteSimple(
@@ -104,7 +104,7 @@ struct TextParserView: View {
                             userID: userID
                           ) { note in
                             if let note = note {
-                              print("Note created: \(note.id)")
+//                              print("Note created: \(note.id)")
                               newNote = note
                               completion?("\nNote \(newNote?.title ?? "Unknown Name") created successfully!")
                               showAlert = false
@@ -171,7 +171,6 @@ struct TextParserView: View {
           .padding()
     }
     .onAppear {
-//        Parse image
         openAI.parseImage(image) { text in
           if let parsedText = text {
             print("Parsed image content: \(parsedText)")
@@ -204,24 +203,19 @@ struct TextParserView: View {
             if let updatedNote = updatedNote {
               self.note = updatedNote
               if let content = content {
-                var combinedContent = (thisNote.content) + "\n" + content
+                let combinedContent = (thisNote.content) + "\n" + content
                 firebase.updateNoteContentCompletion(note: updatedNote, newContent: combinedContent) { updatedNote in
                   if let updatedNote = updatedNote {
                     self.note = updatedNote
-                    // let summary = try await summarizeContent(content: content)
                     Task {
                       var updatedSummary = combinedContent
-                      print("doing task!")
                       do {
                         updatedSummary = try await openAI.summarizeContent(content: combinedContent)
                         print("new summary done")
                       } catch {
-                        print("Failed to summarize content")
                         alertMessage = "Failed to summarize content"
                         showAlert = true
                       }
-                      print("calling updateNoteSummary")
-//                     firebase.updateNoteSummary(note: updatedNote, newSummary: content) { updatedNote in
                       firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
                         if let updatedNote = updatedNote {
                           self.note = updatedNote
