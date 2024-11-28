@@ -96,12 +96,13 @@ struct ScanView: View {
           .fullScreenCover(isPresented: $showTextParserView) {
             if let course = course {
               TextParserView(
-                image: self.capturedImages[0],
+                images: self.capturedImages,
                 firebase: firebase,
                 isPresented: $showTextParserView,
                 course: course,
                 title: noteTitle
               ) { message in
+                self.capturedImages = []
                 alertMessage = message
                 showAlert = true
               }

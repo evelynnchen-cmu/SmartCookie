@@ -168,7 +168,7 @@ struct NoteView: View {
         }) {
           if let image = self.selectedImage {
             TextParserView(
-              image: image,
+              images: [image],
               firebase: firebase,
               isPresented: $showTextParserView,
               course: course,
