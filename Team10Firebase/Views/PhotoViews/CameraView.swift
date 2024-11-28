@@ -53,7 +53,8 @@ class CameraUIView: UIView, AVCapturePhotoCaptureDelegate {
 
         let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
         previewLayer.frame = bounds
-        previewLayer.videoGravity = .resizeAspectFill
+        // previewLayer.videoGravity = .resizeAspectFill
+        previewLayer.videoGravity = .resizeAspect
         layer.addSublayer(previewLayer)
 
         DispatchQueue.global(qos: .userInitiated).async {

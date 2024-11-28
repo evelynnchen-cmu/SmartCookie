@@ -11,24 +11,33 @@ import SwiftUI
 struct CameraContainerView: View {
     var onPhotoCaptured: (UIImage) -> Void
 
-    var body: some View {
-        ZStack {
-            CameraView(onPhotoCaptured: onPhotoCaptured)
-                .edgesIgnoringSafeArea(.all)
+    @Environment(\.presentationMode) var presentationMode
 
-            VStack {
-                Spacer()
-                Button(action: {
-                    NotificationCenter.default.post(name: .takePicture, object: nil)
-                }) {
-                    Text("Take Picture")
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-                .padding(.bottom, 30)
-            }
-        }
+    var body: some View {
+        CameraViewController(onPhotoCaptured: { image in
+            self.onPhotoCaptured(image)
+            self.presentationMode.wrappedValue.dismiss()
+        })
+        .edgesIgnoringSafeArea(.all)
     }
+    // var body: some View {
+    //     ZStack {
+    //         CameraView(onPhotoCaptured: onPhotoCaptured)
+    //             .edgesIgnoringSafeArea(.all)
+
+    //         VStack {
+    //             Spacer()
+    //             Button(action: {
+    //                 NotificationCenter.default.post(name: .takePicture, object: nil)
+    //             }) {
+    //                 Text("Take Picture")
+    //                     .padding()
+    //                     .background(Color.blue)
+    //                     .foregroundColor(.white)
+    //                     .cornerRadius(8)
+    //             }
+    //             .padding(.bottom, 30)
+    //         }
+    //     }
+    // }
 }

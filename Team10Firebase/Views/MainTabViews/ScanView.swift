@@ -1,20 +1,12 @@
 //  ScanView.swift
 //  Team10Firebase
 
-//  This view serves as the main scanning interface for the user. It allows the user to:
-//  1. Open the camera view by tapping the "Open Camera" button.
-//  2. Display the captured image once the user takes a picture.
-//  3. Provide "Close" and "Parse" buttons for further actions:
-//     - "Close" will reset the captured image and re-enable the camera.
-//     - "Parse" will handle the logic for processing the image.
-//  This view uses a `CameraContainerView` to handle camera interactions and photo capturing.
-
-
 import SwiftUI
 
 struct ScanView: View {
-    @State var capturedImage: UIImage?
-    @State private var showCamera = false
+    // @State var capturedImage: UIImage?
+    @State private var capturedImages: [UIImage] = []
+    @State private var showCamera = true
 //  TODO: Refactor so scanview and noteview use same fb object
     @StateObject var firebase = Firebase()
     @State private var userID: String = ""
@@ -26,134 +18,134 @@ struct ScanView: View {
     @State private var showSaveForm = false
     @State private var courseName = ""
     @State private var noteTitle = ""
+    @State private var selectedTab = 0
 
     var body: some View {
-        NavigationStack {
-            VStack {
-                if let image = capturedImage {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 300, height: 300)
-                        .padding()
-                    
-                    HStack {
-                        Button("Close") {
-                            capturedImage = nil
-                        }
-                        .padding()
-                        .background(Color.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                        
-                        Button("Parse") {
-                            print("Parsing image...")
-                        }
-                        .padding()
-                        .background(Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                    }
-                } else {
-                    Text("No image captured")
-                        .foregroundColor(.gray)
-                        .padding()
-                }
-
-                Button(action: {
+      NavigationStack {
+        ZStack {
+          Color.blue.opacity(0.2).edgesIgnoringSafeArea(.all) // Background color for the entire view
+          VStack {
+            Text("Scan Results")
+              .font(.title)
+              .padding(.top)
+            
+            TabView(selection: $selectedTab) {
+              // iPhone 11 image size: 3024.0 x 4032.0
+              ForEach(capturedImages.indices, id: \.self) { index in
+                Image(uiImage: capturedImages[index])
+                  .resizable()
+                  .scaledToFit()
+                  .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
+                //                          .padding()
+                  .tag(index) // Tag each image with its index
+              }
+              
+              
+              ZStack {
+                Rectangle()
+                  .fill(Color.gray.opacity(0.5))
+                  .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
+                  .overlay(
+                    //                                RoundedRectangle(cornerRadius: 10)
+                    Rectangle()
+                      .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
+                      .foregroundColor(.black)
+                  )
+                  .onTapGesture {
                     showCamera = true
-                }) {
-                    Text("Open Camera")
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-            }
-            .fullScreenCover(isPresented: $showCamera) {
-                CameraContainerView { image in
-                    self.capturedImage = image
-                    self.showCamera = false
-                    self.showSaveForm = true
-                }
-            }
-            .fullScreenCover(isPresented: $showTextParserView) {
-              if let image = self.capturedImage {
-                if let course = course {
-                  TextParserView(
-                    image: image,
-                    firebase: firebase,
-                    isPresented: $showTextParserView,
-                    course: course,
-                    title: noteTitle
-                  ) { message in
-                    alertMessage = message
-                    showAlert = true
                   }
+                VStack {
+                  Image(systemName: "plus")
+                    .font(.largeTitle)
+                  Text("Add new Picture")
+                    .font(.headline)
                 }
-                else {
-                  Text("Nil course")
-                }
+                .foregroundColor(.white)
               }
-              else {
-                Text("Nil image")
-              }
+              .tag(capturedImages.count)
             }
-//            .sheet(isPresented: $showSaveForm, onDismiss: {
-//              print("dismissed")
-//              if course != nil {
-//                  showTextParserView = true
-//                print("sheet presented")
-//              }
-//              else {
-//                print("sad")
-//              }
-//            }) {
-//              AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { course in
-//                if let courseObj = course {
-//                  self.course = courseObj
-//                }
-//              }
-            .sheet(isPresented: $showSaveForm) {
-              AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
-                if let courseObj = course {
-                  self.course = courseObj
-                }
-                self.noteTitle = title
+            //                .background(Color.blue.opacity(0.2))
+            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
+            .frame(maxHeight: UIScreen.main.bounds.height - 300)
+            .onAppear {
+              setupPageControlAppearance()
+            }
+            
+            if !capturedImages.isEmpty {
+              Button("Extract All") {
+                showSaveForm = true
               }
-            //   .onDisappear {
-            //     print("dismissed")
-            //     if course != nil {
-            //         showTextParserView = true
-            //       print("sheet presented")
-            //     }
-            //     else {
-            //       print("sad")
-            //     }
-            //   }
+              .padding()
+              // .background(Color.green)
+              // .background(Color.gray.opacity(0.2))
+              .background(.white)
+              // .foregroundColor(.white)
+              .foregroundColor(.black)
+              .cornerRadius(8)
+            }
           }
-            .onChange(of: showSaveForm) {
-               print("showSaveForm changed")
-              if course != nil {
-                  showTextParserView = true
+          //            }
+          //            .background(Color.blue.opacity(0.2))
+          .fullScreenCover(isPresented: $showCamera) {
+            CameraContainerView { image in
+              self.capturedImages.append(image)
+              self.showCamera = false
+              self.selectedTab = self.capturedImages.count - 1
+            }
+          }
+          .fullScreenCover(isPresented: $showTextParserView) {
+            if let course = course {
+              TextParserView(
+                image: self.capturedImages[0],
+                firebase: firebase,
+                isPresented: $showTextParserView,
+                course: course,
+                title: noteTitle
+              ) { message in
+                alertMessage = message
+                showAlert = true
               }
             }
-            .onAppear() {
-              firebase.getCourses()
-              courses = firebase.courses
-              firebase.getUsers()
-              firebase.getFirstUser { user in
-                  if let user = user {
-                    userID = user.id ?? ""
-                  } else {
-                      alertMessage = "Failed to fetch user."
-                  }
+            else {
+              Text("Nil course")
+            }
+          }
+          .sheet(isPresented: $showSaveForm) {
+            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
+              if let courseObj = course {
+                self.course = courseObj
+              }
+              self.noteTitle = title
+            }
+          }
+          .onChange(of: showSaveForm) {
+            print("showSaveForm changed")
+            if course != nil {
+              showTextParserView = true
+            }
+          }
+          .onAppear() {
+            firebase.getCourses()
+            courses = firebase.courses
+            firebase.getUsers()
+            firebase.getFirstUser { user in
+              if let user = user {
+                userID = user.id ?? ""
+              } else {
+                alertMessage = "Failed to fetch user."
               }
             }
-            .alert(isPresented: $showAlert) {
-                Alert(title: Text("Camera Scan"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
-            }
+          }
+          .alert(isPresented: $showAlert) {
+            Alert(title: Text("Camera Scan"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+          }
         }
+      }
+    }
+
+    private func setupPageControlAppearance() {
+        UIPageControl.appearance().currentPageIndicatorTintColor = .blue
+        UIPageControl.appearance().pageIndicatorTintColor = UIColor.blue.withAlphaComponent(0.2)
     }
 }
 
