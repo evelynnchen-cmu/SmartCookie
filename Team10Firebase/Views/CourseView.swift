@@ -162,6 +162,52 @@ struct CourseView: View {
   }()
     
   
+//  private var directNotesSection: some View {
+//      VStack(alignment: .leading) {
+//          Text("Notes in Course")
+//              .font(.headline)
+//          
+//          ForEach(viewModel.notes, id: \.id) { note in
+//              HStack {
+//                  NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
+//                      VStack(alignment: .leading) {
+//                          Text(note.title)
+//                              .font(.body)
+//                              .foregroundColor(.blue)
+//                          Text(note.summary)
+//                              .font(.caption)
+//                              .foregroundColor(.gray)
+//                          Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+//                              .font(.caption2)
+//                              .foregroundColor(.secondary)
+//                      }
+//                      .padding(.vertical, 5)
+//                  }
+//                  
+//                  Spacer()
+//                  
+//                  Button(action: {
+//                      editStates.noteToEdit = note
+//                      editStates.showEditNoteModal = true
+//                  }) {
+//                      Image(systemName: "pencil.circle.fill")
+//                          .font(.title3)
+//                          .foregroundColor(.blue)
+//                  }
+//              }
+//              .contextMenu {
+//                  Button(role: .destructive) {
+//                      noteToDelete = note
+//                      activeAlert = .deleteNote
+//                  } label: {
+//                      Label("Delete Note", systemImage: "trash")
+//                  }
+//              }
+//          }
+//      }
+//      .padding(.top, 10)
+//  }
+  
   private var directNotesSection: some View {
       VStack(alignment: .leading) {
           Text("Notes in Course")
@@ -184,16 +230,15 @@ struct CourseView: View {
                       .padding(.vertical, 5)
                   }
                   
-                  Spacer()
-                  
                   Button(action: {
                       editStates.noteToEdit = note
                       editStates.showEditNoteModal = true
                   }) {
-                      Image(systemName: "pencil.circle.fill")
-                          .font(.title3)
+                      Image(systemName: "pencil.circle")
+                          .font(.caption) // Smaller size
                           .foregroundColor(.blue)
                   }
+                  .padding(.leading, 8) // Add slight spacing
               }
               .contextMenu {
                   Button(role: .destructive) {
@@ -208,6 +253,53 @@ struct CourseView: View {
       .padding(.top, 10)
   }
 
+
+//  private var foldersSection: some View {
+//      VStack(alignment: .leading) {
+//          Text("Folders")
+//              .font(.headline)
+//          
+//          ForEach(viewModel.folders, id: \.id) { folder in
+//              HStack {
+//                  NavigationLink(
+//                      destination: FolderView(
+//                          firebase: viewModel.firebase,
+//                          course: viewModel.course,
+//                          folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
+//                      )
+//                  ) {
+//                      Text(folder.folderName)
+//                          .font(.body)
+//                          .foregroundColor(.blue)
+//                          .padding()
+//                          .background(Color.gray.opacity(0.2))
+//                          .cornerRadius(8)
+//                          .padding(.vertical, 2)
+//                  }
+//                  
+//                  Spacer()
+//                  
+//                  Button(action: {
+//                      editStates.folderToEdit = folder
+//                      editStates.showEditFolderModal = true
+//                  }) {
+//                      Image(systemName: "pencil.circle.fill")
+//                          .font(.title3)
+//                          .foregroundColor(.blue)
+//                  }
+//              }
+//              .contextMenu {
+//                  Button(role: .destructive) {
+//                      folderToDelete = folder
+//                      activeAlert = .deleteFolder
+//                  } label: {
+//                      Label("Delete Folder", systemImage: "trash")
+//                  }
+//              }
+//          }
+//      }
+//  }
+  
   private var foldersSection: some View {
       VStack(alignment: .leading) {
           Text("Folders")
@@ -231,16 +323,15 @@ struct CourseView: View {
                           .padding(.vertical, 2)
                   }
                   
-                  Spacer()
-                  
                   Button(action: {
                       editStates.folderToEdit = folder
                       editStates.showEditFolderModal = true
                   }) {
-                      Image(systemName: "pencil.circle.fill")
-                          .font(.title3)
+                      Image(systemName: "pencil.circle")
+                          .font(.caption) // Smaller size
                           .foregroundColor(.blue)
                   }
+                  .padding(.leading, 8) // Add slight spacing
               }
               .contextMenu {
                   Button(role: .destructive) {
@@ -253,4 +344,5 @@ struct CourseView: View {
           }
       }
   }
+
 }
