@@ -61,22 +61,43 @@ struct AppView: View {
   // }
   var body: some View {
         ZStack {
+//             VStack {
+//                  switch selectedTab {
+// //              switch pendingTab {
+//               case .house:
+//                 // HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+//                 NavigationStack(path: $path) { // Use NavigationStack with path
+//                         HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+//                     }
+//               case .scan:
+//                 ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+//               case .chat:
+//                 ChatView()
+// //              case nil:
+// //                HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+//               }
+//               Spacer()
+//             }
             VStack {
-                 switch selectedTab {
-//              switch pendingTab {
-              case .house:
-                // HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
-                NavigationStack(path: $path) { // Use NavigationStack with path
+                NavigationStack(path: $path) {
+                    switch selectedTab {
+                    case .house:
                         HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                            .onAppear {
+                                if let course = navigateToCourse, let note = navigateToNote {
+                                    path.append(course)
+                                    path.append(note)
+                                    navigateToCourse = nil
+                                    navigateToNote = nil
+                                }
+                            }
+                    case .scan:
+                        ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                    case .chat:
+                        ChatView()
                     }
-              case .scan:
-                ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
-              case .chat:
-                ChatView()
-//              case nil:
-//                HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
-              }
-              Spacer()
+                }
+                Spacer()
             }
             // .padding(.bottom, 50)
             .padding(.bottom, isKeyboardVisible ? 0 : 50)
@@ -107,6 +128,9 @@ struct AppView: View {
                      pendingTab = tab
                      showAlert = true
                    } else {
+                    // if selectedTab == .house {
+                    //         path.removeLast(path.count) // Reset the navigation stack
+                    //     }
                      selectedTab = tab
                      NotificationCenter.default.post(name: tab.notificationName, object: nil)
                    }
@@ -127,10 +151,15 @@ struct AppView: View {
             NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
                 isKeyboardVisible = false
             }
+            NotificationCenter.default.addObserver(forName: .resetHomeView, object: nil, queue: .main) { _ in
+                selectedTab = .house
+                path.removeLast(path.count) // Reset the navigation stack
+            }
         }
         .onDisappear {
             NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
             NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+            NotificationCenter.default.removeObserver(self, name: .resetHomeView, object: nil)
         }
         // .onAppear {
         //     UITabBar.appearance().backgroundColor = UIColor.white

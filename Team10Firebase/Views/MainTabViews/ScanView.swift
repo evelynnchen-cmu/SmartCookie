@@ -115,7 +115,8 @@ struct ScanView: View {
                 showAlert = true
                 self.selectedTabIndex = 0
                 self.navigateToCourse = course
-//                self.navigateToNote = newNote
+               self.navigateToNote = navigateToNote
+                NotificationCenter.default.post(name: .resetHomeView, object: nil)
               }
             }
             else {
