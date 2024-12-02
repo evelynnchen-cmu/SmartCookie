@@ -496,13 +496,34 @@ class Firebase: ObservableObject {
       }
     }
     
-    func updateNoteImages(note: Note, imagePath: String, completion: @escaping (Note?) -> Void) {
+    // func updateNoteImages(note: Note, imagePath: String, completion: @escaping (Note?) -> Void) {
+    //   let noteID = note.id ?? ""
+    //   let noteRef = db.collection(noteCollection).document(noteID)
+      
+    //   var images = note.images
+    //   images.append(imagePath)
+      
+    //   noteRef.updateData(["images": images]) { error in
+    //     if let error = error {
+    //       print("Error updating note images: \(error.localizedDescription)")
+    //       completion(nil)
+    //     } else {
+    //       print("Note images successfully updated")
+    //       if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+    //         self.notes[index].images = images
+    //         completion(self.notes[index])
+    //       }
+    //     }
+    //   }
+    // }
+
+    func updateNoteImages(note: Note, imagePaths: [String], completion: @escaping (Note?) -> Void) {
       let noteID = note.id ?? ""
       let noteRef = db.collection(noteCollection).document(noteID)
       
       var images = note.images
-      images.append(imagePath)
-      
+      images.append(contentsOf: imagePaths)
+
       noteRef.updateData(["images": images]) { error in
         if let error = error {
           print("Error updating note images: \(error.localizedDescription)")

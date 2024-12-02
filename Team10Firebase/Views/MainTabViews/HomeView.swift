@@ -12,6 +12,9 @@ struct HomeView: View {
     @State private var userName: String = "User"
     @State private var streakLength: Int = 0
     @State private var hasCompletedStreakToday: Bool = false
+
+    @Binding var navigateToCourse: Course?
+    @Binding var navigateToNote: Note?
     
     var body: some View {
         NavigationView {
@@ -119,7 +122,18 @@ struct HomeView: View {
                     secondaryButton: .cancel()
                 )
             }
+            .onAppear {
+                if let course = navigateToCourse, let note = navigateToNote {
+                    // Navigate to the specific course and note
+                    navigateToCourse = nil
+                    navigateToNote = nil
+                    // Perform navigation logic here
+                    // For example, you might push a new view onto the navigation stack
+                    // or update the state to show the specific course and note
+                }
+            }
         }
+        
     }
   
     private func getStreakInfo() {
@@ -166,6 +180,3 @@ struct StreakIndicator: View {
     }
 }
 
-#Preview {
-    HomeView()
-}

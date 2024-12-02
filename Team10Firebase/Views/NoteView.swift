@@ -11,12 +11,13 @@ struct NoteView: View {
   @State private var showAlert = false
   @State private var alertMessage = ""
   var note: Note
+  var course: Course
   
-  
-  init(firebase: Firebase, note: Note) {
+  init(firebase: Firebase, note: Note, course: Course) {
     self.firebase = firebase
     _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
     self.note = note
+    self.course = course
   }
   
   var body: some View {
@@ -125,6 +126,41 @@ struct NoteView: View {
             showTextParserView = true
           }
         }
+//        .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
+//          if alertMessage != "" {
+//            showAlert = true
+//          }
+//        }) {
+//          if let image = self.selectedImage {
+////            TextParserView(
+////              image: image,
+////              viewModel: viewModel,
+////              firebase: firebase,
+////              isPresented: $showTextParserView,
+////              note: note
+////            ) { message in
+////              alertMessage = message
+////            }
+////            var course = firebase.getCourse(note.courseID) {
+////              courseResult in course = courseResult
+////            }
+//            TextParserViewNewNote(
+//              image: image,
+//              firebase: firebase,
+//              isPresented: $showTextParserView,
+//              course: course,
+//              title: note.title,
+//              note: $viewModel.note
+//            ) { message in
+//              alertMessage = message
+//              showAlert = true
+//              viewModel.loadImages()
+//            }
+//          }
+//          else {
+//            Text("Nil image")
+//          }
+//        }
         .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
           if alertMessage != "" {
             showAlert = true
@@ -132,13 +168,15 @@ struct NoteView: View {
         }) {
           if let image = self.selectedImage {
             TextParserView(
-              image: image,
-              viewModel: viewModel,
+              images: [image],
               firebase: firebase,
               isPresented: $showTextParserView,
-              note: note
+              course: course,
+              title: note.title,
+              note: $viewModel.note
             ) { message in
               alertMessage = message
+              viewModel.loadImages()
             }
           }
           else {
@@ -183,4 +221,5 @@ struct NoteView: View {
     formatter.timeStyle = .short
     return formatter
   }()
+  
 }
