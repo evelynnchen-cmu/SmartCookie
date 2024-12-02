@@ -703,4 +703,35 @@ class Firebase: ObservableObject {
         }
     }
 
+    func getFoldersById(folderIDs: [String], completion: @escaping ([Folder]) -> Void) {
+      let foldersRef = db.collection("Folder") // Adjust collection name if needed
+      var folders: [Folder] = []
+      
+      for folderID in folderIDs {
+          foldersRef.document(folderID).getDocument { documentSnapshot, error in
+              if let error = error {
+                  print("Error fetching folder by ID: \(error.localizedDescription)")
+                  return
+              }
+              
+              guard let document = documentSnapshot, document.exists else {
+                  print("Folder not found for ID: \(folderID)")
+                  return
+              }
+              
+              if let folder = try? document.data(as: Folder.self) {
+                  folders.append(folder)
+              } else {
+                  print("Failed to parse folder data for ID: \(folderID)")
+              }
+              
+              // Call the completion block once all folder IDs have been processed
+              if folders.count == folderIDs.count {
+                  completion(folders)
+              }
+          }
+      }
+    }
+
+
 }
