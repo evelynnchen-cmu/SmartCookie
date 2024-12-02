@@ -892,6 +892,31 @@ class Firebase: ObservableObject {
           }
       }
     }
+  
+  
+  // Add this method to your Firebase class
+  func updateCourseName(courseID: String, newName: String, completion: @escaping (Error?) -> Void) {
+      let courseRef = db.collection(courseCollection).document(courseID)
+      
+      courseRef.updateData([
+          "courseName": newName,
+          "fileLocation": "/\(newName)/"
+      ]) { error in
+          if let error = error {
+              print("Error updating course name: \(error.localizedDescription)")
+              completion(error)
+          } else {
+              print("Course name successfully updated")
+              // Refresh courses list
+              self.getCourses()
+              completion(nil)
+          }
+      }
+  }
+  
+  
+  
+  
 
 
 }

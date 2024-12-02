@@ -12,6 +12,8 @@ struct HomeView: View {
     @State private var userName: String = "User"
     @State private var streakLength: Int = 0
     @State private var hasCompletedStreakToday: Bool = false
+    @State private var showEditModal = false
+    @State private var courseToEdit: Course?
 
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
@@ -63,35 +65,66 @@ struct HomeView: View {
                         }
                         .padding(.horizontal)
                         
-                        LazyVGrid(columns: [
-                            GridItem(.flexible(), spacing: 16),
-                            GridItem(.flexible(), spacing: 16)
-                        ], spacing: 16) {
-                            ForEach(firebase.courses, id: \.id) { course in
-                              NavigationLink(destination: CourseView(course: course, firebase: firebase)) {
-                                    Text(course.courseName)
-                                        .font(.headline)
-                                        .frame(height: 100)
-                                        .frame(maxWidth: .infinity)
-                                        .background(Color.blue.opacity(0.2))
-                                        .cornerRadius(12)
-                                        .foregroundColor(.primary)
-                                }
-                                .simultaneousGesture(
-                                    LongPressGesture()
-                                        .onEnded { _ in
-                                            courseToDelete = course
-                                            showDeleteAlert = true
-                                        }
-                                )
-                            }
-                        }
-                        .padding(.horizontal)
+                      LazyVGrid(columns: [
+                          GridItem(.flexible(), spacing: 16),
+                          GridItem(.flexible(), spacing: 16)
+                      ], spacing: 16) {
+                          ForEach(firebase.courses, id: \.id) { course in
+                              ZStack(alignment: .topTrailing) {
+                                  NavigationLink(destination: CourseView(course: course, firebase: firebase)) {
+                                      Text(course.courseName)
+                                          .font(.headline)
+                                          .frame(height: 100)
+                                          .frame(maxWidth: .infinity)
+                                          .background(Color.blue.opacity(0.2))
+                                          .cornerRadius(12)
+                                          .foregroundColor(.primary)
+                                  }
+                                  
+                                  HStack {
+                                      Button(action: {
+                                          courseToEdit = course
+                                          showEditModal = true
+                                      }) {
+                                          Image(systemName: "pencil.circle.fill")
+                                              .font(.title3)
+                                              .foregroundColor(.blue)
+                                              .background(Color.white.opacity(0.8))
+                                              .clipShape(Circle())
+                                      }
+                                      .padding(8)
+                                      .zIndex(1)
+                                  }
+                              }
+                              .contentShape(Rectangle())
+                              .simultaneousGesture(
+                                  LongPressGesture()
+                                      .onEnded { _ in
+                                          courseToDelete = course
+                                          showDeleteAlert = true
+                                      }
+                              )
+                          }
+                      }
+                      .padding(.horizontal)
                     }
                 }
                 .sheet(isPresented: $showAddCourseModal) {
-                    // Need onCourseCreated to refresh HomeView after course creation
                     AddCourseModal(onCourseCreated: firebase.getCourses, firebase: firebase)
+                }
+                .sheet(isPresented: $showEditModal) {
+                    if let course = courseToEdit {
+                        EditCourseModal(
+                            course: course,
+                            firebase: firebase,
+                            onCourseUpdated: {
+                                firebase.getCourses()
+                                showEditModal = false
+                            }
+                        )
+                    } else {
+                      Text("No course selected")
+                  }
                 }
                 .onAppear {
                     firebase.getCourses()
@@ -124,12 +157,8 @@ struct HomeView: View {
             }
             .onAppear {
                 if let course = navigateToCourse, let note = navigateToNote {
-                    // Navigate to the specific course and note
                     navigateToCourse = nil
                     navigateToNote = nil
-                    // Perform navigation logic here
-                    // For example, you might push a new view onto the navigation stack
-                    // or update the state to show the specific course and note
                 }
             }
         }
@@ -142,7 +171,6 @@ struct HomeView: View {
                 userName = user.name
                 streakLength = user.streak.currentStreakLength
                 
-                // Check if streak was completed today
                 if let lastQuizDate = user.streak.lastQuizCompletedAt {
                     hasCompletedStreakToday = Calendar.current.isDate(lastQuizDate, inSameDayAs: Date())
                 } else {
