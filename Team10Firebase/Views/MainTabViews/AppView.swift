@@ -65,7 +65,10 @@ struct AppView: View {
                  switch selectedTab {
 //              switch pendingTab {
               case .house:
-                HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                // HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                NavigationStack(path: $path) { // Use NavigationStack with path
+                        HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                    }
               case .scan:
                 ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
               case .chat:
