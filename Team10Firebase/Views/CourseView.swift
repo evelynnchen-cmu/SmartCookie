@@ -127,7 +127,7 @@ struct CourseView: View {
                 .font(.headline)
             
             ForEach(viewModel.notes, id: \.id) { note in
-                NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note)) {
+              NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
                     VStack(alignment: .leading) {
                         Text(note.title)
                             .font(.body)

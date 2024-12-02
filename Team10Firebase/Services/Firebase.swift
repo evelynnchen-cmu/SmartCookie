@@ -496,13 +496,34 @@ class Firebase: ObservableObject {
       }
     }
     
-    func updateNoteImages(note: Note, imagePath: String, completion: @escaping (Note?) -> Void) {
+    // func updateNoteImages(note: Note, imagePath: String, completion: @escaping (Note?) -> Void) {
+    //   let noteID = note.id ?? ""
+    //   let noteRef = db.collection(noteCollection).document(noteID)
+      
+    //   var images = note.images
+    //   images.append(imagePath)
+      
+    //   noteRef.updateData(["images": images]) { error in
+    //     if let error = error {
+    //       print("Error updating note images: \(error.localizedDescription)")
+    //       completion(nil)
+    //     } else {
+    //       print("Note images successfully updated")
+    //       if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+    //         self.notes[index].images = images
+    //         completion(self.notes[index])
+    //       }
+    //     }
+    //   }
+    // }
+
+    func updateNoteImages(note: Note, imagePaths: [String], completion: @escaping (Note?) -> Void) {
       let noteID = note.id ?? ""
       let noteRef = db.collection(noteCollection).document(noteID)
       
       var images = note.images
-      images.append(imagePath)
-      
+      images.append(contentsOf: imagePaths)
+
       noteRef.updateData(["images": images]) { error in
         if let error = error {
           print("Error updating note images: \(error.localizedDescription)")
@@ -702,6 +723,145 @@ class Firebase: ObservableObject {
             }
         }
     }
+  
+  func handleQuestionResult(
+      question: MCQuestion,
+      isCorrect: Bool,
+      userID: String,
+      noteID: String,
+      completion: @escaping (Error?) -> Void
+  ) {
+      let query = db.collection(mcQuestionCollection)
+          .whereField("userID", isEqualTo: userID)
+          .whereField("noteID", isEqualTo: noteID)
+          .whereField("question", isEqualTo: question.question)
+      
+      query.getDocuments { [weak self] (snapshot, error) in
+          if let error = error {
+              completion(error)
+              return
+          }
+          
+          if let existingDoc = snapshot?.documents.first {
+              if isCorrect {
+                  // Delete question if answered correctly
+                  existingDoc.reference.delete { error in
+                      completion(error)
+                  }
+              } else {
+                  // Increment attempt count if answered incorrectly
+                  let currentAttempts = (try? existingDoc.data(as: MCQuestion.self))?.attemptCount ?? 0
+                  existingDoc.reference.updateData([
+                      "attemptCount": currentAttempts + 1,
+                      "lastAttemptDate": Date()
+                  ]) { error in
+                      completion(error)
+                  }
+              }
+          } else if !isCorrect {
+              // Only save new incorrect questions
+              var newQuestion = question
+              newQuestion.userID = userID
+              newQuestion.noteID = noteID
+              newQuestion.attemptCount = 1
+              newQuestion.lastAttemptDate = Date()
+              
+              do {
+                  try self?.db.collection(self?.mcQuestionCollection ?? "").addDocument(from: newQuestion)
+                  completion(nil)
+              } catch {
+                  completion(error)
+              }
+          } else {
+              // Correct answer for new question, no action needed
+              completion(nil)
+          }
+      }
+  }
+  
+  func getIncorrectQuestions(userID: String, noteID: String, completion: @escaping ([MCQuestion]) -> Void) {
+      db.collection(mcQuestionCollection)
+          .whereField("userID", isEqualTo: userID)
+          .whereField("noteID", isEqualTo: noteID)
+          .getDocuments { (snapshot, error) in
+              if let error = error {
+                  print("Error fetching incorrect questions: \(error)")
+                  completion([])
+                  return
+              }
+              
+              let questions = snapshot?.documents.compactMap { doc -> MCQuestion? in
+                  try? doc.data(as: MCQuestion.self)
+              } ?? []
+              
+              completion(questions)
+          }
+  }
+  
+  func updateUserStreak(userID: String, quizScore: Int, completion: @escaping (Error?) -> Void) {
+      let userRef = db.collection(userCollection).document(userID)
+      
+      userRef.getDocument { (document, error) in
+          if let error = error {
+              completion(error)
+              return
+          }
+          
+          guard let document = document,
+                let user = try? document.data(as: User.self) else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "User not found"]))
+              return
+          }
+          
+          guard quizScore >= 80 else {
+              // don't need to update if quiz score is < 80
+              completion(nil)
+              return
+          }
+          
+          let currentDate = Date()
+          
+          // If this is the first quiz completion
+          if user.streak.lastQuizCompletedAt == nil {
+              userRef.updateData([
+                  "streak.currentStreakLength": 1,
+                  "streak.lastQuizCompletedAt": currentDate
+              ]) { error in
+                  completion(error)
+              }
+              return
+          }
+          
+          // to compare dates
+          let calendar = Calendar.current
+          
+          guard let lastQuizDate = user.streak.lastQuizCompletedAt else {
+              completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid last quiz date"]))
+              return
+          }
+          
+          // Check if the last quiz was completed today
+          let isToday = calendar.isDate(lastQuizDate, inSameDayAs: currentDate)
+          if isToday {
+              completion(nil) // no need to update streak
+              return
+          }
+          
+          // Check if the last quiz was completed yesterday
+          let yesterday = calendar.date(byAdding: .day, value: -1, to: currentDate)!
+          let wasYesterday = calendar.isDate(lastQuizDate, inSameDayAs: yesterday)
+          
+          // Update streak based on timing
+          let newStreakLength = wasYesterday ? user.streak.currentStreakLength + 1 : 1
+          
+          userRef.updateData([
+              "streak.currentStreakLength": newStreakLength,
+              "streak.lastQuizCompletedAt": currentDate
+          ]) { error in
+              completion(error)
+          }
+      }
+  }
 
     func getFoldersById(folderIDs: [String], completion: @escaping ([Folder]) -> Void) {
       let foldersRef = db.collection("Folder") // Adjust collection name if needed

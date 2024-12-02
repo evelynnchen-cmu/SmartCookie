@@ -10,6 +10,11 @@ struct HomeView: View {
     @State private var showDeleteAlert = false
     @State private var courseToDelete: Course?
     @State private var userName: String = "User"
+    @State private var streakLength: Int = 0
+    @State private var hasCompletedStreakToday: Bool = false
+
+    @Binding var navigateToCourse: Course?
+    @Binding var navigateToNote: Note?
     
     var body: some View {
         NavigationView {
@@ -27,6 +32,8 @@ struct HomeView: View {
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.blue)
+                              
+                              StreakIndicator(count: streakLength, isActiveToday: hasCompletedStreakToday)
                             }
                             Spacer()
                             NavigationLink(destination: SettingsView()) {
@@ -100,6 +107,7 @@ struct HomeView: View {
                             errorMessage = "Failed to fetch user."
                         }
                     }
+                    getStreakInfo()
                 }
             }
             .alert(isPresented: $showDeleteAlert) {
@@ -114,10 +122,61 @@ struct HomeView: View {
                     secondaryButton: .cancel()
                 )
             }
+            .onAppear {
+                if let course = navigateToCourse, let note = navigateToNote {
+                    // Navigate to the specific course and note
+                    navigateToCourse = nil
+                    navigateToNote = nil
+                    // Perform navigation logic here
+                    // For example, you might push a new view onto the navigation stack
+                    // or update the state to show the specific course and note
+                }
+            }
+        }
+        
+    }
+  
+    private func getStreakInfo() {
+        firebase.getFirstUser { user in
+            if let user = user {
+                userName = user.name
+                streakLength = user.streak.currentStreakLength
+                
+                // Check if streak was completed today
+                if let lastQuizDate = user.streak.lastQuizCompletedAt {
+                    hasCompletedStreakToday = Calendar.current.isDate(lastQuizDate, inSameDayAs: Date())
+                } else {
+                    hasCompletedStreakToday = false
+                }
+            } else {
+                errorMessage = "Failed to fetch user."
+            }
         }
     }
 }
 
-#Preview {
-    HomeView()
+struct StreakIndicator: View {
+    let count: Int
+    let isActiveToday: Bool
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Text("\(count)")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(isActiveToday ? .orange : .gray)
+            
+            Image(systemName: isActiveToday ? "flame.fill" : "flame")
+                .font(.title2)
+                .foregroundColor(isActiveToday ? .orange : .gray)
+
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(isActiveToday ? Color.orange.opacity(0.1) : Color.gray.opacity(0.1))
+        )
+    }
 }
+
