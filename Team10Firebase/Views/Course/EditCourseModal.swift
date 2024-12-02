@@ -16,12 +16,20 @@ struct EditCourseModal: View {
     @ObservedObject var firebase: Firebase
     var onCourseUpdated: () -> Void
     
+//    init(course: Course, firebase: Firebase, onCourseUpdated: @escaping () -> Void) {
+//        self.course = course
+//        self.firebase = firebase
+//        self.onCourseUpdated = onCourseUpdated
+//        _courseName = State(initialValue: course.courseName)
+//    }
     init(course: Course, firebase: Firebase, onCourseUpdated: @escaping () -> Void) {
         self.course = course
         self.firebase = firebase
         self.onCourseUpdated = onCourseUpdated
         _courseName = State(initialValue: course.courseName)
+        print("Debug: Initializing EditCourseModal for course: \(course.courseName)")
     }
+
     
     var body: some View {
         NavigationView {

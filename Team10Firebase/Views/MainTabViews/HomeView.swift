@@ -84,6 +84,10 @@ struct HomeView: View {
                                   HStack {
                                       Button(action: {
                                           courseToEdit = course
+                                          print("Debug: courseToEdit.id = \(course.id ?? "nil")")
+
+                                          print("Debug: courseToEdit set to \(course.courseName)")
+                                          
                                           showEditModal = true
                                       }) {
                                           Image(systemName: "pencil.circle.fill")
@@ -112,18 +116,34 @@ struct HomeView: View {
                 .sheet(isPresented: $showAddCourseModal) {
                     AddCourseModal(onCourseCreated: firebase.getCourses, firebase: firebase)
                 }
+//                .sheet(isPresented: $showEditModal) {
+//                    if let course = courseToEdit {
+//                        EditCourseModal(
+//                            course: course,
+//                            firebase: firebase,
+//                            onCourseUpdated: {
+//                                print("Debug: Course updated successfully")
+//                                firebase.getCourses()
+//                                showEditModal = false
+//                            }
+//                        )
+//                    } else {
+////                      Text("No course selected")
+//                        Text("Error: No course selected")
+//                  }
+//                }
                 .sheet(isPresented: $showEditModal) {
-                    if let course = courseToEdit {
-                        EditCourseModal(
-                            course: course,
-                            firebase: firebase,
-                            onCourseUpdated: {
-                                firebase.getCourses()
-                                showEditModal = false
-                            }
-                        )
-                    } else {
-                      Text("No course selected")
+                  if let courseToEdit = courseToEdit {
+                    EditCourseModal(
+                      course: courseToEdit,
+                      firebase: firebase,
+                      onCourseUpdated: {
+                        firebase.getCourses()
+                        showEditModal = false
+                      }
+                    )
+                  } else {
+                    Text("Error: No course selected")
                   }
                 }
                 .onAppear {
