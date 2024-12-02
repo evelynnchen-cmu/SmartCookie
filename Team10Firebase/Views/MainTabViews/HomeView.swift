@@ -163,7 +163,10 @@ struct HomeView: View {
                     message: Text("Are you sure you want to delete this course and all its associated data?"),
                     primaryButton: .destructive(Text("Delete")) {
                         if let courseToDelete = courseToDelete {
-                            firebase.deleteCourse(course: courseToDelete)
+                            // firebase.deleteCourse(course: courseToDelete)
+                          firebase.deleteCourse(courseID: courseToDelete.id ?? "") {_ in 
+                                // firebase.getCourses()
+                            }
                         }
                     },
                     secondaryButton: .cancel()

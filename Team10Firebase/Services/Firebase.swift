@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseFirestore
+import FirebaseStorage
 
 class Firebase: ObservableObject {
   private let db = Firestore.firestore()
@@ -39,8 +40,8 @@ class Firebase: ObservableObject {
       } ?? []
       
       print("Total courses fetched: \(self.courses.count)")
-//      for course in self.courses {
-//      }
+      //      for course in self.courses {
+      //      }
     }
   }
   
@@ -56,31 +57,31 @@ class Firebase: ObservableObject {
       } ?? []
       
       print("Total notes fetched: \(self.notes.count)")
-//      for note in self.notes {
-//      }
+      //      for note in self.notes {
+      //      }
     }
   }
   
   
   
   func getFolders(completion: @escaping ([Folder]) -> Void) {
-      db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
-          if let error = error {
-              print("Error fetching folders: \(error.localizedDescription)")
-              completion([])
-              return
-          }
-
-          let folders = querySnapshot?.documents.compactMap { document in
-              try? document.data(as: Folder.self)
-          } ?? []
-
-          print("Total folders fetched: \(folders.count)")
-//          for folder in folders {
-//          }
-
-          completion(folders)
+    db.collection(folderCollection).addSnapshotListener { querySnapshot, error in
+      if let error = error {
+        print("Error fetching folders: \(error.localizedDescription)")
+        completion([])
+        return
       }
+      
+      let folders = querySnapshot?.documents.compactMap { document in
+        try? document.data(as: Folder.self)
+      } ?? []
+      
+      print("Total folders fetched: \(folders.count)")
+      //          for folder in folders {
+      //          }
+      
+      completion(folders)
+    }
   }
   
   
@@ -214,13 +215,13 @@ class Firebase: ObservableObject {
   
   
   func createNote(
-      title: String,
-      summary: String,
-      content: String,
-      images: [String] = [],
-      course: Course,
-      folder: Folder? = nil,
-      completion: @escaping (Error?) -> Void
+    title: String,
+    summary: String,
+    content: String,
+    images: [String] = [],
+    course: Course,
+    folder: Folder? = nil,
+    completion: @escaping (Error?) -> Void
     // completion: @escaping (Result<String, Error>) -> Void
   ) {
     guard let courseID = course.id else {
@@ -323,61 +324,88 @@ class Firebase: ObservableObject {
     }
   }
   
+ 
+func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
+    var allNoteIDs: [String] = []
+    var imagePaths: [String] = []
 
-    func deleteCourse(course: Course) {
-      guard let courseID = course.id else {
-          print("Course ID is missing.")
-          return
-      }
+    let batch = db.batch()
+    let courseRef = db.collection("Course").document(courseID)
 
-      let batch = db.batch()
-      var allNoteIDs: [String] = [] 
+    // Fetch the course document to get the notes
+    courseRef.getDocument { (document, error) in
+        if let document = document, document.exists, let course = try? document.data(as: Course.self) {
+            allNoteIDs.append(contentsOf: course.notes)
+        }
 
-      allNoteIDs.append(contentsOf: course.notes)
-      let folderQuery = db.collection("Folder").whereField("courseID", isEqualTo: courseID)
+        let folderQuery = self.db.collection("Folder").whereField("courseID", isEqualTo: courseID)
+        folderQuery.getDocuments { (querySnapshot, error) in
+            if let error = error {
+                print("Error fetching folders: \(error.localizedDescription)")
+                completion(error)
+                return
+            }
 
-      folderQuery.getDocuments { (querySnapshot, error) in
-          if let error = error {
-              print("Error fetching folders: \(error.localizedDescription)")
-              return
-          }
+            guard let folderDocuments = querySnapshot?.documents else {
+                print("No folders found for course.")
+                completion(nil)
+                return
+            }
 
-          guard let folderDocuments = querySnapshot?.documents else {
-              print("No folders found for course.")
-              return
-          }
-          for folderDoc in folderDocuments {
-              let folderID = folderDoc.documentID
+            let dispatchGroup = DispatchGroup()
 
-              if let folder = try? folderDoc.data(as: Folder.self) {
-                  allNoteIDs.append(contentsOf: folder.notes) 
-              }
+            for folderDoc in folderDocuments {
+                let folderID = folderDoc.documentID
 
-              let folderRef = self.db.collection("Folder").document(folderID)
-              batch.deleteDocument(folderRef) 
-          }
+                if let folder = try? folderDoc.data(as: Folder.self) {
+                    allNoteIDs.append(contentsOf: folder.notes)
+                }
 
-          for noteID in allNoteIDs {
-              let noteRef = self.db.collection("Note").document(noteID)
-              batch.deleteDocument(noteRef)
-          }
+                let folderRef = self.db.collection("Folder").document(folderID)
+                batch.deleteDocument(folderRef)
+            }
 
-          let courseRef = self.db.collection("Course").document(courseID)
-          batch.deleteDocument(courseRef)
-          batch.commit { error in
-              if let error = error {
-                  print("Error committing batch delete: \(error.localizedDescription)")
-              } else {
-                  print("Successfully deleted course \(courseID) and all associated data.")
-              }
-              self.getCourses()
-          }
-      }
-  }
+            for noteID in allNoteIDs {
+                dispatchGroup.enter()
+                let noteRef = self.db.collection("Note").document(noteID)
+                noteRef.getDocument { document, error in
+                    if let document = document, document.exists, let data = document.data() {
+                        if let images = data["images"] as? [String] {
+                            imagePaths.append(contentsOf: images)
+                        }
+                    }
+                    batch.deleteDocument(noteRef)
+                    dispatchGroup.leave()
+                }
+            }
 
-  
-  
-  
+            dispatchGroup.notify(queue: .main) {
+                // Delete images from Firebase Storage
+                self.deleteImages(imagePaths: imagePaths) { error in
+                    if let error = error {
+                        completion(error)
+                        return
+                    }
+
+                    // Delete the course document
+                    batch.deleteDocument(courseRef)
+
+                    // Commit the batch after images are deleted
+                    batch.commit { error in
+                        if let error = error {
+                            print("Error committing batch delete: \(error.localizedDescription)")
+                        } else {
+                            print("Successfully deleted course \(courseID) and all associated data.")
+                        }
+                        self.getCourses()
+                        completion(error)
+                    }
+                }
+            }
+        }
+    }
+}
+
   func deleteFolder(folder: Folder, courseID: String, completion: @escaping (Error?) -> Void) {
     guard let folderID = folder.id else {
       completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Folder ID is missing."]))
@@ -385,29 +413,51 @@ class Firebase: ObservableObject {
     }
     
     let batch = db.batch()
+    var imagePaths: [String] = []
+
+    let dispatchGroup = DispatchGroup()
     
     folder.notes.forEach { noteID in
+      dispatchGroup.enter()
       let noteRef = db.collection(noteCollection).document(noteID)
-      batch.deleteDocument(noteRef)
-    }
-    
-    let courseRef = db.collection(courseCollection).document(courseID)
-    batch.updateData(["folders": FieldValue.arrayRemove([folderID])], forDocument: courseRef)
-    
-    let folderRef = db.collection(folderCollection).document(folderID)
-    batch.deleteDocument(folderRef)
-    
-    batch.commit { error in
-      if let error = error {
-        print("Error deleting folder: \(error.localizedDescription)")
-      } else {
-        print("Successfully deleted folder \(folderID) and its notes.")
+      noteRef.getDocument { document, error in
+          if let document = document, document.exists, let data = document.data() {
+              if let images = data["images"] as? [String] {
+                  imagePaths.append(contentsOf: images)
+              }
+          }
+          batch.deleteDocument(noteRef)
+          dispatchGroup.leave()
       }
-      completion(error)
+    }
+
+    dispatchGroup.notify(queue: .main) {
+      // Delete images from Firebase Storage
+      self.deleteImages(imagePaths: imagePaths) { error in
+          if let error = error {
+              completion(error)
+              return
+          }
+          
+        // Update course and delete folder
+        let courseRef = self.db.collection(self.courseCollection).document(courseID)
+        batch.updateData(["folders": FieldValue.arrayRemove([folderID])], forDocument: courseRef)
+        
+        let folderRef = self.db.collection(self.folderCollection).document(folderID)
+        batch.deleteDocument(folderRef)
+        
+        // Commit the batch after images are deleted
+        batch.commit { error in
+            if let error = error {
+                print("Error deleting folder: \(error.localizedDescription)")
+            } else {
+                print("Successfully deleted folder \(folderID) and its notes.")
+            }
+            completion(error)
+        }
+      }
     }
   }
-  
-  
   
   
   func deleteNote(note: Note, folderID: String?, completion: @escaping (Error?) -> Void) {
@@ -433,16 +483,51 @@ class Firebase: ObservableObject {
     
     let noteRef = db.collection(noteCollection).document(noteID)
     batch.deleteDocument(noteRef)
+
+    let imagePaths = note.images ?? []
     
-    batch.commit { error in
-      if let error = error {
-        print("Error deleting note: \(error.localizedDescription)")
-      } else {
-        print("Successfully deleted note \(noteID).")
-      }
-      completion(error)
+    // Delete images from Firebase Storage
+    deleteImages(imagePaths: imagePaths) { error in
+        if let error = error {
+            completion(error)
+            return
+        }
+        
+        // Commit the batch after images are deleted
+        batch.commit { error in
+            if let error = error {
+                print("Error deleting note: \(error.localizedDescription)")
+            } else {
+                print("Successfully deleted note \(noteID).")
+            }
+            completion(error)
+        }
     }
   }
+
+  func deleteImages(imagePaths: [String], completion: @escaping (Error?) -> Void) {
+    let storage = Storage.storage()
+    let dispatchGroup = DispatchGroup()
+    var deletionError: Error?
+
+    for imagePath in imagePaths {
+        dispatchGroup.enter()
+        let storageRef = storage.reference(withPath: imagePath)
+        storageRef.delete { error in
+            if let error = error {
+                print("Error deleting image: \(error.localizedDescription)")
+                deletionError = error
+            } else {
+                print("Successfully deleted image: \(imagePath)")
+            }
+            dispatchGroup.leave()
+        }
+    }
+
+    dispatchGroup.notify(queue: .main) {
+        completion(deletionError)
+    }
+}
   
   func updateNoteSummary(note: Note, newSummary: String, completion: @escaping (Note?) -> Void) {
     let noteID = note.id ?? ""
@@ -495,27 +580,6 @@ class Firebase: ObservableObject {
         }
       }
     }
-    
-    // func updateNoteImages(note: Note, imagePath: String, completion: @escaping (Note?) -> Void) {
-    //   let noteID = note.id ?? ""
-    //   let noteRef = db.collection(noteCollection).document(noteID)
-      
-    //   var images = note.images
-    //   images.append(imagePath)
-      
-    //   noteRef.updateData(["images": images]) { error in
-    //     if let error = error {
-    //       print("Error updating note images: \(error.localizedDescription)")
-    //       completion(nil)
-    //     } else {
-    //       print("Note images successfully updated")
-    //       if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
-    //         self.notes[index].images = images
-    //         completion(self.notes[index])
-    //       }
-    //     }
-    //   }
-    // }
 
     func updateNoteImages(note: Note, imagePaths: [String], completion: @escaping (Note?) -> Void) {
       let noteID = note.id ?? ""
