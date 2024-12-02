@@ -18,6 +18,8 @@ struct AppView: View {
   @State private var showAlert = false
   @State private var pendingTab: Tab?
 
+  @State private var isKeyboardVisible = false
+
   //   var body: some View {
   //     ZStack {
   //     // TabView(selection: $selectedTab) {
@@ -58,8 +60,8 @@ struct AppView: View {
   //   }
   // }
   var body: some View {
-        VStack {
-            Group {
+        ZStack {
+            VStack {
                  switch selectedTab {
 //              switch pendingTab {
               case .house:
@@ -71,7 +73,10 @@ struct AppView: View {
 //              case nil:
 //                HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
               }
+              Spacer()
             }
+            // .padding(.bottom, 50)
+            .padding(.bottom, isKeyboardVisible ? 0 : 50)
             Spacer()
 //            .padding()
 //             .padding(.bottom, 60)
@@ -84,11 +89,11 @@ struct AppView: View {
 //            }
             // Spacer()
             //  CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases)
-            //  ZStack {
-            //    Spacer()
-               VStack {
-                Spacer()
-                 //                Color.clear
+//             ZStack {
+//                Spacer()
+                VStack {
+                 Spacer()
+//                                Color.clear
                  CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases, onTabSelected: { tab in
                    // Will pop alert for all tabs
                    // pendingTab = tab
@@ -113,7 +118,20 @@ struct AppView: View {
         // .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
             UITabBar.appearance().backgroundColor = UIColor.white
+            NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
+                isKeyboardVisible = true
+            }
+            NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                isKeyboardVisible = false
+            }
         }
+        .onDisappear {
+            NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+            NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+        }
+        // .onAppear {
+        //     UITabBar.appearance().backgroundColor = UIColor.white
+        // }
         // .onChange(of: selectedTab) { newTab in
         //     if newTab != selectedTab {
         //         pendingTab = newTab
