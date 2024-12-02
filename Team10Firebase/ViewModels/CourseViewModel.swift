@@ -20,6 +20,25 @@ class CourseViewModel: ObservableObject {
             fetchData()
     }
   
+  
+  @MainActor
+      func fetchDataQuietly() async {
+          firebase.getFolders { [weak self] allFolders in
+              let courseFolders = allFolders.filter { folder in
+                  self?.course.folders.contains(folder.id ?? "") ?? false
+              }
+              
+              // Update folders without triggering a full view refresh
+              DispatchQueue.main.async {
+                  self?.folders = courseFolders
+              }
+          }
+          
+          self.notes = firebase.notes.filter { note in
+              course.notes.contains(note.id ?? "")
+          }
+      }
+  
     private func setupSubscriptions() {
             // Listen for changes to Firebase's notes
             firebase.$notes
