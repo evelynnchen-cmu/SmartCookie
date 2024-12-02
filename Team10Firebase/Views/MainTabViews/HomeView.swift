@@ -15,11 +15,9 @@ struct HomeView: View {
 
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
-    @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        // NavigationView {
-        NavigationStack(path: $navigationPath) {
+        NavigationView {
             VStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -70,25 +68,7 @@ struct HomeView: View {
                             GridItem(.flexible(), spacing: 16)
                         ], spacing: 16) {
                             ForEach(firebase.courses, id: \.id) { course in
-                                // NavigationLink(destination: CourseView(course: course)) {
-                                //     Text(course.courseName)
-                                //         .font(.headline)
-                                //         .frame(height: 100)
-                                //         .frame(maxWidth: .infinity)
-                                //         .background(Color.blue.opacity(0.2))
-                                //         .cornerRadius(12)
-                                //         .foregroundColor(.primary)
-                                // }
-                                // .simultaneousGesture(
-                                //     LongPressGesture()
-                                //         .onEnded { _ in
-                                //             courseToDelete = course
-                                //             showDeleteAlert = true
-                                //         }
-                                // )
-                                Button(action: {
-                                    navigationPath.append(course)
-                                }) {
+                                NavigationLink(destination: CourseView(course: course)) {
                                     Text(course.courseName)
                                         .font(.headline)
                                         .frame(height: 100)
@@ -150,23 +130,10 @@ struct HomeView: View {
                     // Perform navigation logic here
                     // For example, you might push a new view onto the navigation stack
                     // or update the state to show the specific course and note
-                //    navigationPath.append(CourseView(course: course))
-                //    navigationPath.append(NoteView(note: note))
-                   navigationPath.append(course)
-                   navigationPath.append(note)
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: .resetHomeView)) { _ in
-                // Reset the HomeView to its root
-                // For example, you might pop to the root view controller
-                // or reset the state to show the root view
-                navigationPath = NavigationPath()
-            }
-            .navigationDestination(for: Course.self) { course in
-                CourseView(course: course, navigationPath: $navigationPath)
-            }
         }
-        .navigationBarHidden(true)
+        
     }
   
     private func getStreakInfo() {

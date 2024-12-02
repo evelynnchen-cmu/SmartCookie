@@ -8,8 +8,8 @@
 import Foundation
 import FirebaseFirestore
 
-struct Folder: Codable, Identifiable, Hashable {  
-    struct RecentNoteSummary: Codable, Hashable {
+struct Folder: Codable, Identifiable {
+    struct RecentNoteSummary: Codable {
         var noteID: String?
         var title: String
         var summary: String
