@@ -306,38 +306,23 @@ struct TextParserView: View {
   }
 
   private func parseImages() {
-//     for image in images {
-//         openAI.parseImage(image) { text in
-//           if let parsedText = text {
-//             print("Parsed image content: \(parsedText)")
-// //                    self.content = (self.content ?? "") + "\n" + parsedText
-//             if let content = self.content {
-//               self.content = content + "\n" + parsedText
-//             }
-//             else {
-//               self.content = parsedText
-//             }
-//           }
-//           else {
-//             print("Failed to parse image")
-//           }
-//         }
-//       }
-      var parsedText = ""
+      var parsedTexts = [String](repeating: "", count: images.count)
       let dispatchGroup = DispatchGroup()
-      
-      for image in images {
+
+      for (index, image) in images.enumerated() {
           dispatchGroup.enter()
           openAI.parseImage(image) { text in
               if let text = text {
-                  parsedText += text + "\n"
+                  parsedTexts[index] = text
+              } else {
+                  parsedTexts[index] = "Failed to parse image"
               }
               dispatchGroup.leave()
           }
       }
-      
+
       dispatchGroup.notify(queue: .main) {
-          self.content = parsedText.trimmingCharacters(in: .whitespacesAndNewlines)
+          self.content = parsedTexts.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
           self.isParsing = false // Set parsing status to false
       }
   }
