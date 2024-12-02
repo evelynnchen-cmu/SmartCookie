@@ -915,6 +915,44 @@ class Firebase: ObservableObject {
   }
   
   
+  func updateFolderName(folderID: String, newName: String, completion: @escaping (Error?) -> Void) {
+      let folderRef = db.collection(folderCollection).document(folderID)
+      
+      folderRef.updateData([
+          "folderName": newName
+      ]) { error in
+          if let error = error {
+              print("Error updating folder name: \(error.localizedDescription)")
+              completion(error)
+          } else {
+              print("Folder name successfully updated")
+              self.getFolders { _ in }
+              completion(nil)
+          }
+      }
+  }
+
+  func updateNoteTitle(note: Note, newTitle: String, completion: @escaping (Note?) -> Void) {
+      let noteID = note.id ?? ""
+      let noteRef = db.collection(noteCollection).document(noteID)
+      
+      noteRef.updateData([
+          "title": newTitle
+      ]) { error in
+          if let error = error {
+              print("Error updating note title: \(error.localizedDescription)")
+              completion(nil)
+          } else {
+              print("Note title successfully updated")
+              if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+                  self.notes[index].title = newTitle
+                  completion(self.notes[index])
+              }
+          }
+      }
+  }
+  
+  
   
   
 

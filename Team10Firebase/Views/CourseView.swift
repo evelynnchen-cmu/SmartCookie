@@ -17,6 +17,19 @@ enum ActiveAlert: Identifiable {
 }
 
 
+class EditStates: ObservableObject {
+    @Published var courseToEdit: Course?
+    @Published var folderToEdit: Folder?
+    @Published var noteToEdit: Note?
+    @Published var showEditCourseModal = false
+    @Published var showEditFolderModal = false
+    @Published var showEditNoteModal = false
+}
+
+
+
+
+
 struct CourseView: View {
     @StateObject private var viewModel: CourseViewModel
     @State private var isAddingFolder = false
@@ -24,6 +37,8 @@ struct CourseView: View {
     @State private var folderToDelete: Folder?
     @State private var noteToDelete: Note?
     @State private var activeAlert: ActiveAlert?
+    @StateObject private var editStates = EditStates()
+    
     
     init(course: Course, firebase: Firebase) {
         _viewModel = StateObject(wrappedValue: CourseViewModel(firebase: firebase, course: course))
@@ -58,6 +73,31 @@ struct CourseView: View {
                 folder: nil
             )
         }
+        .sheet(isPresented: $editStates.showEditFolderModal) {
+            if let folder = editStates.folderToEdit {
+                EditFolderModal(
+                    folder: folder,
+                    firebase: viewModel.firebase,
+                    onFolderUpdated: {
+                        viewModel.fetchData()
+                        editStates.showEditFolderModal = false
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $editStates.showEditNoteModal) {
+            if let note = editStates.noteToEdit {
+                EditNoteModal(
+                    note: note,
+                    firebase: viewModel.firebase,
+                    onNoteUpdated: {
+                        viewModel.fetchData()
+                        editStates.showEditNoteModal = false
+                    }
+                )
+            }
+        }
+      
         .onAppear {
             viewModel.fetchData()
         }
@@ -121,69 +161,96 @@ struct CourseView: View {
       return formatter
   }()
     
-    private var directNotesSection: some View {
-        VStack(alignment: .leading) {
-            Text("Notes in Course")
-                .font(.headline)
-            
-            ForEach(viewModel.notes, id: \.id) { note in
-              NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
-                    VStack(alignment: .leading) {
-                        Text(note.title)
-                            .font(.body)
-                            .foregroundColor(.blue)
-                        Text(note.summary)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 5)
-                }
-                .contextMenu {
-                    Button(role: .destructive) {
-                        noteToDelete = note
-                        activeAlert = .deleteNote
-                    } label: {
-                        Label("Delete Note", systemImage: "trash")
-                    }
-                }
-            }
-        }
-        .padding(.top, 10)
-    }
-    
-    private var foldersSection: some View {
-        VStack(alignment: .leading) {
-            Text("Folders")
-                .font(.headline)
-            
-            ForEach(viewModel.folders, id: \.id) { folder in
-                NavigationLink(
-                    destination: FolderView(
-                        firebase: viewModel.firebase,
-                        course: viewModel.course,
-                        folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
-                    )
-                ) {
-                    Text(folder.folderName)
-                        .font(.body)
-                        .foregroundColor(.blue)
-                        .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(8)
-                        .padding(.vertical, 2)
-                }
-                .contextMenu {
-                    Button(role: .destructive) {
-                        folderToDelete = folder
-                        activeAlert = .deleteFolder
-                    } label: {
-                        Label("Delete Folder", systemImage: "trash")
-                    }
-                }
-            }
-        }
-    }
+  
+  private var directNotesSection: some View {
+      VStack(alignment: .leading) {
+          Text("Notes in Course")
+              .font(.headline)
+          
+          ForEach(viewModel.notes, id: \.id) { note in
+              HStack {
+                  NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
+                      VStack(alignment: .leading) {
+                          Text(note.title)
+                              .font(.body)
+                              .foregroundColor(.blue)
+                          Text(note.summary)
+                              .font(.caption)
+                              .foregroundColor(.gray)
+                          Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+                              .font(.caption2)
+                              .foregroundColor(.secondary)
+                      }
+                      .padding(.vertical, 5)
+                  }
+                  
+                  Spacer()
+                  
+                  Button(action: {
+                      editStates.noteToEdit = note
+                      editStates.showEditNoteModal = true
+                  }) {
+                      Image(systemName: "pencil.circle.fill")
+                          .font(.title3)
+                          .foregroundColor(.blue)
+                  }
+              }
+              .contextMenu {
+                  Button(role: .destructive) {
+                      noteToDelete = note
+                      activeAlert = .deleteNote
+                  } label: {
+                      Label("Delete Note", systemImage: "trash")
+                  }
+              }
+          }
+      }
+      .padding(.top, 10)
+  }
+
+  private var foldersSection: some View {
+      VStack(alignment: .leading) {
+          Text("Folders")
+              .font(.headline)
+          
+          ForEach(viewModel.folders, id: \.id) { folder in
+              HStack {
+                  NavigationLink(
+                      destination: FolderView(
+                          firebase: viewModel.firebase,
+                          course: viewModel.course,
+                          folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
+                      )
+                  ) {
+                      Text(folder.folderName)
+                          .font(.body)
+                          .foregroundColor(.blue)
+                          .padding()
+                          .background(Color.gray.opacity(0.2))
+                          .cornerRadius(8)
+                          .padding(.vertical, 2)
+                  }
+                  
+                  Spacer()
+                  
+                  Button(action: {
+                      editStates.folderToEdit = folder
+                      editStates.showEditFolderModal = true
+                  }) {
+                      Image(systemName: "pencil.circle.fill")
+                          .font(.title3)
+                          .foregroundColor(.blue)
+                  }
+              }
+              .contextMenu {
+                  Button(role: .destructive) {
+                      folderToDelete = folder
+                      activeAlert = .deleteFolder
+                  } label: {
+                      Label("Delete Folder", systemImage: "trash")
+                  }
+              }
+          }
+      }
+  }
 }
