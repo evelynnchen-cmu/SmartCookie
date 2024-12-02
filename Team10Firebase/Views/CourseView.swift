@@ -1,44 +1,42 @@
 
+
+
+
 import SwiftUI
 import Combine
 
 struct CourseView: View {
-    @StateObject private var firebase = Firebase()
     var course: Course
+    var firebase: Firebase
     @State private var isAddingFolder = false
     @State private var isAddingNote = false
     @State private var courseFolders: [Folder] = []
-    @State private var folderToDelete: Folder?
-    @State private var showDeleteFolderAlert = false
     @State private var directCourseNotes: [Note] = []
+    @State private var folderToDelete: Folder?
     @State private var noteToDelete: Note?
-  
-  @Binding var navigationPath: NavigationPath
+    @Binding var navigationPath: NavigationPath
+    @State private var activeAlert: ActiveAlert?
 
-  enum ActiveAlert: Identifiable {
-    case deleteFolder, deleteNote
-    
-    var id: Int {
-      switch self {
-      case .deleteFolder: return 1
-      case .deleteNote: return 2
-      }
+    enum ActiveAlert: Identifiable {
+        case deleteFolder, deleteNote
+
+        var id: Int {
+            switch self {
+            case .deleteFolder: return 1
+            case .deleteNote: return 2
+            }
+        }
     }
-  }
-  
-  @State private var activeAlert: ActiveAlert?
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading) {
-//                courseDetailsSection
                 recentNoteSummarySection
                 directNotesSection
                 foldersSection
             }
-            .padding(.leading, 20) 
+            .padding(.leading, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
-
-            
         }
         .sheet(isPresented: $isAddingFolder) {
             FolderModal(
@@ -60,13 +58,7 @@ struct CourseView: View {
             )
         }
         .onAppear {
-            firebase.getNotes()
             fetchFoldersForCourse()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                  fetchDirectNotesForCourse()
-            }
-        }
-        .onReceive(firebase.$notes) { _ in
             fetchDirectNotesForCourse()
         }
         .navigationTitle(course.courseName)
@@ -83,39 +75,30 @@ struct CourseView: View {
             }
         }
         .alert(item: $activeAlert) { alert in
-          switch alert {
-          case .deleteFolder:
-            return Alert(
-              title: Text("Delete Folder"),
-              message: Text("Are you sure you want to delete this folder and all its notes?"),
-              primaryButton: .destructive(Text("Delete")) {
-                if let folder = folderToDelete {
-                  firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
-                    if let error = error {
-                      print("Error deleting folder: \(error.localizedDescription)")
-                    } else {
-                      courseFolders.removeAll { $0.id == folder.id }
-                      fetchFoldersForCourse()
-                    }
-                    
-                  }
-                }
-              },
-              secondaryButton: .cancel()
-            )
-          case .deleteNote:
-            return Alert(
-              title: Text("Delete Note"),
-              message: Text("Are you sure you want to delete this note?"),
-              primaryButton: .destructive(Text("Delete")) {
-                if let note = noteToDelete {
-                  deleteDirectNote(note)
-                }
-              },
-              secondaryButton: .cancel()
-            )
-          }
-          
+            switch alert {
+            case .deleteFolder:
+                return Alert(
+                    title: Text("Delete Folder"),
+                    message: Text("Are you sure you want to delete this folder and all its notes?"),
+                    primaryButton: .destructive(Text("Delete")) {
+                        if let folder = folderToDelete {
+                            deleteFolder(folder)
+                        }
+                    },
+                    secondaryButton: .cancel()
+                )
+            case .deleteNote:
+                return Alert(
+                    title: Text("Delete Note"),
+                    message: Text("Are you sure you want to delete this note?"),
+                    primaryButton: .destructive(Text("Delete")) {
+                        if let note = noteToDelete {
+                            deleteDirectNote(note)
+                        }
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
         }
         .navigationDestination(for: Note.self) { note in
             NoteView(firebase: firebase, note: note, course: course)
@@ -125,23 +108,8 @@ struct CourseView: View {
         }
     }
 
-    private var courseDetailsSection: some View {
-        VStack(alignment: .leading) {
-            Text("Course ID: \(course.id ?? "N/A")")
-                .font(.body)
-            Text("User ID: \(course.userID)")
-                .font(.body)
-            Text(course.courseName)
-                .font(.body)
-            Text("Folders: \(course.folders.joined(separator: ", "))")
-                .font(.body)
-            Text("File Location: \(course.fileLocation)")
-                .font(.body)
-        }
-    }
-
     private var recentNoteSummarySection: some View {
-        if let recentNote = getMostRecentNoteForCourse(courseID: course.id!) {
+        if let recentNote = getMostRecentNoteForCourse() {
             Text("Most Recent Note's Summary: \(recentNote.summary)")
                 .font(.subheadline)
                 .foregroundColor(.gray)
@@ -156,7 +124,7 @@ struct CourseView: View {
         VStack(alignment: .leading) {
             Text("Notes in Course")
                 .font(.headline)
-            
+
             ForEach(directCourseNotes, id: \.id) { note in
             //   NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
             //         VStack(alignment: .leading) {
@@ -238,10 +206,7 @@ struct CourseView: View {
                 .contextMenu {
                     Button(role: .destructive) {
                         folderToDelete = folder
-                        print("Vicky hits delete here")
-//                        showDeleteFolderAlert = true
                         activeAlert = .deleteFolder
-                        print("Delete Folder button tapped")
                     } label: {
                         Label("Delete Folder", systemImage: "trash")
                     }
@@ -249,11 +214,8 @@ struct CourseView: View {
             }
         }
     }
-    
-    
-    
+
     private func fetchFoldersForCourse() {
-        firebase.getNotes()
         firebase.getFolders { allFolders in
             self.courseFolders = allFolders.filter { folder in
                 course.folders.contains(folder.id ?? "")
@@ -261,16 +223,23 @@ struct CourseView: View {
         }
     }
 
-  private func fetchDirectNotesForCourse() {
-      directCourseNotes = firebase.notes.filter { note in
-          let containsNote = course.notes.contains(note.id ?? "")
-          return containsNote
-      }
-      print("Filtered directCourseNotes count: \(directCourseNotes.count)")
-  }
+    private func fetchDirectNotesForCourse() {
+        directCourseNotes = firebase.notes.filter { note in
+            course.notes.contains(note.id ?? "")
+        }
+    }
+
+    private func deleteFolder(_ folder: Folder) {
+        firebase.deleteFolder(folder: folder, courseID: course.id ?? "") { error in
+            if let error = error {
+                print("Error deleting folder: \(error.localizedDescription)")
+            } else {
+                fetchFoldersForCourse()
+            }
+        }
+    }
 
     private func deleteDirectNote(_ note: Note) {
-        guard let noteID = note.id else { return }
         firebase.deleteNote(note: note, folderID: nil) { error in
             if let error = error {
                 print("Error deleting note: \(error.localizedDescription)")
@@ -280,9 +249,8 @@ struct CourseView: View {
         }
     }
 
-    private func getMostRecentNoteForCourse(courseID: String) -> Note? {
-        let filteredNotes = directCourseNotes
-        let sortedNotes = filteredNotes.sorted { $0.createdAt > $1.createdAt }
+    private func getMostRecentNoteForCourse() -> Note? {
+        let sortedNotes = directCourseNotes.sorted { $0.createdAt > $1.createdAt }
         return sortedNotes.first
     }
 }
@@ -293,4 +261,6 @@ private let dateFormatter: DateFormatter = {
     formatter.timeStyle = .short
     return formatter
 }()
+
+
 

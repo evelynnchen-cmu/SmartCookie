@@ -54,81 +54,9 @@ class FolderViewModel: ObservableObject {
     }
   }
   
-  
-  
-  
-//    func createNote(
-//        title: String,
-//        summary: String,
-//        content: String,
-//        images: [String] = [],
-//        completion: @escaping (Error?) -> Void
-//    ) {
-//        firebase.createNote(
-//            title: title,
-//            summary: summary,
-//            content: content,
-//            images: images,
-//            course: Course(
-//                id: folder.courseID,
-//                userID: folder.userID ?? "",
-//                courseName: "",
-//                folders: [],
-//                notes: [],
-//                fileLocation: folder.fileLocation
-//            ),
-//            folder: folder
-//        ) { error in
-//            if let error = error {
-//                self.errorMessage = "Error creating note: \(error.localizedDescription)"
-//            }
-//            completion(error)
-//        }
-//    }
-    
-//    func deleteNote(_ note: Note, completion: @escaping (Error?) -> Void) {
-//        firebase.deleteNote(note: note, folderID: folder.id) { error in
-//            if let error = error {
-//                self.errorMessage = "Error deleting note: \(error.localizedDescription)"
-//                completion(error)
-//            } else {
-//                completion(nil)
-//            }
-//        }
-//    }
-    
-//    func getRecentNoteSummary() -> Folder.RecentNoteSummary? {
-//        guard let mostRecentNote = notes.sorted(by: { $0.createdAt > $1.createdAt }).first else {
-//            return nil
-//        }
-//        
-//        return Folder.RecentNoteSummary(
-//            noteID: mostRecentNote.id,
-//            title: mostRecentNote.title,
-//            summary: mostRecentNote.summary,
-//            createdAt: mostRecentNote.createdAt
-//        )
-//    }
-//
-//    func updateRecentNoteSummary() {
-//        let recentSummary = getRecentNoteSummary()
-//        folder.recentNoteSummary = recentSummary
-//        guard let folderID = folder.id else { return }
-//        
-//        db.collection("Folder").document(folderID).updateData([
-//            "recentNoteSummary": [
-//                "noteID": recentSummary?.noteID ?? "",
-//                "title": recentSummary?.title ?? "",
-//                "summary": recentSummary?.summary ?? "",
-//                "createdAt": recentSummary?.createdAt ?? Date()
-//            ]
-//        ]) { error in
-//            if let error = error {
-//                self.errorMessage = "Error updating recent note summary: \(error.localizedDescription)"
-//            }
-//        }
-//    }
-  
+
+
+
   func fetchNotes() {
     updateFolderNotes()
     firebase.getNotes()

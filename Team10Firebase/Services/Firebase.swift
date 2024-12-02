@@ -863,4 +863,98 @@ class Firebase: ObservableObject {
       }
   }
 
+    func getFoldersById(folderIDs: [String], completion: @escaping ([Folder]) -> Void) {
+      let foldersRef = db.collection("Folder") // Adjust collection name if needed
+      var folders: [Folder] = []
+      
+      for folderID in folderIDs {
+          foldersRef.document(folderID).getDocument { documentSnapshot, error in
+              if let error = error {
+                  print("Error fetching folder by ID: \(error.localizedDescription)")
+                  return
+              }
+              
+              guard let document = documentSnapshot, document.exists else {
+                  print("Folder not found for ID: \(folderID)")
+                  return
+              }
+              
+              if let folder = try? document.data(as: Folder.self) {
+                  folders.append(folder)
+              } else {
+                  print("Failed to parse folder data for ID: \(folderID)")
+              }
+              
+              // Call the completion block once all folder IDs have been processed
+              if folders.count == folderIDs.count {
+                  completion(folders)
+              }
+          }
+      }
+    }
+  
+  
+  // Add this method to your Firebase class
+  func updateCourseName(courseID: String, newName: String, completion: @escaping (Error?) -> Void) {
+      let courseRef = db.collection(courseCollection).document(courseID)
+      
+      courseRef.updateData([
+          "courseName": newName,
+          "fileLocation": "/\(newName)/"
+      ]) { error in
+          if let error = error {
+              print("Error updating course name: \(error.localizedDescription)")
+              completion(error)
+          } else {
+              print("Course name successfully updated")
+              // Refresh courses list
+              self.getCourses()
+              completion(nil)
+          }
+      }
+  }
+  
+  
+  func updateFolderName(folderID: String, newName: String, completion: @escaping (Error?) -> Void) {
+      let folderRef = db.collection(folderCollection).document(folderID)
+      
+      folderRef.updateData([
+          "folderName": newName
+      ]) { error in
+          if let error = error {
+              print("Error updating folder name: \(error.localizedDescription)")
+              completion(error)
+          } else {
+              print("Folder name successfully updated")
+              self.getFolders { _ in }
+              completion(nil)
+          }
+      }
+  }
+
+  func updateNoteTitle(note: Note, newTitle: String, completion: @escaping (Note?) -> Void) {
+      let noteID = note.id ?? ""
+      let noteRef = db.collection(noteCollection).document(noteID)
+      
+      noteRef.updateData([
+          "title": newTitle
+      ]) { error in
+          if let error = error {
+              print("Error updating note title: \(error.localizedDescription)")
+              completion(nil)
+          } else {
+              print("Note title successfully updated")
+              if let index = self.notes.firstIndex(where: { $0.id == noteID }) {
+                  self.notes[index].title = newTitle
+                  completion(self.notes[index])
+              }
+          }
+      }
+  }
+  
+  
+  
+  
+
+
 }
