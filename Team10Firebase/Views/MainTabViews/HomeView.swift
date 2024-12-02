@@ -61,7 +61,7 @@ struct HomeView: View {
                             GridItem(.flexible(), spacing: 16)
                         ], spacing: 16) {
                             ForEach(firebase.courses, id: \.id) { course in
-                                NavigationLink(destination: CourseView(course: course)) {
+                              NavigationLink(destination: CourseView(course: course, firebase: firebase)) {
                                     Text(course.courseName)
                                         .font(.headline)
                                         .frame(height: 100)
