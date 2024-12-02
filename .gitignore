@@ -2,6 +2,7 @@
 # Xcode
 ##########
 *.plist
+Team10Firebase/GoogleService-Info.plist
 Team10Firebase/Secrets.plist
 !Info.plist
 *.pbxuser

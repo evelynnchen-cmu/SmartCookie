@@ -1,12 +1,16 @@
 import SwiftUI
+import PDFKit
+import UniformTypeIdentifiers
 import PhotosUI
 
 struct NoteView: View {
   @StateObject var viewModel: NoteViewModel
   @ObservedObject var firebase: Firebase
   @State private var isPickerPresented = false
+  @State private var isPDFPickerPresented = false
   @State private var showTextParserView = false
   @State private var selectedImage: UIImage?
+  @State private var selectedPDFText: String?
   @State private var contentTab = true
   @State private var showAlert = false
   @State private var alertMessage = ""
@@ -54,7 +58,43 @@ struct NoteView: View {
                 .cornerRadius(8)
             }
             
-            Spacer()
+//            Spacer()
+              
+            // Button to upload PDFs
+              Button(action: {
+                isPDFPickerPresented = true
+              }) {
+                Text("Upload and Parse PDF")
+                  .font(.headline)
+                  .padding()
+                  .frame(maxWidth: .infinity)
+                  .background(Color.blue)
+                  .foregroundColor(Color.white)
+                  .cornerRadius(8)
+              }
+              .sheet(isPresented: $isPDFPickerPresented) {
+                PDFPicker { extractedText in
+                  self.selectedPDFText = extractedText
+                  // Handle storing text in Firebase or displaying in the UI
+                  if let text = extractedText {
+                    // You can store or use the text here
+                    print("Extracted PDF Text: \(text)")
+                  } else {
+                    self.alertMessage = "Failed to extract text from PDF."
+                    self.showAlert = true
+                  }
+                }
+              }
+              .alert(isPresented: $showAlert) {
+                  Alert(
+                      title: Text("PDF Error"),
+                      message: Text(alertMessage),
+                      dismissButton: .default(Text("OK"))
+                  )
+              }
+              
+              Spacer()
+
             
             // Buttons to switch between tabs
             HStack {
