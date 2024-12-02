@@ -59,7 +59,7 @@ struct AppView: View {
   // }
   var body: some View {
         VStack {
-            ZStack {
+            Group {
                  switch selectedTab {
 //              switch pendingTab {
               case .house:
@@ -73,23 +73,44 @@ struct AppView: View {
               }
             }
             Spacer()
+//            .padding()
+//             .padding(.bottom, 60)
+//            VStack {
+//                // Rectangle for padding
+//                Rectangle()
+//                    .fill(Color.white)
+//                    .frame(height: 60)
+//                    .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: -5)
+//            }
+            // Spacer()
             //  CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases)
-            CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases, onTabSelected: { tab in
-            // Will pop alert for all tabs
-                // pendingTab = tab
-                // showAlert = true
-
-                // Shows alert only if swtiching away from chat and scan tab
-                if selectedTab == .chat || selectedTab == .scan {
-                    pendingTab = tab
-                    showAlert = true
-                } else {
-                    selectedTab = tab
-                    NotificationCenter.default.post(name: tab.notificationName, object: nil)
-                }
-            })
-//            .ignoresSafeArea(.keyboard, edges: .bottom)
+            //  ZStack {
+            //    Spacer()
+               VStack {
+                Spacer()
+                 //                Color.clear
+                 CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases, onTabSelected: { tab in
+                   // Will pop alert for all tabs
+                   // pendingTab = tab
+                   // showAlert = true
+                   
+                   // Shows alert only if swtiching away from chat and scan tab
+                   if selectedTab == .chat || selectedTab == .scan {
+                     pendingTab = tab
+                     showAlert = true
+                   } else {
+                     selectedTab = tab
+                     NotificationCenter.default.post(name: tab.notificationName, object: nil)
+                   }
+                 })
+               }
+//                .ignoresSafeArea(.keyboard)
+            // }
+           .ignoresSafeArea(.keyboard)
+//            .ignoresSafeArea(edges: .all)
+            // .ignoresSafeArea(.keyboard)
         }
+        // .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
             UITabBar.appearance().backgroundColor = UIColor.white
         }

@@ -80,7 +80,8 @@ struct CustomTabBar: View {
                         Image(systemName: tab.rawValue)
                         Text(tab.text)
                     }
-                    .padding()
+//                    .ignoresSafeArea(edges: .all)
+                     .padding()
                     .foregroundColor(selectedTab == tab ? .blue : .gray)
                 }
                 if tab != tabs.last {
@@ -89,6 +90,7 @@ struct CustomTabBar: View {
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+//        .ignoresSafeArea(edges: .all)
       // This padding controls how close the tab buttons are to each other
         .padding(.horizontal, 36)
         // This frame controls the height of the tab bar
