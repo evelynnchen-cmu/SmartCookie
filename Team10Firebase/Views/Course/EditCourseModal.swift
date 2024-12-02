@@ -9,62 +9,71 @@ import SwiftUI
 import FirebaseFirestore
 
 
+
+
+class EditCourseState: ObservableObject {
+    @Published var courseToEdit: Course?
+    @Published var showEditModal: Bool = false
+}
+
+
+
 struct EditCourseModal: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var courseName: String
+    @State private var newName: String
     let course: Course
     @ObservedObject var firebase: Firebase
     var onCourseUpdated: () -> Void
     
-//    init(course: Course, firebase: Firebase, onCourseUpdated: @escaping () -> Void) {
-//        self.course = course
-//        self.firebase = firebase
-//        self.onCourseUpdated = onCourseUpdated
-//        _courseName = State(initialValue: course.courseName)
-//    }
     init(course: Course, firebase: Firebase, onCourseUpdated: @escaping () -> Void) {
+        print("Debug: EditCourseModal init with course: \(course.courseName)")
         self.course = course
         self.firebase = firebase
         self.onCourseUpdated = onCourseUpdated
-        _courseName = State(initialValue: course.courseName)
-        print("Debug: Initializing EditCourseModal for course: \(course.courseName)")
+        self._newName = State(initialValue: course.courseName)
     }
-
     
     var body: some View {
         NavigationView {
-
-          NavigationView {
-              Form {
-                  Section(header: Text("Course Information")) {
-                      TextField("Course Name", text: $courseName)
-                  }
-
-                Button("Update Course") {
-                    guard let courseID = course.id else {
-                        print("Error: Missing course ID")
-                        return
-                    }
-                    print("Debug: Updating course name to \(courseName)")
-                    firebase.updateCourseName(courseID: courseID, newName: courseName) { error in
-                        if let error = error {
-                            print("Error: \(error.localizedDescription)")
-                        } else {
-                            print("Debug: Course name successfully updated")
-                            onCourseUpdated()
-                            dismiss()
+            Form {
+                Section(header: Text("Course Information")) {
+                    TextField("Course Name", text: $newName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                }
+                
+                Section {
+                    Button(action: {
+                        guard let courseID = course.id else { return }
+                        print("Attempting to update course name to: \(newName)")
+                        firebase.updateCourseName(courseID: courseID, newName: newName) { error in
+                            if let error = error {
+                                print("Error updating course: \(error.localizedDescription)")
+                            } else {
+                                print("Course name updated successfully")
+                                onCourseUpdated()
+                                dismiss()
+                            }
                         }
+                    }) {
+                        Text("Update Course")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(newName.isEmpty || newName == course.courseName ? Color.gray : Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                     }
                 }
-              }
-              .navigationTitle("Edit Course")
-              .toolbar {
-                  Button("Cancel") {
-                      dismiss()
-                  }
-              }
-          }
-
+            }
+            .navigationTitle("Edit Course")
+            .navigationBarItems(trailing: Button("Cancel") {
+                dismiss()
+            })
+        }
+        .interactiveDismissDisabled()  // Prevents accidental dismissal
+        .onAppear {
+            print("Modal appeared with name: \(newName)")
         }
     }
 }

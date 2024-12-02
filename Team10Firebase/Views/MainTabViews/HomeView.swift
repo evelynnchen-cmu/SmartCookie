@@ -12,8 +12,7 @@ struct HomeView: View {
     @State private var userName: String = "User"
     @State private var streakLength: Int = 0
     @State private var hasCompletedStreakToday: Bool = false
-    @State private var showEditModal = false
-    @State private var courseToEdit: Course?
+    @StateObject private var editState = EditCourseState()
 
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
@@ -83,12 +82,11 @@ struct HomeView: View {
                                   
                                   HStack {
                                       Button(action: {
-                                          courseToEdit = course
-                                          print("Debug: courseToEdit.id = \(course.id ?? "nil")")
-
-                                          print("Debug: courseToEdit set to \(course.courseName)")
-                                          
-                                          showEditModal = true
+                                          print("Debug: Before setting courseToEdit - Button pressed")
+                                          editState.courseToEdit = course
+                                          print("Debug: After setting courseToEdit: \(editState.courseToEdit?.courseName ?? "nil")")
+                                          print("Debug: Course details - ID: \(course.id ?? "nil"), Name: \(course.courseName)")
+                                          editState.showEditModal = true
                                       }) {
                                           Image(systemName: "pencil.circle.fill")
                                               .font(.title3)
@@ -116,36 +114,19 @@ struct HomeView: View {
                 .sheet(isPresented: $showAddCourseModal) {
                     AddCourseModal(onCourseCreated: firebase.getCourses, firebase: firebase)
                 }
-//                .sheet(isPresented: $showEditModal) {
-//                    if let course = courseToEdit {
-//                        EditCourseModal(
-//                            course: course,
-//                            firebase: firebase,
-//                            onCourseUpdated: {
-//                                print("Debug: Course updated successfully")
-//                                firebase.getCourses()
-//                                showEditModal = false
-//                            }
-//                        )
-//                    } else {
-////                      Text("No course selected")
-//                        Text("Error: No course selected")
-//                  }
-//                }
-                .sheet(isPresented: $showEditModal) {
-                  if let courseToEdit = courseToEdit {
-                    EditCourseModal(
-                      course: courseToEdit,
-                      firebase: firebase,
-                      onCourseUpdated: {
-                        firebase.getCourses()
-                        showEditModal = false
+                  .sheet(isPresented: $editState.showEditModal) {
+                      if let courseToEdit = editState.courseToEdit {
+                          EditCourseModal(
+                              course: courseToEdit,
+                              firebase: firebase,
+                              onCourseUpdated: {
+                                  firebase.getCourses()
+                                  editState.showEditModal = false
+                              }
+                          )
                       }
-                    )
-                  } else {
-                    Text("Error: No course selected")
                   }
-                }
+              
                 .onAppear {
                     firebase.getCourses()
                     firebase.getNotes()

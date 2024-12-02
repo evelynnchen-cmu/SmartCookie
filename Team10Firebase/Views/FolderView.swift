@@ -93,7 +93,7 @@ struct FolderView: View {
                           if let error = error {
                               print("Error deleting note: \(error.localizedDescription)")
                           } else {
-                            folderViewModel.fetchNotes() // Refresh the notes list after deletion
+                            folderViewModel.fetchNotes() 
                           }
                       }
                   }
