@@ -17,7 +17,7 @@ class OpenAI {
       var correctAnswer: Int
   }
 
-  func generateQuizQuestions(content: String, numQuestions: Int = 5) async throws -> [MCQuestion] {
+  func generateQuizQuestions(content: String, notesOnlyScope: Bool = false, numQuestions: Int = 5) async throws -> [MCQuestion] {
       guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
           throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
       }
@@ -31,26 +31,47 @@ class OpenAI {
           return key
       }()
 
-      let prompt = """
-      Generate \(numQuestions) multiple choice questions based on this content. The questions should be able to be answered without referencing the original image. Format your response as a JSON array of objects.
-      Each object should have these fields:
-      - question (string)
-      - potentialAnswers (array of 4 strings)
-      - correctAnswer (number 0-3 indicating which answer is correct)
-      
-      Content: \(content)
-      
-      Response format example:
-      [
-        {
-          "question": "What is...",
-          "potentialAnswers": ["answer1", "answer2", "answer3", "answer4"],
-          "correctAnswer": 2
-        }
-      ]
-      
-      Only return the JSON array, no other text.
-      """
+    let prompt = notesOnlyScope ?
+        """
+        Generate \(numQuestions) multiple choice questions based STRICTLY on this content. You must not use any external knowledge or information not present in the provided content. Each question and all answer options must be directly derived from the given text. The questions should be able to be answered without referencing the original image. Format your response as a JSON array of objects.
+        Each object should have these fields:
+        - question (string)
+        - potentialAnswers (array of 4 strings)
+        - correctAnswer (number 0-3 indicating which answer is correct)
+        
+        Content: \(content)
+        
+        Response format example:
+        [
+          {
+            "question": "What is...",
+            "potentialAnswers": ["answer1", "answer2", "answer3", "answer4"],
+            "correctAnswer": 2
+          }
+        ]
+        
+        Only return the JSON array, no other text. Remember to use ONLY information from the provided content.
+        """ :
+        """
+        Generate \(numQuestions) multiple choice questions based on this content. The questions should be able to be answered without referencing the original image. Format your response as a JSON array of objects.
+        Each object should have these fields:
+        - question (string)
+        - potentialAnswers (array of 4 strings)
+        - correctAnswer (number 0-3 indicating which answer is correct)
+        
+        Content: \(content)
+        
+        Response format example:
+        [
+          {
+            "question": "What is...",
+            "potentialAnswers": ["answer1", "answer2", "answer3", "answer4"],
+            "correctAnswer": 2
+          }
+        ]
+        
+        Only return the JSON array, no other text.
+        """
 
       var request = URLRequest(url: url)
       request.httpMethod = "POST"

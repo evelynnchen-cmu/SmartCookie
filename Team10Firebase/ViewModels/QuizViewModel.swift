@@ -27,17 +27,33 @@ class QuizViewModel: ObservableObject {
         self.note = note
         self.noteContent = noteContent
     }
-    
+
     func generateQuestions() {
         isLoadingQuestions = true
         errorMessage = nil
         
         Task {
             do {
-                let generatedQuestions = try await openAI.generateQuizQuestions(content: noteContent)
-                DispatchQueue.main.async {
-                    self.questions = generatedQuestions
-                    self.isLoadingQuestions = false
+                // Get user settings for notesOnlyScope
+                let db = Firestore.firestore()
+                if let userDoc = try? await db.collection("User").limit(to: 1).getDocuments().documents.first,
+                   let user = try? userDoc.data(as: User.self) {
+                    let notesOnlyScope = user.settings.notesOnlyQuizScope
+                    let generatedQuestions = try await openAI.generateQuizQuestions(
+                        content: noteContent,
+                        notesOnlyScope: notesOnlyScope
+                    )
+                    DispatchQueue.main.async {
+                        self.questions = generatedQuestions
+                        self.isLoadingQuestions = false
+                    }
+                } else {
+                    // Fallback to default behavior if user settings can't be fetched
+                    let generatedQuestions = try await openAI.generateQuizQuestions(content: noteContent)
+                    DispatchQueue.main.async {
+                        self.questions = generatedQuestions
+                        self.isLoadingQuestions = false
+                    }
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -49,9 +65,23 @@ class QuizViewModel: ObservableObject {
     }
     
     func generateAdditionalQuestions(neededCount: Int) async throws -> [MCQuestion] {
-        let generatedQuestions = try await openAI.generateQuizQuestions(content: noteContent)
-        // Take only the number of questions we need
-        return Array(generatedQuestions.prefix(neededCount))
+        let db = Firestore.firestore()
+        if let userDoc = try? await db.collection("User").limit(to: 1).getDocuments().documents.first,
+           let user = try? userDoc.data(as: User.self) {
+            let notesOnlyScope = user.settings.notesOnlyQuizScope
+            let generatedQuestions = try await openAI.generateQuizQuestions(
+                content: noteContent,
+                notesOnlyScope: notesOnlyScope,
+                numQuestions: neededCount
+            )
+            return Array(generatedQuestions.prefix(neededCount))
+        } else {
+            let generatedQuestions = try await openAI.generateQuizQuestions(
+                content: noteContent,
+                numQuestions: neededCount
+            )
+            return Array(generatedQuestions.prefix(neededCount))
+        }
     }
     
     func loadQuestionsWithHistory(userID: String, firebase: Firebase) {
