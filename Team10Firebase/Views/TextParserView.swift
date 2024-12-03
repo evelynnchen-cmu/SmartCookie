@@ -25,6 +25,9 @@ struct TextParserView: View {
   @State private var content: String? = nil
   @State private var newNote: Note? = nil
   @State private var isParsing = true
+  @State private var isEditing = false
+  @State private var editedContent: String = ""
+  @State private var keyboardHeight: CGFloat = 0
   private var openAI = OpenAI()
   
   var completion: ((String) -> Void)?
@@ -40,225 +43,287 @@ struct TextParserView: View {
     }
   
     var body: some View {
-      VStack {
-        HStack {
-          Spacer()
-          Button(action: {
-            isPresented = false
-          }) {
-            Image(systemName: "xmark")
-                .foregroundColor(.black)
-                .padding()
-          }
-        }
-        
-        ScrollView {
-          if !isParsing {
-            if let text = content {
-              if (text.isEmpty) {
-                Text("No text found")
-                    .padding()
-              }
-              else {
-                Text(text)
-                  .padding()
-              }
-            }
-            else {
-              Text("No text found")
-                  .padding()
-            }
-          } else {
-            ProgressView("Parsing text...")
-              .padding()
-          }
-        }
-        
-        Spacer()
-        
-        HStack {
-            Button(action: {
-                // Action to save the parsed text
-                firebaseStorage.uploadImagesToFirebase(images) { paths in
-                  // If imagePaths not nil, parse image
-                  if let imagePaths = paths {
-                    print("Image paths: \(imagePaths)")
-                    // If thisNote is not nil, update the given note; otherwise, create a new note
-                    if let thisNote = self.note {
-                      Task {
-                        do {
-                          try await updateNote(thisNote: thisNote, imagePaths: imagePaths)
-                        } catch {
-                          print("Failed to update note")
-                          alertMessage = "Failed to update note"
-                          showAlert = true
+        GeometryReader { geometry in
+            ZStack(alignment: .bottomTrailing) {
+                VStack(spacing: 0) {
+                    // Top bar with close button
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            isPresented = false
+                        }) {
+                            Image(systemName: "xmark")
+                                .foregroundColor(.black)
+                                .padding()
                         }
-                      }
                     }
-                    else {
-                      if let course = course {
-                        //                        print("Course ID: \(course.id)")
+                  
+                    // Content area
+                    if !isParsing {
+                        if let text = content {
+                            if isEditing {
+                                // Editable text area
+                                TextEditor(text: $editedContent)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(Color.white)
+                                    .padding()
+                            } else {
+                                ScrollView {
+                                    Text(text)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .padding()
+                                }
+                            }
+                        } else {
+                            Text("No text found")
+                                .padding()
+                        }
+                    } else {
+                        ProgressView("Parsing text...")
+                            .padding()
+                    }
+                    
+                    // Bottom action buttons that need to be fixed later
+                    if !isEditing {
+                        HStack {
+                            Button(action: {
+                                // Action to save the parsed text
+                                handleSave()
+                            }) {
+                                Text("Save")
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                            
+                            Button(action: {
+                                // Action to re-extract the text
+                                self.content = nil
+                                self.isParsing = true
+                                parseImages()
+                            }) {
+                                Text("Re-extract")
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.green)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                            
+                            Button(action: {
+                                isChatViewPresented = true
+                            }) {
+                                Text("Chat Now")
+                                    .padding()
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.orange)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .padding()
+                        .background(Color.white)
+                        .shadow(radius: 2)
+                    }
+                }
+                .edgesIgnoringSafeArea(.bottom)
+                
+                // Edit/Confirm button
+                if !isParsing {
+                    if isEditing {
+                        Button(action: {
+                            content = editedContent
+                            isEditing = false
+                        }) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.blue)
+                                .background(Circle().fill(Color.white))
+                                .shadow(radius: 2)
+                        }
+                        .padding([.trailing, .bottom], 20)
+                    } else {
+                        Button(action: {
+                            editedContent = content ?? ""
+                            isEditing = true
+                        }) {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(.blue)
+                                .background(Circle().fill(Color.white))
+                                .shadow(radius: 2)
+                        }
+                        .padding([.trailing, .bottom], 20)
+                    }
+                }
+            }
+        }
+        .onAppear {
+            parseImages()
+            setupKeyboardObservers()
+        }
+        .onDisappear {
+            removeKeyboardObservers()
+        }
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { isChatViewPresented ?? false },
+            set: { isChatViewPresented = $0 ? true : nil }
+        )) {
+            if let course = course {
+                ChatView(selectedCourse: course, isChatViewPresented: $isChatViewPresented)
+            } else {
+                Text("Failed to load course")
+            }
+        }
+    }
+
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { notification in
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                self.keyboardHeight = keyboardFrame.height
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+            self.keyboardHeight = 0
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+
+    private func handleSave() {
+        firebaseStorage.uploadImagesToFirebase(images) { paths in
+            // If imagePaths not nil, parse image
+            if let imagePaths = paths {
+                print("Image paths: \(imagePaths)")
+                // If thisNote is not nil, update the given note; otherwise, create a new note
+                if let thisNote = self.note {
+                    Task {
+                        do {
+                            try await updateNote(thisNote: thisNote, imagePaths: imagePaths)
+                        } catch {
+                            print("Failed to update note")
+                            alertMessage = "Failed to update note"
+                            showAlert = true
+                        }
+                    }
+                } else {
+                    if let course = course {
                         courseID = course.id ?? ""
                         userID = course.userID
                         
                         let noteTitle = title.isEmpty ? "\(imagePaths[0])" : title
                         
                         Task {
-                          await firebase.createNoteSimple(
-                            title: noteTitle,
-                            content: content ?? "",
-                            images: imagePaths,
-                            courseID: courseID,
-                            folderID: nil,
-                            userID: userID
-                          ) { note in
-                            if let note = note {
-                              //                              print("Note created: \(note.id)")
-                              newNote = note
-                              self.note = newNote
-                              completion?("\nNote \(newNote?.title ?? "Unknown Name") created successfully!")
-                              showAlert = false
-                              isPresented = false
-                            } else {
-                              print("Failed to create note")
-                              alertMessage = "Failed to create note"
-                              showAlert = true
+                            await firebase.createNoteSimple(
+                                title: noteTitle,
+                                content: content ?? "",
+                                images: imagePaths,
+                                courseID: courseID,
+                                folderID: nil,
+                                userID: userID
+                            ) { note in
+                                if let note = note {
+                                    newNote = note
+                                    self.note = newNote
+                                    completion?("\nNote \(newNote?.title ?? "Unknown Name") created successfully!")
+                                    showAlert = false
+                                    isPresented = false
+                                } else {
+                                    print("Failed to create note")
+                                    alertMessage = "Failed to create note"
+                                    showAlert = true
+                                }
                             }
-                          }
                         }
-                      } else {
+                    } else {
                         print("Failed to get course")
                         alertMessage = "Failed to get course"
                         showAlert = true
-                      }
                     }
-                    
-                  }
-                  else {
-                    print("Failed to upload image")
-                    alertMessage = "Failed to upload image"
-                    showAlert = true
-                  }
                 }
-            }) {
-                Text("Save")
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-            
-            Button(action: {
-                // Action to re-extract the text
-                self.content = nil
-                self.isParsing = true
-                parseImages()
-            }) {
-                Text("Re-extract")
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-            
-            Button(action: {
-              isChatViewPresented = true
-            }) {
-                Text("Chat Now")
-                    .padding()
-                    .background(Color.orange)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-            }
-          }
-          .padding()
-    }
-    .onAppear {
-      parseImages()
-    }
-    .alert(isPresented: $showAlert) {
-        Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
-    }
-    .fullScreenCover(isPresented: Binding(
-        get: { isChatViewPresented ?? false },
-        set: { isChatViewPresented = $0 ? true : nil }
-    )) {
-      if let course = course {
-        ChatView(selectedCourse: course, isChatViewPresented: $isChatViewPresented)
-      }
-      else {
-        Text("Failed to load course")
-      }
-    }
-  }
-  
-  private func updateNote(thisNote: Note, imagePaths: [String]) async throws {
-    // Update the note document in firebase with the new file paths
-    firebase.updateNoteImages(note: thisNote, imagePaths: imagePaths) { updatedNote in
-      if let updatedNote = updatedNote {
-        self.note = updatedNote
-        if let content = content {
-          let combinedContent = (thisNote.content) + "\n" + content
-          firebase.updateNoteContentCompletion(note: updatedNote, newContent: combinedContent) { updatedNote in
-            if let updatedNote = updatedNote {
-              self.note = updatedNote
-              Task {
-                var updatedSummary = combinedContent
-                do {
-                  updatedSummary = try await openAI.summarizeContent(content: combinedContent)
-                  print("new summary done")
-                } catch {
-                  alertMessage = "Failed to summarize content"
-                  showAlert = true
-                }
-                firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
-                  if let updatedNote = updatedNote {
-                    self.note = updatedNote
-                    completion?("\nNote updated successfully!")
-                    showAlert = false
-                    isPresented = false
-                  }
-                  else {
-                    print("Failed to update summary")
-                    alertMessage = "Failed to update summary"
-                    showAlert = true
-                  }
-                }
-              }
             } else {
-              print("Failed to update note with parsed image content")
-              alertMessage = "Failed to update note with parsed image content"
-              showAlert = true
+                print("Failed to upload image")
+                alertMessage = "Failed to upload image"
+                showAlert = true
             }
-          }
         }
-      } else {
-        print("Failed to update note with image paths")
-        alertMessage = "Failed to update note with images"
-        showAlert = true
-      }
     }
-  }
+    
+    private func updateNote(thisNote: Note, imagePaths: [String]) async throws {
+        // Update the note document in firebase with the new file paths
+        firebase.updateNoteImages(note: thisNote, imagePaths: imagePaths) { updatedNote in
+            if let updatedNote = updatedNote {
+                self.note = updatedNote
+                if let content = content {
+                    let combinedContent = (thisNote.content) + "\n" + content
+                    firebase.updateNoteContentCompletion(note: updatedNote, newContent: combinedContent) { updatedNote in
+                        if let updatedNote = updatedNote {
+                            self.note = updatedNote
+                            Task {
+                                var updatedSummary = combinedContent
+                                do {
+                                    updatedSummary = try await openAI.summarizeContent(content: combinedContent)
+                                    print("new summary done")
+                                } catch {
+                                    alertMessage = "Failed to summarize content"
+                                    showAlert = true
+                                }
+                                firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
+                                    if let updatedNote = updatedNote {
+                                        self.note = updatedNote
+                                        completion?("\nNote updated successfully!")
+                                        showAlert = false
+                                        isPresented = false
+                                    } else {
+                                        print("Failed to update summary")
+                                        alertMessage = "Failed to update summary"
+                                        showAlert = true
+                                    }
+                                }
+                            }
+                        } else {
+                            print("Failed to update note with parsed image content")
+                            alertMessage = "Failed to update note with parsed image content"
+                            showAlert = true
+                        }
+                    }
+                }
+            } else {
+                print("Failed to update note with image paths")
+                alertMessage = "Failed to update note with images"
+                showAlert = true
+            }
+        }
+    }
 
-  private func parseImages() {
-      var parsedTexts = [String](repeating: "", count: images.count)
-      let dispatchGroup = DispatchGroup()
+    private func parseImages() {
+        var parsedTexts = [String](repeating: "", count: images.count)
+        let dispatchGroup = DispatchGroup()
 
-      for (index, image) in images.enumerated() {
-          dispatchGroup.enter()
-          openAI.parseImage(image) { text in
-              if let text = text {
-                  parsedTexts[index] = text
-              } else {
-                  parsedTexts[index] = "Failed to parse image"
-              }
-              dispatchGroup.leave()
-          }
-      }
+        for (index, image) in images.enumerated() {
+            dispatchGroup.enter()
+            openAI.parseImage(image) { text in
+                if let text = text {
+                    parsedTexts[index] = text
+                } else {
+                    parsedTexts[index] = "Failed to parse image"
+                }
+                dispatchGroup.leave()
+            }
+        }
 
-      dispatchGroup.notify(queue: .main) {
-          self.content = parsedTexts.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-          self.isParsing = false // Set parsing status to false
-      }
-  }
+        dispatchGroup.notify(queue: .main) {
+            self.content = parsedTexts.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+            self.isParsing = false // Set parsing status to false
+        }
+    }
 }
