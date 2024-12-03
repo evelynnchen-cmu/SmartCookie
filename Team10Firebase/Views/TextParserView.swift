@@ -80,8 +80,10 @@ struct TextParserView: View {
             Button(action: {
                 // Action to save the parsed text
                 firebaseStorage.uploadImagesToFirebase(images) { paths in
+                  // If imagePaths not nil, parse image
                   if let imagePaths = paths {
                     print("Image paths: \(imagePaths)")
+                    // If thisNote is not nil, update the given note; otherwise, create a new note
                     if let thisNote = self.note {
                       Task {
                         do {
@@ -151,23 +153,6 @@ struct TextParserView: View {
                 self.content = nil
                 self.isParsing = true
                 parseImages()
-//               for image in images {
-//                 openAI.parseImage(image) { text in
-//                   if let parsedText = text {
-//                     print("Parsed image content: \(parsedText)")
-// //                    self.content = (self.content ?? "") + "\n" + parsedText
-//                     if let content = self.content {
-//                       self.content = content + "\n" + parsedText
-//                     }
-//                     else {
-//                       self.content = parsedText
-//                     }
-//                   }
-//                   else {
-//                     print("Failed to parse image")
-//                   }
-//                 }
-//               }
             }) {
                 Text("Re-extract")
                     .padding()
@@ -207,56 +192,6 @@ struct TextParserView: View {
     }
   }
   
-//  private func updateNote(thisNote: Note, imagePath: String) async throws {
-//        // Update the note document in firebase with the new file path
-//        firebase.updateNoteImages(note: thisNote, imagePath: imagePath) { updatedNote in
-//            if let updatedNote = updatedNote {
-//              self.note = updatedNote
-//              if let content = content {
-//                let combinedContent = (thisNote.content) + "\n" + content
-//                firebase.updateNoteContentCompletion(note: updatedNote, newContent: combinedContent) { updatedNote in
-//                  if let updatedNote = updatedNote {
-//                    self.note = updatedNote
-//                    Task {
-//                      var updatedSummary = combinedContent
-//                      do {
-//                        updatedSummary = try await openAI.summarizeContent(content: combinedContent)
-//                        print("new summary done")
-//                      } catch {
-//                        alertMessage = "Failed to summarize content"
-//                        showAlert = true
-//                      }
-//                      firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
-//                        if let updatedNote = updatedNote {
-//                          self.note = updatedNote
-//                          completion?("\nNote updated successfully!")
-//                          showAlert = false
-//                          isPresented = false
-//                        }
-//                        else {
-//                          print("Failed to update summary")
-//                          alertMessage = "Failed to update summary"
-//                          showAlert = true
-//                        }
-//                      }
-//                                      
-//                                      
-//                    }
-//                  } else {
-//                    print("Failed to update note with parsed image content")
-//                    alertMessage = "Failed to update note with parsed image content"
-//                    showAlert = true
-//                  }
-//                }
-//              }
-//            } else {
-//                print("Failed to update note with image path")
-//                alertMessage = "Failed to update note with image"
-//                showAlert = true
-//            }
-//      }
-//  }
-
   private func updateNote(thisNote: Note, imagePaths: [String]) async throws {
     // Update the note document in firebase with the new file paths
     firebase.updateNoteImages(note: thisNote, imagePaths: imagePaths) { updatedNote in
