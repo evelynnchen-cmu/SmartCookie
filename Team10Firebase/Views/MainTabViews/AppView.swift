@@ -43,6 +43,7 @@ struct AppView: View {
                 }
                 Spacer()
             }
+          // This conditional padding is needed for the keyboard in ChatView to cover the CustomTabBar without too much padding
             .padding(.bottom, isKeyboardVisible ? 0 : 50)
             Spacer()
             VStack {

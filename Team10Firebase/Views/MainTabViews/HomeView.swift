@@ -72,15 +72,6 @@ struct HomeView: View {
                       ], spacing: 16) {
                           ForEach(firebase.courses, id: \.id) { course in
                               ZStack(alignment: .topTrailing) {
-                                //   NavigationLink(destination: CourseView(course: course, firebase: firebase)) {
-                                //       Text(course.courseName)
-                                //           .font(.headline)
-                                //           .frame(height: 100)
-                                //           .frame(maxWidth: .infinity)
-                                //           .background(Color.blue.opacity(0.2))
-                                //           .cornerRadius(12)
-                                //           .foregroundColor(.primary)
-                                //   }
                                 Button(action: {
                                     navigationPath.append(course)
                                 }) {
@@ -174,21 +165,14 @@ struct HomeView: View {
             }
             .onAppear {
                 if let course = navigateToCourse, let note = navigateToNote {
-                    navigateToCourse = nil
-                    navigateToNote = nil
-                    // Perform navigation logic here
-                    // For example, you might push a new view onto the navigation stack
-                    // or update the state to show the specific course and note
-                //    navigationPath.append(CourseView(course: course))
-                //    navigationPath.append(NoteView(note: note))
-                   navigationPath.append(course)
-                   navigationPath.append(note)
+                  navigateToCourse = nil
+                  navigateToNote = nil
+                  navigationPath.append(course)
+                  navigationPath.append(note)
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: .resetHomeView)) { _ in
                 // Reset the HomeView to its root
-                // For example, you might pop to the root view controller
-                // or reset the state to show the root view
                 navigationPath = NavigationPath()
             }
             .navigationDestination(for: Course.self) { course in
