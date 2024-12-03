@@ -14,6 +14,7 @@ struct CourseView: View {
     @State private var directCourseNotes: [Note] = []
     @State private var folderToDelete: Folder?
     @State private var noteToDelete: Note?
+    @Binding var navigationPath: NavigationPath
     @State private var activeAlert: ActiveAlert?
 
     enum ActiveAlert: Identifiable {
@@ -99,6 +100,12 @@ struct CourseView: View {
                 )
             }
         }
+        .navigationDestination(for: Note.self) { note in
+            NoteView(firebase: firebase, note: note, course: course)
+        }
+        .navigationDestination(for: Folder.self) { folder in
+            FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
+        }
     }
 
     private var recentNoteSummarySection: some View {
@@ -119,7 +126,23 @@ struct CourseView: View {
                 .font(.headline)
 
             ForEach(directCourseNotes, id: \.id) { note in
-                NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
+            //   NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
+            //         VStack(alignment: .leading) {
+            //             Text(note.title)
+            //                 .font(.body)
+            //                 .foregroundColor(.blue)
+            //             Text(note.summary)
+            //                 .font(.caption)
+            //                 .foregroundColor(.gray)
+            //             Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+            //                 .font(.caption2)
+            //                 .foregroundColor(.secondary)
+            //         }
+            //         .padding(.vertical, 5)
+            //     }
+            Button(action: {
+                    navigationPath.append(note)
+                }) {
                     VStack(alignment: .leading) {
                         Text(note.title)
                             .font(.body)
@@ -152,13 +175,26 @@ struct CourseView: View {
                 .font(.headline)
 
             ForEach(courseFolders, id: \.id) { folder in
-                NavigationLink(
-                    destination: FolderView(
-                        firebase: firebase,
-                        course: course,
-                        folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course)
-                    )
-                ) {
+//                 NavigationLink(
+//                     destination: FolderView(
+//                         firebase: firebase,
+// //                        folder: folder,
+//                         course: course,
+//                         folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course)
+                        
+//                     )
+//                 ) {
+//                     Text(folder.folderName)
+//                         .font(.body)
+//                         .foregroundColor(.blue)
+//                         .padding()
+//                         .background(Color.gray.opacity(0.2))
+//                         .cornerRadius(8)
+//                         .padding(.vertical, 2)
+//                 }
+                Button(action: {
+                    navigationPath.append(folder)
+                }) {
                     Text(folder.folderName)
                         .font(.body)
                         .foregroundColor(.blue)

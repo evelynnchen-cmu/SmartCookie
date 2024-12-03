@@ -243,6 +243,9 @@ struct ChatView: View {
             .alert(isPresented: $showSaveConfirmation) {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
             }
+            .onReceive(NotificationCenter.default.publisher(for: .resetChatView)) { _ in
+                clearChat()
+            }
         }
     }
 
