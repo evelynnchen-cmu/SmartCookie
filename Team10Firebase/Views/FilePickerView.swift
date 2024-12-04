@@ -26,8 +26,9 @@ struct FilePickerView: View {
                     trailing: saveButton
                 )
                 .toolbar { toolbarContent }
-                .onAppear { 
-                    fetchFolders() 
+                .onAppear {
+                    firebase.getNotes()
+                    fetchFolders()
                     fetchNotes()
                     debugPrintData() 
                 }
@@ -181,16 +182,30 @@ struct FilePickerView: View {
 
         if let selectedFolder = selectedFolder {
             // Fetch notes specifically in the selected folder
+            // notes = firebase.notes.filter { note in
+            //     note.courseID == selectedCourse.id && (note.fileLocation == "\(selectedCourse.id)/" || note.fileLocation.isEmpty)
+            // }
             notes = firebase.notes.filter { note in
-                note.courseID == selectedCourse.id && (note.fileLocation == "\(selectedCourse.id)/" || note.fileLocation.isEmpty)
+                guard let courseID = note.courseID else { return false }
+                return courseID == selectedCourse.id
             }
             print("Notes in folder \(selectedFolder.folderName ?? "Unnamed"): \(notes.map { $0.title })")
         } else {
             // Fetch notes for the selected course not in any folder
+            // notes = firebase.notes.filter { note in
+                // note.courseID == selectedCourse.id &&
+                // (note.fileLocation == "\(selectedCourse.id)/" || !note.fileLocation.contains("/"))
+            // }
             notes = firebase.notes.filter { note in
-                note.courseID == selectedCourse.id &&
-                (note.fileLocation == "\(selectedCourse.id)/" || !note.fileLocation.contains("/"))
+                guard let courseID = note.courseID else { return false }
+                return courseID == selectedCourse.id
             }
+            print("selected course id: \(selectedCourse.id ?? "nil")")
+            print("firebase notes: \(firebase.notes.map { $0.title })")
+            print("firebase notes filtered by course id: \(firebase.notes.filter { $0.courseID == selectedCourse.id }.map { $0.title })")
+            print("firebase notes filtered by course id and file location: \(firebase.notes.filter { $0.courseID == selectedCourse.id && $0.fileLocation == "\(selectedCourse.id)/" }.map { $0.title })")
+            print("note.courseid: \(notes.map { $0.courseID })")
+            print("note.filelocation: \(notes.map { $0.fileLocation })")
             print("Notes not in a folder for course \(selectedCourse.courseName): \(notes.map { $0.title })")
         }
     }
