@@ -115,7 +115,8 @@ struct ScanView: View {
                 showAlert = true
                 self.selectedTabIndex = 0
                 self.navigateToCourse = course
-//                self.navigateToNote = newNote
+               self.navigateToNote = navigateToNote
+                NotificationCenter.default.post(name: .resetHomeView, object: nil)
               }
             }
             else {
@@ -151,6 +152,17 @@ struct ScanView: View {
           .alert(isPresented: $showAlert) {
             Alert(title: Text("Camera Scan"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
           }
+          .onReceive(NotificationCenter.default.publisher(for: .resetScanView)) { _ in
+                // Reset the ScanView to its initial state
+                capturedImages = []
+                showCamera = true
+                showTextParserView = false
+                showAlert = false
+                alertMessage = ""
+                course = nil
+                noteTitle = ""
+                selectedTab = 0
+            }
         }
       }
     }

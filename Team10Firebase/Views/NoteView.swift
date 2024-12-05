@@ -126,41 +126,6 @@ struct NoteView: View {
             showTextParserView = true
           }
         }
-//        .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
-//          if alertMessage != "" {
-//            showAlert = true
-//          }
-//        }) {
-//          if let image = self.selectedImage {
-////            TextParserView(
-////              image: image,
-////              viewModel: viewModel,
-////              firebase: firebase,
-////              isPresented: $showTextParserView,
-////              note: note
-////            ) { message in
-////              alertMessage = message
-////            }
-////            var course = firebase.getCourse(note.courseID) {
-////              courseResult in course = courseResult
-////            }
-//            TextParserViewNewNote(
-//              image: image,
-//              firebase: firebase,
-//              isPresented: $showTextParserView,
-//              course: course,
-//              title: note.title,
-//              note: $viewModel.note
-//            ) { message in
-//              alertMessage = message
-//              showAlert = true
-//              viewModel.loadImages()
-//            }
-//          }
-//          else {
-//            Text("Nil image")
-//          }
-//        }
         .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
           if alertMessage != "" {
             showAlert = true

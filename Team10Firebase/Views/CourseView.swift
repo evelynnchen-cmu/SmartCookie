@@ -15,11 +15,13 @@ struct CourseView: View {
     @State private var directCourseNotes: [Note] = []
     @State private var folderToDelete: Folder?
     @State private var noteToDelete: Note?
+    @Binding var navigationPath: NavigationPath
     @State private var activeAlert: ActiveAlert?
   
-  init(course: Course, firebase: Firebase) {
+  init(course: Course, firebase: Firebase, navigationPath: Binding<NavigationPath>) {
             self.course = course
             self.firebase = firebase
+            self._navigationPath = navigationPath
           _viewModel = StateObject(wrappedValue: CourseViewModel(firebase: firebase, course: course))
   }
 
@@ -108,6 +110,12 @@ struct CourseView: View {
                     secondaryButton: .cancel()
                 )
             }
+        }
+        .navigationDestination(for: Note.self) { note in
+            NoteView(firebase: firebase, note: note, course: course)
+        }
+        .navigationDestination(for: Folder.self) { folder in
+            FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
         }
     }
 

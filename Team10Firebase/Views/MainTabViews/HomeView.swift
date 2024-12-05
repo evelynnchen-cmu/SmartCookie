@@ -16,9 +16,11 @@ struct HomeView: View {
 
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
+    @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        NavigationView {
+        // NavigationView {
+        NavigationStack(path: $navigationPath) {
             VStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -70,15 +72,17 @@ struct HomeView: View {
                       ], spacing: 16) {
                           ForEach(firebase.courses, id: \.id) { course in
                               ZStack(alignment: .topTrailing) {
-                                  NavigationLink(destination: CourseView(course: course, firebase: firebase)) {
-                                      Text(course.courseName)
-                                          .font(.headline)
-                                          .frame(height: 100)
-                                          .frame(maxWidth: .infinity)
-                                          .background(Color.blue.opacity(0.2))
-                                          .cornerRadius(12)
-                                          .foregroundColor(.primary)
-                                  }
+                                Button(action: {
+                                    navigationPath.append(course)
+                                }) {
+                                    Text(course.courseName)
+                                        .font(.headline)
+                                        .frame(height: 100)
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.blue.opacity(0.2))
+                                        .cornerRadius(12)
+                                        .foregroundColor(.primary)
+                                }
                                   
                                   HStack {
                                       Button(action: {
@@ -161,12 +165,21 @@ struct HomeView: View {
             }
             .onAppear {
                 if let course = navigateToCourse, let note = navigateToNote {
-                    navigateToCourse = nil
-                    navigateToNote = nil
+                  navigateToCourse = nil
+                  navigateToNote = nil
+                  navigationPath.append(course)
+                  navigationPath.append(note)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .resetHomeView)) { _ in
+                // Reset the HomeView to its root
+                navigationPath = NavigationPath()
+            }
+            .navigationDestination(for: Course.self) { course in
+                CourseView(course: course, firebase: firebase, navigationPath: $navigationPath)
+            }
         }
-        
+        .navigationBarHidden(true)
     }
   
     private func getStreakInfo() {
