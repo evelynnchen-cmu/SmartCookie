@@ -14,7 +14,7 @@ struct FolderView: View {
 
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
-
+    
     var body: some View {
       VStack{
         ScrollView {
