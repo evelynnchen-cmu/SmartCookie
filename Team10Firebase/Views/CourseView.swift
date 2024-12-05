@@ -8,6 +8,7 @@ import Combine
 struct CourseView: View {
     var course: Course
     var firebase: Firebase
+  @StateObject private var viewModel: CourseViewModel
     @State private var isAddingFolder = false
     @State private var isAddingNote = false
     @State private var courseFolders: [Folder] = []
@@ -15,6 +16,12 @@ struct CourseView: View {
     @State private var folderToDelete: Folder?
     @State private var noteToDelete: Note?
     @State private var activeAlert: ActiveAlert?
+  
+  init(course: Course, firebase: Firebase) {
+            self.course = course
+            self.firebase = firebase
+          _viewModel = StateObject(wrappedValue: CourseViewModel(firebase: firebase, course: course))
+  }
 
     enum ActiveAlert: Identifiable {
         case deleteFolder, deleteNote
@@ -40,27 +47,30 @@ struct CourseView: View {
         .sheet(isPresented: $isAddingFolder) {
             FolderModal(
                 onFolderCreated: {
-                    fetchFoldersForCourse()
+//                    fetchFoldersForCourse()
+                  viewModel.fetchData()
                 },
-                firebase: firebase,
-                course: course
+                firebase: viewModel.firebase,
+                course: viewModel.course
             )
         }
         .sheet(isPresented: $isAddingNote) {
             AddNoteModal(
                 onNoteCreated: {
-                    fetchDirectNotesForCourse()
+//                    fetchDirectNotesForCourse()
+                  viewModel.fetchData()
                 },
-                firebase: firebase,
-                course: course,
+                firebase: viewModel.firebase,
+                course: viewModel.course,
                 folder: nil
             )
         }
         .onAppear {
-            fetchFoldersForCourse()
-            fetchDirectNotesForCourse()
+//            fetchFoldersForCourse()
+//            fetchDirectNotesForCourse()
+          viewModel.fetchData()
         }
-        .navigationTitle(course.courseName)
+        .navigationTitle(viewModel.course.courseName)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HStack {
@@ -81,7 +91,7 @@ struct CourseView: View {
                     message: Text("Are you sure you want to delete this folder and all its notes?"),
                     primaryButton: .destructive(Text("Delete")) {
                         if let folder = folderToDelete {
-                            deleteFolder(folder)
+                          viewModel.deleteFolder(folder)
                         }
                     },
                     secondaryButton: .cancel()
@@ -92,7 +102,7 @@ struct CourseView: View {
                     message: Text("Are you sure you want to delete this note?"),
                     primaryButton: .destructive(Text("Delete")) {
                         if let note = noteToDelete {
-                            deleteDirectNote(note)
+                          viewModel.deleteNote(note)
                         }
                     },
                     secondaryButton: .cancel()
@@ -102,7 +112,7 @@ struct CourseView: View {
     }
 
     private var recentNoteSummarySection: some View {
-        if let recentNote = getMostRecentNoteForCourse() {
+      if let recentNote = viewModel.getMostRecentNote() {
             Text("Most Recent Note's Summary: \(recentNote.summary)")
                 .font(.subheadline)
                 .foregroundColor(.gray)
@@ -118,8 +128,8 @@ struct CourseView: View {
             Text("Notes in Course")
                 .font(.headline)
 
-            ForEach(directCourseNotes, id: \.id) { note in
-                NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
+          ForEach(viewModel.notes, id: \.id) { note in
+            NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
                     VStack(alignment: .leading) {
                         Text(note.title)
                             .font(.body)
@@ -151,12 +161,12 @@ struct CourseView: View {
             Text("Folders")
                 .font(.headline)
 
-            ForEach(courseFolders, id: \.id) { folder in
+          ForEach(viewModel.folders, id: \.id) { folder in
                 NavigationLink(
                     destination: FolderView(
-                        firebase: firebase,
-                        course: course,
-                        folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course)
+                      firebase: viewModel.firebase,
+                      course: viewModel.course,
+                      folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
                     )
                 ) {
                     Text(folder.folderName)
