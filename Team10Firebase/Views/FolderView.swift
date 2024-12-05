@@ -5,22 +5,28 @@ import SwiftUI
 
 struct FolderView: View {
     @ObservedObject var firebase: Firebase
-//    var folder: Folder
+
     var course: Course
 
     @StateObject var folderViewModel: FolderViewModel
+  
+    @State private var isViewActive = true
     
     @State private var showAddNoteModal = false
 
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
+  
+    init(firebase: Firebase, course: Course, folderViewModel: FolderViewModel) {
+            self.firebase = firebase
+            self.course = course
+            _folderViewModel = StateObject(wrappedValue: folderViewModel)
+    }
     
     var body: some View {
       VStack{
         ScrollView {
           VStack(alignment: .leading) {
-            
-            
             Text("Notes:")
               .font(.headline)
             
@@ -53,57 +59,63 @@ struct FolderView: View {
           }
         }
         Button(action: {
-            showAddNoteModal = true
-        }) {
-            Text("Create Note")
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .cornerRadius(8)
+                        showAddNoteModal = true
+            }) {
+                Text("Create Note")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+            }
+            .padding(.top, 20)
         }
-        .padding(.top, 20)
+        .padding()
+        .navigationTitle(folderViewModel.folder.folderName)
+        .onAppear {
+            isViewActive = true
+            if isViewActive {
+                folderViewModel.fetchNotesByIDs()
+            }
+        }
+        .onDisappear {
+            isViewActive = false
+        }
+      
         .sheet(isPresented: $showAddNoteModal) {
             AddNoteModal(
                 onNoteCreated: {
                   folderViewModel.fetchNotes()
                 },
-                // updateFolderNotes: {
-                //   folderViewModel.updateFolderNotes()
-                // },
                 firebase: firebase,
                 course: course,
                 folder: folderViewModel.folder
             )
         }
+        .alert(isPresented: $showDeleteNoteAlert) {
+            Alert(
+                title: Text("Delete Note"),
+                message: Text("Are you sure you want to delete this note?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    if let note = noteToDelete {
+                      firebase.deleteNote(note: note, folderID: folderViewModel.folder.id ?? "") { error in
+                            if let error = error {
+                                print("Error deleting note: \(error.localizedDescription)")
+                            } else {
+                              folderViewModel.fetchNotes()
+                            }
+                        }
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
       }
-      .padding()
-      .navigationTitle("Folder Details")
-      .onAppear {
-        folderViewModel.fetchNotes()
       }
-      .alert(isPresented: $showDeleteNoteAlert) {
-          Alert(
-              title: Text("Delete Note"),
-              message: Text("Are you sure you want to delete this note?"),
-              primaryButton: .destructive(Text("Delete")) {
-                  if let note = noteToDelete {
-                    firebase.deleteNote(note: note, folderID: folderViewModel.folder.id ?? "") { error in
-                          if let error = error {
-                              print("Error deleting note: \(error.localizedDescription)")
-                          } else {
-                            folderViewModel.fetchNotes() 
-                          }
-                      }
-                  }
-              },
-              secondaryButton: .cancel()
-          )
-      }
-    }
+      
 
-}
+
 
 private let dateFormatter: DateFormatter = {
     let formatter = DateFormatter()

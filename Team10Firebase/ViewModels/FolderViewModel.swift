@@ -5,20 +5,6 @@
 //  Created by Vicky Chen on 11/12/24.
 //
 
-//import Foundation
-//import FirebaseFirestore
-//import FirebaseStorage
-//import Combine
-//import UIKit
-//
-//class FolderViewModel: ObservableObject {
-//  @Published var folder: Folder?
-//  
-//  
-//  init(folder: Folder) {
-//    self.folder = folder
-//  }
-//}
 
 
 
@@ -40,11 +26,24 @@ class FolderViewModel: ObservableObject {
       self.folder = folder
       self.course = course
       self.notes = []
+      setupSubscriptions()
       fetchNotesByIDs()
     }
   
+  private func setupSubscriptions() {
+          // Monitor folder updates
+          firebase.getFolder(folderID: folder.id ?? "") { [weak self] updatedFolder in
+              if let updatedFolder = updatedFolder {
+                  DispatchQueue.main.async {
+                      self?.folder = updatedFolder
+                      self?.fetchNotesByIDs()
+                  }
+              }
+          }
+  }
   
-  private func fetchNotesByIDs() {
+  
+ func fetchNotesByIDs() {
     let noteIDs = folder.notes
     print("Note IDS to fetch", folder.notes)
 
