@@ -28,41 +28,6 @@ struct RecentNoteCard: View {
     }
 }
 
-struct RecentNotesSection: View {
-    let accessedNote: Note?
-    let updatedNote: Note?
-    let firebase: Firebase
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Recent Activity")
-                .font(.title2)
-                .fontWeight(.bold)
-                .padding(.horizontal)
-            
-            if let note = accessedNote {
-                Text("Last Viewed")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                RecentNoteCard(
-                    note: note,
-                    course: firebase.courses.first(where: { $0.id == note.courseID })
-                )
-            }
-            
-            if let note = updatedNote {
-                Text("Last Updated")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                RecentNoteCard(
-                    note: note,
-                    course: firebase.courses.first(where: { $0.id == note.courseID })
-                )
-            }
-        }
-    }
-}
-
 struct HomeView: View {
     @StateObject private var firebase = Firebase()
     @State private var errorMessage: String?
@@ -121,14 +86,7 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal)
-                      
-//                        RecentNotesSection(
-//                            accessedNote: firebase.getMostRecentlyAccessedNote(),
-//                            updatedNote: firebase.getMostRecentlyUpdatedNote(),
-//                            firebase: firebase
-//                        )
-//                        .padding(.horizontal)
-//                        .padding(.bottom)
+            
 
                         
                         HStack {
