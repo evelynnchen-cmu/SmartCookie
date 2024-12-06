@@ -3,17 +3,20 @@
 
 import SwiftUI
 
+class FolderEditStates: ObservableObject {
+    @Published var noteToEdit: Note?
+    @Published var showEditNoteModal = false
+}
+
 struct FolderView: View {
     @ObservedObject var firebase: Firebase
-//    var folder: Folder
     var course: Course
-
     @StateObject var folderViewModel: FolderViewModel
-    
+    @StateObject private var editStates = FolderEditStates()
     @State private var showAddNoteModal = false
-
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
+
 
     var body: some View {
       VStack{
@@ -25,29 +28,41 @@ struct FolderView: View {
               .font(.headline)
             
             ForEach(folderViewModel.notes, id: \.id) { note in
-              NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
-                VStack(alignment: .leading) {
-                  Text(note.title)
-                    .font(.body)
-                    .foregroundColor(.blue)
-                  Text(note.summary)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                  Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                HStack(spacing: 8) {
+                    NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
+                        VStack(alignment: .leading) {
+                            Text(note.title)
+                                .font(.body)
+                                .foregroundColor(.blue)
+                            Text(note.summary)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                            Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 5)
+                    }
+                    
+                    Button(action: {
+                        editStates.noteToEdit = note
+                        editStates.showEditNoteModal = true
+                    }) {
+                        Image(systemName: "pencil.circle")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
                 }
-                .padding(.vertical, 5)
-              }
-              .contextMenu {
-                Button(role: .destructive) {
-                  noteToDelete = note
-                  showDeleteNoteAlert = true
-                } label: {
-                  Label("Delete Note", systemImage: "trash")
+                .contextMenu {
+                    Button(role: .destructive) {
+                        noteToDelete = note
+                        showDeleteNoteAlert = true
+                    } label: {
+                        Label("Delete Note", systemImage: "trash")
+                    }
                 }
-              }
             }
+
             
             Spacer()
           }
@@ -78,6 +93,19 @@ struct FolderView: View {
             )
         }
       }
+      .sheet(isPresented: $editStates.showEditNoteModal) {
+          if let note = editStates.noteToEdit {
+              EditNoteModal(
+                  note: note,
+                  firebase: firebase,
+                  onNoteUpdated: {
+                      folderViewModel.fetchNotes()
+                      editStates.showEditNoteModal = false
+                  }
+              )
+          }
+      }
+
       .padding()
       .navigationTitle("Folder Details")
       .onAppear {
