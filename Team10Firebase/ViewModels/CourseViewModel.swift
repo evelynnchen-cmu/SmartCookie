@@ -59,7 +59,7 @@ class CourseViewModel: ObservableObject {
         }
     }
     
-    func getMostRecentNote() -> Note? {
+    func getMostRecentlyAccessedNote() -> Note? {
         return notes.sorted { $0.createdAt > $1.createdAt }.first
     }
     

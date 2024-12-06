@@ -20,6 +20,7 @@ struct Note: Codable, Identifiable, Hashable {
     var courseID: String?
     var fileLocation: String
     var lastAccessed: Date?
+    var lastUpdated: Date?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -32,6 +33,7 @@ struct Note: Codable, Identifiable, Hashable {
         case courseID
         case fileLocation 
         case lastAccessed
+        case lastUpdated 
     }
 }
 

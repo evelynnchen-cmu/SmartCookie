@@ -39,6 +39,8 @@ struct EditNoteModal: View {
 
                     firebase.updateNoteContentCompletion(note: note, newContent: newContent) { updatedNote in
                         if let updatedNote = updatedNote {
+                          
+                            firebase.updateNoteLastUpdated(noteID: noteID)
                             // Then update the title
                             firebase.updateNoteTitle(note: updatedNote, newTitle: newTitle) { _ in
                                 onNoteUpdated()

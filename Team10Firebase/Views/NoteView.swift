@@ -143,6 +143,7 @@ struct NoteView: View {
         
         // To avoid reloading images more than once
         .onAppear {
+          
           if (!viewModel.imagesLoaded) {
             viewModel.loadImages()
           }
