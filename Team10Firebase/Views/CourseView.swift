@@ -175,23 +175,26 @@ struct CourseView: View {
   
   private var directNotesSection: some View {
       VStack(alignment: .leading) {
-          Text("Notes in Course")
+          Text("Notes")
               .font(.headline)
 
+    LazyVGrid(columns: [
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top)
+          ], spacing: 10) {
           ForEach(viewModel.notes, id: \.id) { note in
-              HStack(spacing: 8) { // Reduced spacing between elements
+              VStack(spacing: 8) { // Reduced spacing between elements
                   NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
-                      VStack(alignment: .leading) {
-                          Text(note.title)
-                              .font(.body)
-                              .foregroundColor(.blue)
-                          Text(note.summary)
-                              .font(.caption)
-                              .foregroundColor(.gray)
-                          Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                              .font(.caption2)
-                              .foregroundColor(.secondary)
-                      }
+                    VStack {
+                        Image("note")
+                        .resizable()
+                        .frame(width: 70, height: 70)
+                    Text(note.title)
+                        .font(.body)
+                        .frame(maxWidth: .infinity)
+                    }
                   }
 
                   Button(action: {
@@ -199,8 +202,10 @@ struct CourseView: View {
                       editStates.showEditNoteModal = true
                   }) {
                       Image(systemName: "pencil.circle")
-                          .font(.caption)
-                          .foregroundColor(.blue)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 15, height: 15)
+                        .foregroundColor(.blue)
                   }
               }
               .contextMenu {
@@ -213,6 +218,7 @@ struct CourseView: View {
               }
           }
           .padding(.top, 10)
+          }
       }
   }
 
@@ -222,38 +228,49 @@ struct CourseView: View {
           Text("Folders")
               .font(.headline)
 
+        LazyVGrid(columns: [
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top)
+          ], spacing: 10) {
           ForEach(viewModel.folders, id: \.id) { folder in
-              HStack(spacing: 8) {
-                  NavigationLink(
-                      destination: FolderView(
+               VStack(spacing: 8) {
+                      NavigationLink(
+                        destination: FolderView(
                           firebase: viewModel.firebase,
                           course: viewModel.course,
                           folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
-                      )
-                  ) {
-                      Text(folder.folderName)
-                          .font(.body)
+                        )
+                      ) {
+                        VStack {
+                          Image("folder")
+                            .resizable()
+                            .frame(width: 70, height: 70)
+                          Text(folder.folderName)
+                            .font(.body)
+                            .frame(maxWidth: .infinity)
+                        }                        
+                      }
+                      Button(action: {
+                        editStates.folderToEdit = folder
+                        editStates.showEditFolderModal = true
+                      }) {
+                        Image(systemName: "pencil.circle")
+                        //   .font(.caption)
+                          .resizable()
+                          .aspectRatio(contentMode: .fit)
+                          .frame(width: 15, height: 15)
                           .foregroundColor(.blue)
-                          .padding()
-                          .background(Color.gray.opacity(0.2))
-                          .cornerRadius(8)
-                  }
-
-                  Button(action: {
-                      editStates.folderToEdit = folder
-                      editStates.showEditFolderModal = true
-                  }) {
-                      Image(systemName: "pencil.circle")
-                          .font(.caption)
-                          .foregroundColor(.blue)
-                  }
-              }
-              .contextMenu {
-                  Button(role: .destructive) {
+                      }
+                    }   
+                  .contextMenu {
+                    Button(role: .destructive) {
                       folderToDelete = folder
                       activeAlert = .deleteFolder
-                  } label: {
+                    } label: {
                       Label("Delete Folder", systemImage: "trash")
+                    }
                   }
               }
           }
