@@ -18,6 +18,9 @@ struct PDFParserView: View {
             
             ScrollView {
                 Text(pdfText.isEmpty ? "No content found" : pdfText)
+                    .onAppear {
+                        print("PDF text in PDFParserView is: \(pdfText)")
+                    }
                     .padding()
             }
             
@@ -45,21 +48,26 @@ struct PDFParserView: View {
             showAlert = true
             return
         }
-        
+
+        // Ensure the note exists
+        guard let note = note else {
+            alertMessage = "Failed to get note"
+            showAlert = true
+            return
+        }
+
+        // Append PDF text to the existing content
+        let updatedContent = (note.content + "\n\n" + pdfText).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Update the note in Firebase
         Task {
-            await firebase.createNoteSimple(
-                title: title,
-                content: pdfText,
-                images: [],
-                courseID: course.id ?? "",
-                folderID: nil,
-                userID: course.userID
-            ) { note in
-                if let note = note {
-                    self.note = note
+            firebase.updateNoteContentCompletion(note: note, newContent: updatedContent) { updatedNote in
+                if let updatedNote = updatedNote {
+                    // Update local state
+                    self.note = updatedNote
                     isPresented = false
                 } else {
-                    alertMessage = "Failed to create note"
+                    alertMessage = "Failed to update note"
                     showAlert = true
                 }
             }
