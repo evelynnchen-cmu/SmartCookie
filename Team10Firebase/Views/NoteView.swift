@@ -25,19 +25,7 @@ struct NoteView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 8) {
           if let note = viewModel.note {
-            VStack(spacing: 8) {
-              Text("Summary")
-                .font(.headline)
-                .foregroundColor(.primary)
-              Text(note.summary)
-                .font(.body) // Smaller font for the summary text
-            }
-            .padding(16) // Padding around the box
-            .background(
-              RoundedRectangle(cornerRadius: 10)
-                .fill(Color.blue.opacity(0.2)) // Background color for the box
-            )
-            .frame(maxWidth: .infinity)
+            SummaryComponent(summary: note.summary, title: "Summary")
             
             Spacer()
             

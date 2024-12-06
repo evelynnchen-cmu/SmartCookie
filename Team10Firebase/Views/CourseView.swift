@@ -60,12 +60,12 @@ struct CourseView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 8) {
                 recentNoteSummarySection
                 directNotesSection
                 foldersSection
             }
-            .padding(.leading, 20)
+            .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sheet(isPresented: $isAddingFolder) {
@@ -162,14 +162,12 @@ struct CourseView: View {
     }
 
     private var recentNoteSummarySection: some View {
-      if let recentNote = viewModel.getMostRecentNote() {
-            Text("Most Recent Note's Summary: \(recentNote.summary)")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-        } else {
-            Text("No note available")
-                .font(.subheadline)
-                .foregroundColor(.gray)
+        Group {
+            if let recentNote = viewModel.getMostRecentNote() {
+                SummaryComponent(summary: recentNote.summary, title: "Most Recent Note's Summary")
+            } else {
+                EmptyView()
+            }
         }
     }
 
