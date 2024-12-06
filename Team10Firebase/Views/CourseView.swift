@@ -5,6 +5,27 @@
 import SwiftUI
 import Combine
 
+class EditStates: ObservableObject {
+    @Published var courseToEdit: Course?
+    @Published var folderToEdit: Folder?
+    @Published var noteToEdit: Note?
+    @Published var showEditCourseModal = false
+    @Published var showEditFolderModal = false
+    @Published var showEditNoteModal = false
+}
+
+struct LazyView<Content: View>: View {
+    let build: () -> Content
+
+    init(_ build: @autoclosure @escaping () -> Content) {
+        self.build = build
+    }
+
+    var body: Content {
+        build()
+    }
+}
+
 struct CourseView: View {
     var course: Course
     var firebase: Firebase
@@ -17,6 +38,7 @@ struct CourseView: View {
     @State private var noteToDelete: Note?
     @Binding var navigationPath: NavigationPath
     @State private var activeAlert: ActiveAlert?
+    @StateObject private var editStates = EditStates()
   
   init(course: Course, firebase: Firebase, navigationPath: Binding<NavigationPath>) {
             self.course = course
@@ -49,7 +71,6 @@ struct CourseView: View {
         .sheet(isPresented: $isAddingFolder) {
             FolderModal(
                 onFolderCreated: {
-//                    fetchFoldersForCourse()
                   viewModel.fetchData()
                 },
                 firebase: viewModel.firebase,
@@ -59,7 +80,6 @@ struct CourseView: View {
         .sheet(isPresented: $isAddingNote) {
             AddNoteModal(
                 onNoteCreated: {
-//                    fetchDirectNotesForCourse()
                   viewModel.fetchData()
                 },
                 firebase: viewModel.firebase,
@@ -67,9 +87,31 @@ struct CourseView: View {
                 folder: nil
             )
         }
+        .sheet(isPresented: $editStates.showEditFolderModal) {
+            if let folder = editStates.folderToEdit {
+                EditFolderModal(
+                    folder: folder,
+                    firebase: viewModel.firebase,
+                    onFolderUpdated: {
+                        viewModel.fetchData()
+                        editStates.showEditFolderModal = false
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $editStates.showEditNoteModal) {
+            if let note = editStates.noteToEdit {
+                EditNoteModal(
+                    note: note,
+                    firebase: viewModel.firebase,
+                    onNoteUpdated: {
+                        viewModel.fetchData()
+                        editStates.showEditNoteModal = false
+                    }
+                )
+            }
+        }
         .onAppear {
-//            fetchFoldersForCourse()
-//            fetchDirectNotesForCourse()
           viewModel.fetchData()
         }
         .navigationTitle(viewModel.course.courseName)
@@ -131,38 +173,52 @@ struct CourseView: View {
         }
     }
 
-    private var directNotesSection: some View {
-        VStack(alignment: .leading) {
-            Text("Notes in Course")
-                .font(.headline)
+  
+  private var directNotesSection: some View {
+      VStack(alignment: .leading) {
+          Text("Notes in Course")
+              .font(.headline)
 
           ForEach(viewModel.notes, id: \.id) { note in
-            NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
-                    VStack(alignment: .leading) {
-                        Text(note.title)
-                            .font(.body)
-                            .foregroundColor(.blue)
-                        Text(note.summary)
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.vertical, 5)
-                }
-                .contextMenu {
-                    Button(role: .destructive) {
-                        noteToDelete = note
-                        activeAlert = .deleteNote
-                    } label: {
-                        Label("Delete Note", systemImage: "trash")
-                    }
-                }
-            }
-        }
-        .padding(.top, 10)
-    }
+              NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
+                  HStack {
+                      VStack(alignment: .leading) {
+                          Text(note.title)
+                              .font(.body)
+                              .foregroundColor(.blue)
+                          Text(note.summary)
+                              .font(.caption)
+                              .foregroundColor(.gray)
+                          Text("Created at: \(note.createdAt, formatter: dateFormatter)")
+                              .font(.caption2)
+                              .foregroundColor(.secondary)
+                      }
+                      Spacer()
+                      Button(action: {
+                          editStates.noteToEdit = note
+                          editStates.showEditNoteModal = true
+                      }) {
+                          Image(systemName: "pencil.circle")
+                              .font(.caption)
+                              .foregroundColor(.blue)
+                      }
+                      .padding(.leading, 8)
+                  }
+                  .padding(.vertical, 5)
+              }
+              .contextMenu {
+                  Button(role: .destructive) {
+                      noteToDelete = note
+                      activeAlert = .deleteNote
+                  } label: {
+                      Label("Delete Note", systemImage: "trash")
+                  }
+              }
+          }
+          .padding(.top, 10)
+      } 
+  }
+
 
     private var foldersSection: some View {
         VStack(alignment: .leading) {
@@ -185,6 +241,16 @@ struct CourseView: View {
                         .cornerRadius(8)
                         .padding(.vertical, 2)
                 }
+                Spacer()
+                Button(action: {
+                     editStates.folderToEdit = folder
+                     editStates.showEditFolderModal = true
+                 }) {
+                     Image(systemName: "pencil.circle")
+                         .font(.caption)
+                         .foregroundColor(.blue)
+                 }
+                 .padding(.leading, 8)
                 .contextMenu {
                     Button(role: .destructive) {
                         folderToDelete = folder
