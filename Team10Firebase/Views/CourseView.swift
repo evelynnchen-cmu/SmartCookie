@@ -185,7 +185,7 @@ struct CourseView: View {
 
     private var recentNoteSummarySection: some View {
         Group {
-            if let recentNote = viewModel.getMostRecentNote() {
+            if let recentNote = viewModel.getMostRecentlyAccessedNote() {
                 SummaryComponent(summary: recentNote.summary, title: "What happened last class?")
             } else {
                 EmptyView()
@@ -209,7 +209,7 @@ struct CourseView: View {
                 spacing: 10
             ) {
                 ForEach(viewModel.folders, id: \.id) { folder in
-                    VStack(spacing: 8) {
+                    ZStack(alignment: .topTrailing) {
                         NavigationLink(
                             destination: FolderView(
                                 firebase: viewModel.firebase,
@@ -250,7 +250,7 @@ struct CourseView: View {
                 }
 
                 ForEach(viewModel.notes, id: \.id) { note in
-                    VStack(spacing: 8) {
+                  ZStack(alignment: .topTrailing) {
                         NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
                             VStack {
                                 Image("note")

@@ -32,7 +32,7 @@ struct FolderView: View {
             GridItem(.flexible(), alignment: .top)
           ], spacing: 10) {
             ForEach(folderViewModel.notes, id: \.id) { note in
-                VStack(spacing: 8) { // Reduced spacing between elements
+              ZStack(alignment: .topTrailing) {
                 NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {                     
                     VStack {
                         Image("note")
@@ -50,7 +50,9 @@ struct FolderView: View {
                         editStates.showEditNoteModal = true
                     }) {
                         Image(systemName: "pencil.circle")
-                            .frame(width: 15, height: 15)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
                             .foregroundColor(.blue)
                   }
               }
