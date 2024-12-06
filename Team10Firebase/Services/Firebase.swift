@@ -1020,18 +1020,7 @@ func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
       }
   }
   
-  
-//  func getMostRecentlyUpdatedNote() -> Note? {
-//      // Sort notes by lastUpdated or createdAt if lastUpdated is nil
-//      let sortedNotes = notes.sorted { note1, note2 in
-//          let date1 = note1.lastUpdated ?? note1.createdAt
-//          let date2 = note2.lastUpdated ?? note2.createdAt
-//          return date1 > date2
-//      }
-//      
-//      return sortedNotes.first
-//  }
-  
+
   
   func updateNoteLastUpdated(noteID: String) {
       let noteRef = db.collection(noteCollection).document(noteID)

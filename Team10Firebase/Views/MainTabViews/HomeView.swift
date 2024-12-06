@@ -1,61 +1,33 @@
 import SwiftUI
 
-//
-//struct RecentNoteCard: View {
-//    let note: Note
-//    let course: Course?
-//    
-//    var body: some View {
-//        VStack(alignment: .leading, spacing: 8) {
-//            Text(note.title)
-//                .font(.title3)
-//                .fontWeight(.medium)
-//            
-//            if let courseName = course?.courseName {
-//                Text(courseName)
-//                    .font(.subheadline)
-//                    .foregroundColor(.gray)
-//            }
-//            
-//            Text(note.summary)
-//                .font(.body)
-//                .lineLimit(2)
-//                .foregroundColor(.secondary)
-//        }
-//        .padding()
-//        .background(Color.blue.opacity(0.1))
-//        .cornerRadius(12)
-//    }
-//}
-
 
 struct RecentNoteCard: View {
     let note: Note
     let course: Course?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 4) {  // Reduced spacing
             Text(note.title)
-                .font(.title3)
+                .font(.subheadline)  // Smaller font
                 .fontWeight(.medium)
                 .lineLimit(1)
             
             if let courseName = course?.courseName {
                 Text(courseName)
-                    .font(.subheadline)
+                    .font(.caption)  // Smaller font
                     .foregroundColor(.gray)
                     .lineLimit(1)
             }
             
             Text(note.summary)
-                .font(.body)
-                .lineLimit(3)
+                .font(.caption)  // Smaller font
+                .lineLimit(2)
                 .foregroundColor(.secondary)
         }
-        .padding()
-        .frame(height: 150)  // Fixed height for consistent card size
+        .padding(8)  // Reduced padding
+        .frame(height: 100)  // Reduced height
         .background(Color.blue.opacity(0.1))
-        .cornerRadius(12)
+        .cornerRadius(8)  // Slightly reduced corner radius
     }
 }
 
@@ -97,36 +69,6 @@ struct HomeView: View {
                               
                               StreakIndicator(count: streakLength, isActiveToday: hasCompletedStreakToday)
                             }
-//                            Spacer()
-                          
-                          Text("Recently Updated")
-                              .font(.headline)
-                              .foregroundColor(.blue)
-                              .padding(.top)
-                          // Add this right after the StreakIndicator in HomeView
-                          ScrollView(.horizontal, showsIndicators: false) {
-                              HStack(spacing: 16) {
-                                  ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
-                                      let course = firebase.courses.first { $0.id == note.courseID }
-                                      
-                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
-                                          RecentNoteCard(note: note, course: course)
-                                              .frame(width: 200)  // Fixed width for each card
-                                      }
-                                      .buttonStyle(PlainButtonStyle())
-                                  }
-                              }
-                              .padding(.horizontal)
-                          }
-                          
-//                          if let recentNote = firebase.getMostRecentlyUpdatedNote() {
-//                                  let course = firebase.courses.first { $0.id == recentNote.courseID }
-//                                  
-//                                  NavigationLink(destination: NoteView(firebase: firebase, note: recentNote, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
-//                                      RecentNoteCard(note: recentNote, course: course)
-//                                  }
-//                                  .buttonStyle(PlainButtonStyle())
-//                              }
 
                             Spacer()
                           
@@ -137,7 +79,29 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal)
-            
+                      
+                      VStack(alignment: .leading) {
+                          Text("Recently Updated")
+                              .font(.headline)
+                              .foregroundColor(.blue)
+                              .padding(.leading, 20)
+                          
+                          ScrollView(.horizontal, showsIndicators: false) {
+                              HStack(spacing: 12) {  // Reduced spacing between cards
+                                  ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
+                                      let course = firebase.courses.first { $0.id == note.courseID }
+                                      
+                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+                                          RecentNoteCard(note: note, course: course)
+                                              .frame(width: 150)  // Reduced width for each card
+                                      }
+                                      .buttonStyle(PlainButtonStyle())
+                                  }
+                              }
+                              .padding(.horizontal)
+                          }
+                      }
+                      .padding(.vertical, 8)
 
                         
                         HStack {
