@@ -241,7 +241,8 @@ class Firebase: ObservableObject {
       courseID: courseID,
       fileLocation: "\(courseID)/\(folder?.id ?? "")",
       // lastAccessed: nil
-      lastAccessed: Date()
+      lastAccessed: Date(),
+      lastUpdated: Date()
     )
     
     do {
@@ -287,7 +288,8 @@ class Firebase: ObservableObject {
         courseID: courseID,
         fileLocation: "\(courseID)/\(folderID ?? "")",
         // lastAccessed: nil
-        lastAccessed: Date()
+        lastAccessed: Date(),
+        lastUpdated: Date()
       )
       
       let ref = try db.collection(noteCollection).addDocument(from: note)
@@ -1018,26 +1020,51 @@ func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
       }
   }
   
-  func getMostRecentNote() -> Note? {
-      // Combine all notes and sort by either ssed or createdAt
+//  func getMostRecentlyAccessedNote() -> Note? {
+//    // Rename the existing getMostRecentNote to be clearer
+//    let sortedNotes = notes.sorted { note1, note2 in
+//        let date1 = note1.lastAccessed ?? note1.createdAt
+//        let date2 = note2.lastAccessed ?? note2.createdAt
+//        return date1 > date2
+//    }
+//    
+//    return sortedNotes.first
+//  }
+
+  // Also add a method to update lastAccessed
+//  func updateNoteLastAccessed(noteID: String) {
+//      let noteRef = db.collection(noteCollection).document(noteID)
+//      
+//      noteRef.updateData([
+//          "lastAccessed": Date()
+//      ]) { error in
+//          if let error = error {
+//              print("Error updating note last accessed: \(error.localizedDescription)")
+//          }
+//      }
+//  }
+  
+  
+  func getMostRecentlyUpdatedNote() -> Note? {
+      // Sort notes by lastUpdated or createdAt if lastUpdated is nil
       let sortedNotes = notes.sorted { note1, note2 in
-          let date1 = note1.lastAccessed ?? note1.createdAt
-          let date2 = note2.lastAccessed ?? note2.createdAt
+          let date1 = note1.lastUpdated ?? note1.createdAt
+          let date2 = note2.lastUpdated ?? note2.createdAt
           return date1 > date2
       }
       
       return sortedNotes.first
   }
-
-  // Also add a method to update lastAccessed
-  func updateNoteLastAccessed(noteID: String) {
+  
+  
+  func updateNoteLastUpdated(noteID: String) {
       let noteRef = db.collection(noteCollection).document(noteID)
       
       noteRef.updateData([
-          "lastAccessed": Date()
+          "lastUpdated": Date()
       ]) { error in
           if let error = error {
-              print("Error updating note last accessed: \(error.localizedDescription)")
+              print("Error updating note last updated: \(error.localizedDescription)")
           }
       }
   }

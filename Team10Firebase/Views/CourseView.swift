@@ -162,7 +162,7 @@ struct CourseView: View {
     }
 
     private var recentNoteSummarySection: some View {
-      if let recentNote = viewModel.getMostRecentNote() {
+      if let recentNote = viewModel.getMostRecentlyAccessedNote() {
             Text("Most Recent Note's Summary: \(recentNote.summary)")
                 .font(.subheadline)
                 .foregroundColor(.gray)

@@ -1,46 +1,65 @@
 import SwiftUI
 
-// Add this as a new struct in HomeView.swift
+
 struct RecentNoteCard: View {
     let note: Note
     let course: Course?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Recently Updated")
-                    .font(.headline)
-                    .foregroundColor(.blue)
-                Spacer()
-                Text(formatDate(note.lastAccessed ?? note.createdAt))
-                    .font(.caption)
+            Text(note.title)
+                .font(.title3)
+                .fontWeight(.medium)
+            
+            if let courseName = course?.courseName {
+                Text(courseName)
+                    .font(.subheadline)
                     .foregroundColor(.gray)
             }
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text(course?.courseName ?? "Unknown Course")
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                
-                Text(note.title)
-                    .font(.title3)
-                    .fontWeight(.medium)
-                
-                Text(note.summary)
-                    .font(.body)
-                    .lineLimit(2)
-                    .foregroundColor(.secondary)
-            }
+            Text(note.summary)
+                .font(.body)
+                .lineLimit(2)
+                .foregroundColor(.secondary)
         }
         .padding()
         .background(Color.blue.opacity(0.1))
         .cornerRadius(12)
     }
+}
+
+struct RecentNotesSection: View {
+    let accessedNote: Note?
+    let updatedNote: Note?
+    let firebase: Firebase
     
-    private func formatDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Recent Activity")
+                .font(.title2)
+                .fontWeight(.bold)
+                .padding(.horizontal)
+            
+            if let note = accessedNote {
+                Text("Last Viewed")
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                RecentNoteCard(
+                    note: note,
+                    course: firebase.courses.first(where: { $0.id == note.courseID })
+                )
+            }
+            
+            if let note = updatedNote {
+                Text("Last Updated")
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                RecentNoteCard(
+                    note: note,
+                    course: firebase.courses.first(where: { $0.id == note.courseID })
+                )
+            }
+        }
     }
 }
 
@@ -84,14 +103,15 @@ struct HomeView: View {
                             }
                             Spacer()
                           
-                          if let recentNote = firebase.getMostRecentNote() {
-                              let course = firebase.courses.first { $0.id == recentNote.courseID }
-                              
-                              NavigationLink(destination: NoteView(firebase: firebase, note: recentNote, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
-                                  RecentNoteCard(note: recentNote, course: course)
+                          if let recentNote = firebase.getMostRecentlyUpdatedNote() {
+                                  let course = firebase.courses.first { $0.id == recentNote.courseID }
+                                  
+                                  NavigationLink(destination: NoteView(firebase: firebase, note: recentNote, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+                                      RecentNoteCard(note: recentNote, course: course)
+                                  }
+                                  .buttonStyle(PlainButtonStyle())
                               }
-                              .buttonStyle(PlainButtonStyle())
-                          }
+
                           
                           
                             NavigationLink(destination: SettingsView()) {
@@ -101,6 +121,15 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal)
+                      
+//                        RecentNotesSection(
+//                            accessedNote: firebase.getMostRecentlyAccessedNote(),
+//                            updatedNote: firebase.getMostRecentlyUpdatedNote(),
+//                            firebase: firebase
+//                        )
+//                        .padding(.horizontal)
+//                        .padding(.bottom)
+
                         
                         HStack {
                             Text("Classes")
