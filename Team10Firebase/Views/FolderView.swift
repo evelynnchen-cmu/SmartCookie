@@ -6,6 +6,7 @@ import SwiftUI
 class FolderEditStates: ObservableObject {
     @Published var noteToEdit: Note?
     @Published var showEditNoteModal = false
+    @Published var showPlusActions = false
 }
 
 struct FolderView: View {
@@ -19,7 +20,7 @@ struct FolderView: View {
 
 
     var body: some View {
-      VStack{
+      ZStack {
         ScrollView {
           VStack(alignment: .leading) {
             Text("Notes")
@@ -40,6 +41,7 @@ struct FolderView: View {
                     Text(note.title)
                         .font(.body)
                         .frame(maxWidth: .infinity)
+                        .foregroundColor(.black)
                     }
                   }
 
@@ -62,21 +64,46 @@ struct FolderView: View {
               }
             }
           }
-
-            
             Spacer()
           }
         }
-        Button(action: {
-            showAddNoteModal = true
-        }) {
-            Text("Create Note")
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .cornerRadius(8)
+        // Button(action: {
+        //     showAddNoteModal = true
+        // }) {
+        //     Text("Create Note")
+        //         .font(.headline)
+        //         .foregroundColor(.white)
+        //         .padding()
+        //         .frame(maxWidth: .infinity)
+        //         .background(Color.blue)
+        //         .cornerRadius(8)
+        // }
+        VStack {
+            Spacer()
+            HStack {
+              Spacer()
+                Button(action: {
+                    editStates.showPlusActions = true
+                }) {
+                Image(systemName: "plus")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .padding(20)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                }
+            }
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
+        }
+        .confirmationDialog("Create", isPresented: $editStates.showPlusActions, titleVisibility: .hidden) {
+            Button("New Note") {
+                showAddNoteModal = true
+            }
+            Button("Cancel", role: .cancel) {}
         }
         .padding(.top, 20)
         .sheet(isPresented: $showAddNoteModal) {
@@ -107,7 +134,7 @@ struct FolderView: View {
       }
 
       .padding()
-      .navigationTitle("Folder Details")
+      .navigationTitle("\(folderViewModel.folder.folderName)")
       .onAppear {
         folderViewModel.fetchNotes()
       }
