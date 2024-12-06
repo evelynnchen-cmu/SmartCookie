@@ -25,7 +25,7 @@ struct CustomTabBar: View {
                         Text(tab.text)
                     }
                     .padding()
-                    .foregroundColor(selectedTab == tab ? .blue : .gray)
+                    .foregroundColor(selectedTab == tab ? Color(UIColor.systemGray4) : .white)
                 }
                 if tab != tabs.last {
                   Spacer()
@@ -35,9 +35,10 @@ struct CustomTabBar: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
       // This padding controls how close the tab buttons are to each other
         .padding(.horizontal, 36)
+        .padding(.top, 8)
         // This frame controls the height of the tab bar
         .frame(maxHeight: 60)
-        .background(Color.white)
+        .background(Color.blue.opacity(0.5))
     }
 }
 

@@ -143,10 +143,7 @@ struct HomeView: View {
                                   
                                   HStack {
                                       Button(action: {
-                                          print("Debug: Before setting courseToEdit - Button pressed")
                                           editState.courseToEdit = course
-                                          print("Debug: After setting courseToEdit: \(editState.courseToEdit?.courseName ?? "nil")")
-                                          print("Debug: Course details - ID: \(course.id ?? "nil"), Name: \(course.courseName)")
                                           editState.showEditModal = true
                                       }) {
                                           Image(systemName: "pencil.circle.fill")
