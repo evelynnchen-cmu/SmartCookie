@@ -155,6 +155,10 @@ struct NoteView: View {
         
         // To avoid reloading images more than once
         .onAppear {
+          if let noteID = note.id {
+              firebase.updateNoteLastAccessed(noteID: noteID)
+          }
+          
           if (!viewModel.imagesLoaded) {
             viewModel.loadImages()
           }

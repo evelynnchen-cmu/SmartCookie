@@ -240,7 +240,8 @@ class Firebase: ObservableObject {
       createdAt: Date(),
       courseID: courseID,
       fileLocation: "\(courseID)/\(folder?.id ?? "")",
-      lastAccessed: nil
+      // lastAccessed: nil
+      lastAccessed: Date()
     )
     
     do {
@@ -285,7 +286,8 @@ class Firebase: ObservableObject {
         createdAt: Date(),
         courseID: courseID,
         fileLocation: "\(courseID)/\(folderID ?? "")",
-        lastAccessed: nil
+        // lastAccessed: nil
+        lastAccessed: Date()
       )
       
       let ref = try db.collection(noteCollection).addDocument(from: note)
@@ -1012,6 +1014,30 @@ func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
                   self.notes[index].title = newTitle
                   completion(self.notes[index])
               }
+          }
+      }
+  }
+  
+  func getMostRecentNote() -> Note? {
+      // Combine all notes and sort by either ssed or createdAt
+      let sortedNotes = notes.sorted { note1, note2 in
+          let date1 = note1.lastAccessed ?? note1.createdAt
+          let date2 = note2.lastAccessed ?? note2.createdAt
+          return date1 > date2
+      }
+      
+      return sortedNotes.first
+  }
+
+  // Also add a method to update lastAccessed
+  func updateNoteLastAccessed(noteID: String) {
+      let noteRef = db.collection(noteCollection).document(noteID)
+      
+      noteRef.updateData([
+          "lastAccessed": Date()
+      ]) { error in
+          if let error = error {
+              print("Error updating note last accessed: \(error.localizedDescription)")
           }
       }
   }
