@@ -1020,41 +1020,17 @@ func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
       }
   }
   
-//  func getMostRecentlyAccessedNote() -> Note? {
-//    // Rename the existing getMostRecentNote to be clearer
-//    let sortedNotes = notes.sorted { note1, note2 in
-//        let date1 = note1.lastAccessed ?? note1.createdAt
-//        let date2 = note2.lastAccessed ?? note2.createdAt
-//        return date1 > date2
-//    }
-//    
-//    return sortedNotes.first
-//  }
-
-  // Also add a method to update lastAccessed
-//  func updateNoteLastAccessed(noteID: String) {
-//      let noteRef = db.collection(noteCollection).document(noteID)
-//      
-//      noteRef.updateData([
-//          "lastAccessed": Date()
-//      ]) { error in
-//          if let error = error {
-//              print("Error updating note last accessed: \(error.localizedDescription)")
-//          }
+  
+//  func getMostRecentlyUpdatedNote() -> Note? {
+//      // Sort notes by lastUpdated or createdAt if lastUpdated is nil
+//      let sortedNotes = notes.sorted { note1, note2 in
+//          let date1 = note1.lastUpdated ?? note1.createdAt
+//          let date2 = note2.lastUpdated ?? note2.createdAt
+//          return date1 > date2
 //      }
+//      
+//      return sortedNotes.first
 //  }
-  
-  
-  func getMostRecentlyUpdatedNote() -> Note? {
-      // Sort notes by lastUpdated or createdAt if lastUpdated is nil
-      let sortedNotes = notes.sorted { note1, note2 in
-          let date1 = note1.lastUpdated ?? note1.createdAt
-          let date2 = note2.lastUpdated ?? note2.createdAt
-          return date1 > date2
-      }
-      
-      return sortedNotes.first
-  }
   
   
   func updateNoteLastUpdated(noteID: String) {
@@ -1067,6 +1043,19 @@ func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
               print("Error updating note last updated: \(error.localizedDescription)")
           }
       }
+  }
+  
+  
+  
+  func getMostRecentlyUpdatedNotes(limit: Int = 4) -> [Note] {
+      // Sort notes by lastUpdated or createdAt if lastUpdated is nil
+      let sortedNotes = notes.sorted { note1, note2 in
+          let date1 = note1.lastUpdated ?? note1.createdAt
+          let date2 = note2.lastUpdated ?? note2.createdAt
+          return date1 > date2
+      }
+      
+      return Array(sortedNotes.prefix(limit))
   }
   
   

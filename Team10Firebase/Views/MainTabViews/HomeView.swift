@@ -1,5 +1,33 @@
 import SwiftUI
 
+//
+//struct RecentNoteCard: View {
+//    let note: Note
+//    let course: Course?
+//    
+//    var body: some View {
+//        VStack(alignment: .leading, spacing: 8) {
+//            Text(note.title)
+//                .font(.title3)
+//                .fontWeight(.medium)
+//            
+//            if let courseName = course?.courseName {
+//                Text(courseName)
+//                    .font(.subheadline)
+//                    .foregroundColor(.gray)
+//            }
+//            
+//            Text(note.summary)
+//                .font(.body)
+//                .lineLimit(2)
+//                .foregroundColor(.secondary)
+//        }
+//        .padding()
+//        .background(Color.blue.opacity(0.1))
+//        .cornerRadius(12)
+//    }
+//}
+
 
 struct RecentNoteCard: View {
     let note: Note
@@ -10,19 +38,22 @@ struct RecentNoteCard: View {
             Text(note.title)
                 .font(.title3)
                 .fontWeight(.medium)
+                .lineLimit(1)
             
             if let courseName = course?.courseName {
                 Text(courseName)
                     .font(.subheadline)
                     .foregroundColor(.gray)
+                    .lineLimit(1)
             }
             
             Text(note.summary)
                 .font(.body)
-                .lineLimit(2)
+                .lineLimit(3)
                 .foregroundColor(.secondary)
         }
         .padding()
+        .frame(height: 150)  // Fixed height for consistent card size
         .background(Color.blue.opacity(0.1))
         .cornerRadius(12)
     }
@@ -66,18 +97,38 @@ struct HomeView: View {
                               
                               StreakIndicator(count: streakLength, isActiveToday: hasCompletedStreakToday)
                             }
-                            Spacer()
+//                            Spacer()
                           
-                          if let recentNote = firebase.getMostRecentlyUpdatedNote() {
-                                  let course = firebase.courses.first { $0.id == recentNote.courseID }
-                                  
-                                  NavigationLink(destination: NoteView(firebase: firebase, note: recentNote, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
-                                      RecentNoteCard(note: recentNote, course: course)
+                          Text("Recently Updated")
+                              .font(.headline)
+                              .foregroundColor(.blue)
+                              .padding(.top)
+                          // Add this right after the StreakIndicator in HomeView
+                          ScrollView(.horizontal, showsIndicators: false) {
+                              HStack(spacing: 16) {
+                                  ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
+                                      let course = firebase.courses.first { $0.id == note.courseID }
+                                      
+                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+                                          RecentNoteCard(note: note, course: course)
+                                              .frame(width: 200)  // Fixed width for each card
+                                      }
+                                      .buttonStyle(PlainButtonStyle())
                                   }
-                                  .buttonStyle(PlainButtonStyle())
                               }
-
+                              .padding(.horizontal)
+                          }
                           
+//                          if let recentNote = firebase.getMostRecentlyUpdatedNote() {
+//                                  let course = firebase.courses.first { $0.id == recentNote.courseID }
+//                                  
+//                                  NavigationLink(destination: NoteView(firebase: firebase, note: recentNote, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+//                                      RecentNoteCard(note: recentNote, course: course)
+//                                  }
+//                                  .buttonStyle(PlainButtonStyle())
+//                              }
+
+                            Spacer()
                           
                             NavigationLink(destination: SettingsView()) {
                                 Image(systemName: "gearshape")
