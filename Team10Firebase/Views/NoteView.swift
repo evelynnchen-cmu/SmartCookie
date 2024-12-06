@@ -47,215 +47,116 @@ struct NoteView: View {
     // MARK: - Content Section
     private var contentSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            summaryView
-            photoUploadButton
-            pdfUploadButton
-            tabSwitcher
-            tabContent
-        }
-    }
-
-    // MARK: - Summary View
-    private var summaryView: some View {
-        VStack(spacing: 8) {
-            Text("Summary")
+          if let note = viewModel.note {
+            SummaryComponent(summary: note.summary, title: "Summary")
+            
+            Spacer()
+            
+            // Button to upload photos
+            Button(action: {
+              isPickerPresented = true
+            }) {
+              Text("Upload Image from Photo Library")
                 .font(.headline)
-                .foregroundColor(.primary)
-            Text(viewModel.note?.summary ?? "No summary available")
-                .font(.body)
-        }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.2)))
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Buttons
-    private var photoUploadButton: some View {
-        Button(action: { isPickerPresented = true }) {
-            buttonText("Upload Image from Photo Library")
-        }
-        .sheet(isPresented: $isPickerPresented) {
-            ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
-        }
-        .onChange(of: selectedImage) { _ in
-            showTextParserView = true
-        }
-    }
-
-    private var pdfUploadButton: some View {
-        Button(action: { isPDFPickerPresented = true }) {
-            buttonText("Upload and Parse PDF")
-        }
-        .sheet(isPresented: $isPDFPickerPresented) {
-            PDFPicker { extractedText in
-                if let text = extractedText {
-                    selectedPDFText = text
-                    isFilePickerPresented = true
-                } else {
-                    alertMessage = "Failed to extract text from PDF."
-                    showAlert = true
-                }
-            }
-        }
-        .sheet(isPresented: $isFilePickerPresented) {
-            FilePickerView(firebase: firebase, isPresented: $isFilePickerPresented, selectedNote: $selectedNoteForAppend)
-        }
-        .fullScreenCover(isPresented: $showTextParserView) {
-            if let pdfText = selectedPDFText {
-                parserView(parsedPDFText: pdfText)
-            } else if let image = selectedImage {
-                parserView(images: [image])
-            }
-        }
-    }
-
-    private func buttonText(_ title: String) -> some View {
-        Text(title)
-            .font(.headline)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(8)
-    }
-
-    // MARK: - Tab Switcher
-    private var tabSwitcher: some View {
-        HStack {
-            Button(action: { contentTab = true }) {
-                tabButtonText("Content", isSelected: contentTab)
-            }
-            Button(action: { contentTab = false }) {
-                tabButtonText("Images", isSelected: !contentTab)
-            }
-        }
-    }
-
-    private func tabButtonText(_ title: String, isSelected: Bool) -> some View {
-        Text(title)
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.blue : Color.clear)
-            .foregroundColor(isSelected ? .white : .blue)
-            .cornerRadius(8)
-    }
-
-    // MARK: - Tab Content
-    private var tabContent: some View {
-        Group {
-            if contentTab {
-                contentTabView
-            } else {
-                imageTabView
-            }
-        }
-    }
-
-    private var contentTabView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if let selectedPDFText = selectedPDFText {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Parsed PDF Content:")
-                        .font(.headline)
-                    Text(selectedPDFText)
-                        .font(.body)
-                }
                 .padding()
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.blue.opacity(0.1)))
-            } else {
-                Text(note.content)
-                    .font(.body)
-            }
-            metadataView
-        }
-    }
-
-    private var metadataView: some View {
-        Group {
-            Text("Created At: \(note.createdAt, formatter: dateFormatter)")
-                .font(.body)
-                .foregroundColor(.secondary)
-            Text("Last Accessed: \(note.lastAccessed ?? Date(), formatter: dateFormatter)")
-                .font(.body)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private var imageTabView: some View {
-        Group {
-            if viewModel.isLoading {
-                ProgressView("Loading...")
-            } else if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage).foregroundColor(.red)
-            } else if viewModel.images.isEmpty {
-                Text("No images available")
-            } else {
-                VStack {
-                    ForEach(viewModel.images, id: \.self) { image in
-                        Image(uiImage: image)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                    }
-                }
-            }
-        }
-    }
-
-    // MARK: - Review Button
-    private var reviewButton: some View {
-        NavigationLink(destination: QuizView(note: note, noteContent: note.content, firebase: firebase)) {
-            HStack { Text("Review") }
-                .font(.headline)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
                 .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(15)
-                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
-        }
-        .padding(.leading, 20)
-        .padding(.bottom, 20)
-    }
-
-    // MARK: - Helper
-    private func parserView(parsedPDFText: String? = nil, images: [UIImage]? = nil) -> some View {
-        TextParserView(
-            images: images,
-            parsedPDFText: parsedPDFText,
-            firebase: firebase,
-            isPresented: $showTextParserView,
-            course: course,
-            title: note.title,
-            note: bindingForSelectedNote()
-        ) { message in
-            alertMessage = message
-            viewModel.loadImages()
-        }
-    }
-    
-    // Helper function to return the correct Binding<Note?>
-    private func bindingForSelectedNote() -> Binding<Note?> {
-        if let selectedNote = selectedNoteForAppend {
-            return .constant(selectedNote) // Wrap selectedNoteForAppend in a constant Binding
-        }
-        return $viewModel.note // Use the viewModel's note binding otherwise
-    }
-
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter
-    }()
-}
-
-struct SupportingModifiers: ViewModifier {
-    func body(content: Content) -> some View {
-        content
-            .alert(isPresented: .constant(false)) {
-                Alert(title: Text("Error"), message: Text("An error occurred"), dismissButton: .default(Text("OK")))
+                .foregroundColor(Color.white)
+                .cornerRadius(8)
             }
+            
+            Spacer()
+            
+            // Buttons to switch between tabs
+            HStack {
+              Button(action: {
+                contentTab = true
+              }) {
+                Text("Content")
+                  .padding()
+                  .frame(maxWidth: .infinity)
+                  .background(contentTab ? Color.blue : Color.clear)
+                  .foregroundColor(contentTab ? Color.white : Color.blue)
+                  .cornerRadius(8)
+              }
+              
+              Button(action: {
+                contentTab = false
+              }) {
+                Text("Images")
+                  .padding()
+                  .frame(maxWidth: .infinity)
+                  .background(!contentTab ? Color.blue : Color.clear)
+                  .foregroundColor(!contentTab ? Color.white : Color.blue)
+                  .cornerRadius(8)
+              }
+            }
+            .frame(maxWidth: .infinity)
+            
+            if (contentTab) {
+              Text(note.content)
+                .font(.body)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 80) // Add padding to prevent button overlap
+        .sheet(isPresented: $isPickerPresented) {
+          ImagePicker(sourceType: .photoLibrary, selectedImage: $selectedImage)
+        }
+        .onChange(of: selectedImage) {
+          if selectedImage != nil {
+            showTextParserView = true
+          }
+        }
+        .fullScreenCover(isPresented: $showTextParserView, onDismiss: {
+          if alertMessage != "" {
+            showAlert = true
+          }
+        }) {
+          if let image = self.selectedImage {
+            TextParserView(
+              images: [image],
+              firebase: firebase,
+              isPresented: $showTextParserView,
+              course: course,
+              title: note.title,
+              note: $viewModel.note
+            ) { message in
+              alertMessage = message
+              viewModel.loadImages()
+            }
+          }
+          else {
+            Text("Nil image")
+          }
+        }
+        
+        .alert(isPresented: $showAlert) {
+          Alert(title: Text("Image Selection"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+        
+        // To avoid reloading images more than once
+        .onAppear {
+          
+          if (!viewModel.imagesLoaded) {
+            viewModel.loadImages()
+          }
+        }
+      }
+      
+      // Review button outside ScrollView but inside ZStack
+      NavigationLink(destination: QuizView(note: note, noteContent: note.content, firebase: firebase)) {
+        HStack {
+          Text("Review")
+        }
+        .font(.headline)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(Color.blue)
+        .foregroundColor(.white)
+        .cornerRadius(15)
+        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+      }
+      .padding(.leading, 20)
+      .padding(.bottom, 20)
     }
 }

@@ -9,7 +9,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct Note: Codable, Identifiable, Equatable {
+struct Note: Codable, Identifiable, Equatable, Hashable {
     @DocumentID var id: String?
     var userID: String?
     var title: String
@@ -20,6 +20,7 @@ struct Note: Codable, Identifiable, Equatable {
     var courseID: String?
     var fileLocation: String
     var lastAccessed: Date?
+    var lastUpdated: Date?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -32,6 +33,7 @@ struct Note: Codable, Identifiable, Equatable {
         case courseID
         case fileLocation 
         case lastAccessed
+        case lastUpdated 
     }
 }
 

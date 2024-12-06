@@ -1,5 +1,36 @@
 import SwiftUI
 
+
+struct RecentNoteCard: View {
+    let note: Note
+    let course: Course?
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {  // Reduced spacing
+            Text(note.title)
+                .font(.subheadline)  // Smaller font
+                .fontWeight(.medium)
+                .lineLimit(1)
+            
+            if let courseName = course?.courseName {
+                Text(courseName)
+                    .font(.caption)  // Smaller font
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
+            
+            Text(note.summary)
+                .font(.caption)  // Smaller font
+                .lineLimit(2)
+                .foregroundColor(.secondary)
+        }
+        .padding(8)  // Reduced padding
+        .frame(height: 100)  // Reduced height
+        .background(Color.blue.opacity(0.1))
+        .cornerRadius(8)  // Slightly reduced corner radius
+    }
+}
+
 struct HomeView: View {
     @StateObject private var firebase = Firebase()
     @State private var errorMessage: String?
@@ -16,9 +47,11 @@ struct HomeView: View {
 
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
+    @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        NavigationView {
+        // NavigationView {
+        NavigationStack(path: $navigationPath) {
             VStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
@@ -36,7 +69,9 @@ struct HomeView: View {
                               
                               StreakIndicator(count: streakLength, isActiveToday: hasCompletedStreakToday)
                             }
+
                             Spacer()
+                          
                             NavigationLink(destination: SettingsView()) {
                                 Image(systemName: "gearshape")
                                     .font(.title2)
@@ -44,6 +79,30 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal)
+                      
+                      VStack(alignment: .leading) {
+                          Text("Recently Updated")
+                              .font(.headline)
+                              .foregroundColor(.blue)
+                              .padding(.leading, 20)
+                          
+                          ScrollView(.horizontal, showsIndicators: false) {
+                              HStack(spacing: 12) {  // Reduced spacing between cards
+                                  ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
+                                      let course = firebase.courses.first { $0.id == note.courseID }
+                                      
+                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+                                          RecentNoteCard(note: note, course: course)
+                                              .frame(width: 150)  // Reduced width for each card
+                                      }
+                                      .buttonStyle(PlainButtonStyle())
+                                  }
+                              }
+                              .padding(.horizontal)
+                          }
+                      }
+                      .padding(.vertical, 8)
+
                         
                         HStack {
                             Text("Classes")
@@ -70,22 +129,21 @@ struct HomeView: View {
                       ], spacing: 16) {
                           ForEach(firebase.courses, id: \.id) { course in
                               ZStack(alignment: .topTrailing) {
-                                  NavigationLink(destination: CourseView(course: course, firebase: firebase)) {
-                                      Text(course.courseName)
-                                          .font(.headline)
-                                          .frame(height: 100)
-                                          .frame(maxWidth: .infinity)
-                                          .background(Color.blue.opacity(0.2))
-                                          .cornerRadius(12)
-                                          .foregroundColor(.primary)
-                                  }
+                                Button(action: {
+                                    navigationPath.append(course)
+                                }) {
+                                    Text(course.courseName)
+                                        .font(.headline)
+                                        .frame(height: 100)
+                                        .frame(maxWidth: .infinity)
+                                        .background(Color.blue.opacity(0.2))
+                                        .cornerRadius(12)
+                                        .foregroundColor(.primary)
+                                }
                                   
                                   HStack {
                                       Button(action: {
-                                          print("Debug: Before setting courseToEdit - Button pressed")
                                           editState.courseToEdit = course
-                                          print("Debug: After setting courseToEdit: \(editState.courseToEdit?.courseName ?? "nil")")
-                                          print("Debug: Course details - ID: \(course.id ?? "nil"), Name: \(course.courseName)")
                                           editState.showEditModal = true
                                       }) {
                                           Image(systemName: "pencil.circle.fill")
@@ -161,12 +219,21 @@ struct HomeView: View {
             }
             .onAppear {
                 if let course = navigateToCourse, let note = navigateToNote {
-                    navigateToCourse = nil
-                    navigateToNote = nil
+                  navigateToCourse = nil
+                  navigateToNote = nil
+                  navigationPath.append(course)
+                  navigationPath.append(note)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .resetHomeView)) { _ in
+                // Reset the HomeView to its root
+                navigationPath = NavigationPath()
+            }
+            .navigationDestination(for: Course.self) { course in
+                CourseView(course: course, firebase: firebase, navigationPath: $navigationPath)
+            }
         }
-        
+        .navigationBarHidden(true)
     }
   
     private func getStreakInfo() {

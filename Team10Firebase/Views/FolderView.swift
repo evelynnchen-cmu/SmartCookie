@@ -3,65 +3,99 @@
 
 import SwiftUI
 
+class FolderEditStates: ObservableObject {
+    @Published var noteToEdit: Note?
+    @Published var showEditNoteModal = false
+    @Published var showPlusActions = false
+}
+
 struct FolderView: View {
     @ObservedObject var firebase: Firebase
-//    var folder: Folder
     var course: Course
-
     @StateObject var folderViewModel: FolderViewModel
-    
+    @StateObject private var editStates = FolderEditStates()
     @State private var showAddNoteModal = false
-
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
 
+
     var body: some View {
-      VStack{
+      ZStack {
         ScrollView {
           VStack(alignment: .leading) {
-            
-            
-            Text("Notes:")
+            Text("Notes")
               .font(.headline)
-            
+        LazyVGrid(columns: [
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top)
+          ], spacing: 10) {
             ForEach(folderViewModel.notes, id: \.id) { note in
-              NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
-                VStack(alignment: .leading) {
-                  Text(note.title)
-                    .font(.body)
-                    .foregroundColor(.blue)
-                  Text(note.summary)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-                  Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 5)
+              ZStack(alignment: .topTrailing) {
+                NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {                     
+                    VStack {
+                        Image("note")
+                        .resizable()
+                        .frame(width: 70, height: 70)
+                    Text(note.title)
+                        .font(.body)
+                        .frame(maxWidth: .infinity)
+                        .foregroundColor(.black)
+                    }
+                  }
+
+                  Button(action: {
+                        editStates.noteToEdit = note
+                        editStates.showEditNoteModal = true
+                    }) {
+                        Image(systemName: "pencil.circle")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 24, height: 24)
+                            .foregroundColor(.blue)
+                  }
               }
               .contextMenu {
-                Button(role: .destructive) {
-                  noteToDelete = note
-                  showDeleteNoteAlert = true
-                } label: {
-                  Label("Delete Note", systemImage: "trash")
-                }
+                  Button(role: .destructive) {
+                      noteToDelete = note
+                      showDeleteNoteAlert = true
+                  } label: {
+                      Label("Delete Note", systemImage: "trash")
+                  }
               }
             }
-            
+          }
             Spacer()
           }
         }
-        Button(action: {
-            showAddNoteModal = true
-        }) {
-            Text("Create Note")
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .cornerRadius(8)
+        
+        VStack {
+            Spacer()
+            HStack {
+              Spacer()
+                Button(action: {
+                    editStates.showPlusActions = true
+                }) {
+                Image(systemName: "plus")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .padding(20)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                }
+            }
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
+        }
+        .confirmationDialog("Create", isPresented: $editStates.showPlusActions, titleVisibility: .hidden) {
+            Button("New Note") {
+                showAddNoteModal = true
+            }
+            Button("Cancel", role: .cancel) {}
         }
         .padding(.top, 20)
         .sheet(isPresented: $showAddNoteModal) {
@@ -78,8 +112,21 @@ struct FolderView: View {
             )
         }
       }
+      .sheet(isPresented: $editStates.showEditNoteModal) {
+          if let note = editStates.noteToEdit {
+              EditNoteModal(
+                  note: note,
+                  firebase: firebase,
+                  onNoteUpdated: {
+                      folderViewModel.fetchNotes()
+                      editStates.showEditNoteModal = false
+                  }
+              )
+          }
+      }
+
       .padding()
-      .navigationTitle("Folder Details")
+      .navigationTitle("\(folderViewModel.folder.folderName)")
       .onAppear {
         folderViewModel.fetchNotes()
       }
