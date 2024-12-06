@@ -12,6 +12,7 @@ class EditStates: ObservableObject {
     @Published var showEditCourseModal = false
     @Published var showEditFolderModal = false
     @Published var showEditNoteModal = false
+    @Published var showPlusActions = false
 }
 
 struct LazyView<Content: View>: View {
@@ -59,112 +60,135 @@ struct CourseView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
+        ZStack {
+        //   VStack {
+            ScrollView {
+              VStack(alignment: .leading, spacing: 8) {
                 recentNoteSummarySection
                 directNotesSection
                 foldersSection
+              }
+              .padding(.horizontal, 20)
+              .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .sheet(isPresented: $isAddingFolder) {
-            FolderModal(
+            .sheet(isPresented: $isAddingFolder) {
+              FolderModal(
                 onFolderCreated: {
                   viewModel.fetchData()
                 },
                 firebase: viewModel.firebase,
                 course: viewModel.course
-            )
-        }
-        .sheet(isPresented: $isAddingNote) {
-            AddNoteModal(
+              )
+            }
+            .sheet(isPresented: $isAddingNote) {
+              AddNoteModal(
                 onNoteCreated: {
                   viewModel.fetchData()
                 },
                 firebase: viewModel.firebase,
                 course: viewModel.course,
                 folder: nil
-            )
-        }
-        .sheet(isPresented: $editStates.showEditFolderModal) {
-            if let folder = editStates.folderToEdit {
+              )
+            }
+            .sheet(isPresented: $editStates.showEditFolderModal) {
+              if let folder = editStates.folderToEdit {
                 EditFolderModal(
-                    folder: folder,
-                    firebase: viewModel.firebase,
-                    onFolderUpdated: {
-                        viewModel.fetchData()
-                        editStates.showEditFolderModal = false
-                    }
+                  folder: folder,
+                  firebase: viewModel.firebase,
+                  onFolderUpdated: {
+                    viewModel.fetchData()
+                    editStates.showEditFolderModal = false
+                  }
                 )
+              }
             }
-        }
-        .sheet(isPresented: $editStates.showEditNoteModal) {
-            if let note = editStates.noteToEdit {
+            .sheet(isPresented: $editStates.showEditNoteModal) {
+              if let note = editStates.noteToEdit {
                 EditNoteModal(
-                    note: note,
-                    firebase: viewModel.firebase,
-                    onNoteUpdated: {
-                        viewModel.fetchData()
-                        editStates.showEditNoteModal = false
-                    }
+                  note: note,
+                  firebase: viewModel.firebase,
+                  onNoteUpdated: {
+                    viewModel.fetchData()
+                    editStates.showEditNoteModal = false
+                  }
                 )
+              }
             }
-        }
-        .onAppear {
-          viewModel.fetchData()
-        }
-        .navigationTitle(viewModel.course.courseName)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HStack {
-                    Button("Add Note") {
-                        isAddingNote = true
+            .onAppear {
+              viewModel.fetchData()
+            }
+            .navigationTitle(viewModel.course.courseName)
+            .alert(item: $activeAlert) { alert in
+              switch alert {
+              case .deleteFolder:
+                return Alert(
+                  title: Text("Delete Folder"),
+                  message: Text("Are you sure you want to delete this folder and all its notes?"),
+                  primaryButton: .destructive(Text("Delete")) {
+                    if let folder = folderToDelete {
+                      viewModel.deleteFolder(folder)
                     }
-                    Button("Add Folder") {
-                        isAddingFolder = true
+                  },
+                  secondaryButton: .cancel()
+                )
+              case .deleteNote:
+                return Alert(
+                  title: Text("Delete Note"),
+                  message: Text("Are you sure you want to delete this note?"),
+                  primaryButton: .destructive(Text("Delete")) {
+                    if let note = noteToDelete {
+                      viewModel.deleteNote(note)
                     }
+                  },
+                  secondaryButton: .cancel()
+                )
+              }
+            }
+            .navigationDestination(for: Note.self) { note in
+              NoteView(firebase: firebase, note: note, course: course)
+            }
+            .navigationDestination(for: Folder.self) { folder in
+              FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
+            }
+            
+            VStack {
+            Spacer()
+            
+            HStack {
+              Spacer()
+                Button(action: {
+                    editStates.showPlusActions = true
+                }) {
+                Image(systemName: "plus")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 24, height: 24)
+                    .padding(20)
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
                 }
             }
+            .padding(.bottom, 20)
+            .padding(.trailing, 20)
+          }
         }
-        .alert(item: $activeAlert) { alert in
-            switch alert {
-            case .deleteFolder:
-                return Alert(
-                    title: Text("Delete Folder"),
-                    message: Text("Are you sure you want to delete this folder and all its notes?"),
-                    primaryButton: .destructive(Text("Delete")) {
-                        if let folder = folderToDelete {
-                          viewModel.deleteFolder(folder)
-                        }
-                    },
-                    secondaryButton: .cancel()
-                )
-            case .deleteNote:
-                return Alert(
-                    title: Text("Delete Note"),
-                    message: Text("Are you sure you want to delete this note?"),
-                    primaryButton: .destructive(Text("Delete")) {
-                        if let note = noteToDelete {
-                          viewModel.deleteNote(note)
-                        }
-                    },
-                    secondaryButton: .cancel()
-                )
+        .confirmationDialog("Create", isPresented: $editStates.showPlusActions, titleVisibility: .hidden) {
+            Button("New Note") {
+                isAddingNote = true
             }
-        }
-        .navigationDestination(for: Note.self) { note in
-            NoteView(firebase: firebase, note: note, course: course)
-        }
-        .navigationDestination(for: Folder.self) { folder in
-            FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
+            Button("New Folder") {
+                isAddingFolder = true
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
 
     private var recentNoteSummarySection: some View {
         Group {
             if let recentNote = viewModel.getMostRecentNote() {
-                SummaryComponent(summary: recentNote.summary, title: "Most Recent Note's Summary")
+                SummaryComponent(summary: recentNote.summary, title: "What happened last class?")
             } else {
                 EmptyView()
             }
@@ -196,7 +220,6 @@ struct CourseView: View {
                         .frame(maxWidth: .infinity)
                     }
                   }
-
                   Button(action: {
                       editStates.noteToEdit = note
                       editStates.showEditNoteModal = true

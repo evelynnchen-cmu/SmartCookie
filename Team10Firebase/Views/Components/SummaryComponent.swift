@@ -5,7 +5,7 @@ struct SummaryComponent: View {
     var title: String
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(title)
               .font(.headline)
               .foregroundColor(.primary)
