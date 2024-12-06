@@ -174,14 +174,15 @@ struct CourseView: View {
     }
 
   
+  
   private var directNotesSection: some View {
       VStack(alignment: .leading) {
           Text("Notes in Course")
               .font(.headline)
 
           ForEach(viewModel.notes, id: \.id) { note in
-              NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
-                  HStack {
+              HStack(spacing: 8) { // Reduced spacing between elements
+                  NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
                       VStack(alignment: .leading) {
                           Text(note.title)
                               .font(.body)
@@ -193,18 +194,16 @@ struct CourseView: View {
                               .font(.caption2)
                               .foregroundColor(.secondary)
                       }
-                      Spacer()
-                      Button(action: {
-                          editStates.noteToEdit = note
-                          editStates.showEditNoteModal = true
-                      }) {
-                          Image(systemName: "pencil.circle")
-                              .font(.caption)
-                              .foregroundColor(.blue)
-                      }
-                      .padding(.leading, 8)
                   }
-                  .padding(.vertical, 5)
+
+                  Button(action: {
+                      editStates.noteToEdit = note
+                      editStates.showEditNoteModal = true
+                  }) {
+                      Image(systemName: "pencil.circle")
+                          .font(.caption)
+                          .foregroundColor(.blue)
+                  }
               }
               .contextMenu {
                   Button(role: .destructive) {
@@ -216,52 +215,54 @@ struct CourseView: View {
               }
           }
           .padding(.top, 10)
-      } 
+      }
+  }
+
+  
+  private var foldersSection: some View {
+      VStack(alignment: .leading) {
+          Text("Folders")
+              .font(.headline)
+
+          ForEach(viewModel.folders, id: \.id) { folder in
+              HStack(spacing: 8) {
+                  NavigationLink(
+                      destination: FolderView(
+                          firebase: viewModel.firebase,
+                          course: viewModel.course,
+                          folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
+                      )
+                  ) {
+                      Text(folder.folderName)
+                          .font(.body)
+                          .foregroundColor(.blue)
+                          .padding()
+                          .background(Color.gray.opacity(0.2))
+                          .cornerRadius(8)
+                  }
+
+                  Button(action: {
+                      editStates.folderToEdit = folder
+                      editStates.showEditFolderModal = true
+                  }) {
+                      Image(systemName: "pencil.circle")
+                          .font(.caption)
+                          .foregroundColor(.blue)
+                  }
+              }
+              .contextMenu {
+                  Button(role: .destructive) {
+                      folderToDelete = folder
+                      activeAlert = .deleteFolder
+                  } label: {
+                      Label("Delete Folder", systemImage: "trash")
+                  }
+              }
+          }
+      }
   }
 
 
-    private var foldersSection: some View {
-        VStack(alignment: .leading) {
-            Text("Folders")
-                .font(.headline)
-
-          ForEach(viewModel.folders, id: \.id) { folder in
-                NavigationLink(
-                    destination: FolderView(
-                      firebase: viewModel.firebase,
-                      course: viewModel.course,
-                      folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
-                    )
-                ) {
-                    Text(folder.folderName)
-                        .font(.body)
-                        .foregroundColor(.blue)
-                        .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(8)
-                        .padding(.vertical, 2)
-                }
-                Spacer()
-                Button(action: {
-                     editStates.folderToEdit = folder
-                     editStates.showEditFolderModal = true
-                 }) {
-                     Image(systemName: "pencil.circle")
-                         .font(.caption)
-                         .foregroundColor(.blue)
-                 }
-                 .padding(.leading, 8)
-                .contextMenu {
-                    Button(role: .destructive) {
-                        folderToDelete = folder
-                        activeAlert = .deleteFolder
-                    } label: {
-                        Label("Delete Folder", systemImage: "trash")
-                    }
-                }
-            }
-        }
-    }
 
     private func fetchFoldersForCourse() {
         firebase.getFolders { allFolders in
