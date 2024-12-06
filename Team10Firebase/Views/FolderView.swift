@@ -22,46 +22,46 @@ struct FolderView: View {
       VStack{
         ScrollView {
           VStack(alignment: .leading) {
-            
-            
-            Text("Notes:")
+            Text("Notes")
               .font(.headline)
-            
+        LazyVGrid(columns: [
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top),
+            GridItem(.flexible(), alignment: .top)
+          ], spacing: 10) {
             ForEach(folderViewModel.notes, id: \.id) { note in
-                HStack(spacing: 8) {
-                    NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
-                        VStack(alignment: .leading) {
-                            Text(note.title)
-                                .font(.body)
-                                .foregroundColor(.blue)
-                            Text(note.summary)
-                                .font(.caption)
-                                .foregroundColor(.gray)
-                            Text("Created at: \(note.createdAt, formatter: dateFormatter)")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.vertical, 5)
+                VStack(spacing: 8) { // Reduced spacing between elements
+                NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {                     
+                    VStack {
+                        Image("note")
+                        .resizable()
+                        .frame(width: 70, height: 70)
+                    Text(note.title)
+                        .font(.body)
+                        .frame(maxWidth: .infinity)
                     }
-                    
-                    Button(action: {
+                  }
+
+                  Button(action: {
                         editStates.noteToEdit = note
                         editStates.showEditNoteModal = true
                     }) {
                         Image(systemName: "pencil.circle")
-                            .font(.caption)
+                            .frame(width: 15, height: 15)
                             .foregroundColor(.blue)
-                    }
-                }
-                .contextMenu {
-                    Button(role: .destructive) {
-                        noteToDelete = note
-                        showDeleteNoteAlert = true
-                    } label: {
-                        Label("Delete Note", systemImage: "trash")
-                    }
-                }
+                  }
+              }
+              .contextMenu {
+                  Button(role: .destructive) {
+                      noteToDelete = note
+                      showDeleteNoteAlert = true
+                  } label: {
+                      Label("Delete Note", systemImage: "trash")
+                  }
+              }
             }
+          }
 
             
             Spacer()
