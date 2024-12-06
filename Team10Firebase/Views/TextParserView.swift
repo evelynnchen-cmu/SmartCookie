@@ -35,6 +35,7 @@ struct TextParserView: View {
 
   init(images: [UIImage], firebase: Firebase, isPresented: Binding<Bool>, course: Course?, title: String, note: Binding<Note?>? = .constant(nil), completion: ((String) -> Void)? = nil) {
         self.images = images
+//        self.parsedPDFText = parsedPDFText
         self.firebase = firebase
         self._isPresented = isPresented
         self.course = course
