@@ -66,7 +66,7 @@ struct ChatView: View {
                     Button(action: {
                         isMessageSelectionViewPresented = true
                     }) {
-                        Image(systemName: "note.text.badge.plus")
+                        Image(systemName: "square.and.arrow.down.on.square")
                             .foregroundColor(.black)
                     }
                     
