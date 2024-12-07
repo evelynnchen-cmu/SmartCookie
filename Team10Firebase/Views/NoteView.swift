@@ -109,7 +109,24 @@ struct NoteView: View {
                     }
                 }
             }
-            
+
+            // Review button outside ScrollView but inside ZStack
+            NavigationLink(destination: QuizView(note: note, noteContent: note.content, firebase: firebase)) {
+                HStack {
+                    Text("Review")
+                }
+                .font(.headline)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(15)
+                .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+            }
+            .padding(.leading, 20)
+            .padding(.bottom, 20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             // Floating plus button
             Button(action: {
                 isActionSheetPresented = true
