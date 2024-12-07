@@ -137,6 +137,7 @@ struct ChatView: View {
                                 if message.isUser {
                                     Spacer()
                                 }
+
                                 Text(message.content)
                                     .padding(.horizontal, 16)
                                     .padding(.vertical, 10)
@@ -145,6 +146,16 @@ struct ChatView: View {
                                         message.isUser ? Color.blue : Color(.systemGray6)
                                     )
                                     .clipShape(BubbleShape(isUser: message.isUser))
+                                    .contextMenu {
+                                        Button(action: {
+                                            selectedMessages.insert(message.id)
+                                            isMessageSelectionViewPresented = true
+                                        }) {
+                                            Text("Save to notes")
+                                            Image(systemName: "square.and.arrow.down")
+                                        }
+                                    }
+                                    
                                 if !message.isUser {
                                     Spacer()
                                 }
