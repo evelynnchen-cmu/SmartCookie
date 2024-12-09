@@ -96,8 +96,8 @@ struct TextParserView: View {
                                    self.isParsing = true
                                    parseImages()
                                }) {
-                                   Image(systemName: "arrow.trianglehead.counterclockwise")
-                                       .font(.system(size: 24))
+                                   Image(systemName: "arrow.counterclockwise.circle")
+                                       .font(.system(size: 40))
                                        .foregroundColor(Color.blue.opacity(0.2))
                                }
                                .padding(8)
