@@ -30,24 +30,27 @@ struct TextParserView: View {
   @State private var keyboardHeight: CGFloat = 0
   private var openAI = OpenAI()
   @FocusState private var isTextEditorFocused: Bool
+  public var tan = Color(hex: "775139")
+  public var tan1 = Color(hex: "EBDBCE")
+  public var lightBlue = Color(hex: "D8E9F5")
+  public var mediumBlue = Color(hex: "89BBDE")
+  public var darkBlue = Color(hex: "191D32")
   
   var completion: ((String) -> Void)?
 
   init(images: [UIImage], firebase: Firebase, isPresented: Binding<Bool>, course: Course?, title: String, note: Binding<Note?>? = .constant(nil), completion: ((String) -> Void)? = nil) {
         self.images = images
-//        self.parsedPDFText = parsedPDFText
         self.firebase = firebase
         self._isPresented = isPresented
         self.course = course
         self.title = title
-        self._note = note ?? .constant(nil) // Set to nil if not provided
+        self._note = note ?? .constant(nil)
         self.completion = completion
     }
   
   var body: some View {
        GeometryReader { geometry in
            VStack(spacing: 0) {
-               // Header with close button
                ZStack {
                    Text("What we got")
                        .font(.title)
@@ -88,7 +91,6 @@ struct TextParserView: View {
                                .padding()
                        }
                        
-                       // Side buttons within content area
                        VStack(spacing: 8) {
                            if !isEditing {
                                Button(action: {
@@ -98,7 +100,9 @@ struct TextParserView: View {
                                }) {
                                    Image(systemName: "arrow.counterclockwise.circle")
                                        .font(.system(size: 40))
-                                       .foregroundColor(Color.blue.opacity(0.2))
+//                                       .foregroundColor(darkBlue)
+                                       .background(Color.white)
+                                       .foregroundColor(tan)
                                }
                                .padding(8)
                                
@@ -111,7 +115,8 @@ struct TextParserView: View {
                                }) {
                                    Image(systemName: "pencil.circle.fill")
                                    .font(.system(size: 40))
-                                   .foregroundColor(Color.blue.opacity(0.2))
+//                                   .foregroundColor(darkBlue)
+                                   .foregroundColor(tan)
                                }
                                .padding(8)
                            } else {
@@ -140,7 +145,7 @@ struct TextParserView: View {
                    Group {
                        if !isParsing {
                            RoundedRectangle(cornerRadius: 12)
-                               .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                               .stroke(tan, lineWidth: 3)
                                .background(Color.white)
                        }
                    }
@@ -162,7 +167,7 @@ struct TextParserView: View {
                                    .cornerRadius(8)
                                    .overlay(
                                        RoundedRectangle(cornerRadius: 8)
-                                           .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                           .stroke(tan, lineWidth: 1)
                                    )
                            }
                            
@@ -172,8 +177,9 @@ struct TextParserView: View {
                                Text("Save")
                                    .frame(maxWidth: .infinity)
                                    .padding()
-                                   .background(Color.blue.opacity(0.2))
-                                   .foregroundColor(.black)
+                                   .background(tan)
+//                                   .foregroundColor(tan)
+                                   .foregroundColor(.white)
                                    .cornerRadius(8)
                            }
                        }
@@ -203,7 +209,8 @@ struct TextParserView: View {
                Text("Failed to load course")
            }
        }
-       .background(Color.blue.opacity(0.1))
+//       .background(Color.blue.opacity(0.1))
+       .background(tan1)
    }
 
     private func setupKeyboardObservers() {
@@ -228,7 +235,6 @@ struct TextParserView: View {
             // If imagePaths not nil, parse image
             if let imagePaths = paths {
                 print("Image paths: \(imagePaths)")
-                // If thisNote is not nil, update the given note; otherwise, create a new note
                 if let thisNote = self.note {
                     Task {
                         do {
@@ -347,7 +353,7 @@ struct TextParserView: View {
 
         dispatchGroup.notify(queue: .main) {
             self.content = parsedTexts.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
-            self.isParsing = false // Set parsing status to false
+            self.isParsing = false
         }
     }
 }
