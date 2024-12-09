@@ -17,6 +17,7 @@ class QuizViewModel: ObservableObject {
     @Published var isLoadingQuestions = false
     @Published var errorMessage: String?
     @Published var previouslyIncorrectQuestionsCorrectCount: Int = 0
+    @Published var questionResults: [Bool] = []
     
     private let note: Note
     private let noteContent: String
@@ -34,7 +35,6 @@ class QuizViewModel: ObservableObject {
         
         Task {
             do {
-                // Get user settings for notesOnlyScope
                 let db = Firestore.firestore()
                 if let userDoc = try? await db.collection("User").limit(to: 1).getDocuments().documents.first,
                    let user = try? userDoc.data(as: User.self) {
@@ -48,7 +48,6 @@ class QuizViewModel: ObservableObject {
                         self.isLoadingQuestions = false
                     }
                 } else {
-                    // Fallback to default behavior if user settings can't be fetched
                     let generatedQuestions = try await openAI.generateQuizQuestions(content: noteContent)
                     DispatchQueue.main.async {
                         self.questions = generatedQuestions
@@ -114,11 +113,12 @@ class QuizViewModel: ObservableObject {
         }
     }
     
-    // saves new incorrect questions, deletes previously-incorrect questions that the user got right, updates attempt count of previously-incorrect questions that the user still got wrong, upserts streak
     func checkAnswerWithPersistence(userID: String, firebase: Firebase) {
         guard let selected = selectedAnswer else { return }
         let currentQuestion = questions[currentQuestionIndex]
         let isCorrect = selected == currentQuestion.correctAnswer
+        
+        questionResults.append(isCorrect)
         
         if isCorrect {
             correctAnswers += 1
@@ -144,20 +144,19 @@ class QuizViewModel: ObservableObject {
                     } else {
                         self.showScore = true
                       
-                      // try to update streak
-                      firebase.updateUserStreak(userID: userID, quizScore: self.score) { error in
-                          if let error = error {
-                              self.errorMessage = "Error updating streak: \(error.localizedDescription)"
-                          }
-                      }
+                        firebase.updateUserStreak(userID: userID, quizScore: self.score) { error in
+                            if let error = error {
+                                self.errorMessage = "Error updating streak: \(error.localizedDescription)"
+                            }
+                        }
                     }
                 }
             }
         }
       
-      if isCorrect && currentQuestion.id != nil {
-          previouslyIncorrectQuestionsCorrectCount += 1
-      }
+        if isCorrect && currentQuestion.id != nil {
+            previouslyIncorrectQuestionsCorrectCount += 1
+        }
     }
     
     var score: Int {
