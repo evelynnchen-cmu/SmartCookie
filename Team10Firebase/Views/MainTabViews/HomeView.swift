@@ -81,7 +81,7 @@ struct HomeView: View {
                         .padding(.horizontal)
                       
                       VStack(alignment: .leading) {
-                          Text("Recently Updated")
+                          Text("Recently Updated Notes")
                               .font(.headline)
                               .foregroundColor(.blue)
                               .padding(.leading, 20)
