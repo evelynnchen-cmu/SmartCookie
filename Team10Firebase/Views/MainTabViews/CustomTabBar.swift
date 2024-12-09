@@ -27,7 +27,7 @@ struct CustomTabBar: View {
                     .padding()
                     .foregroundColor(
                         selectedTab == tab 
-                        ? Color(red: 119 / 255, green: 81 / 255, blue: 57 / 255) // 775139 Color
+                        ? darkBlue
                         : .gray
                     )
                 }
@@ -44,12 +44,12 @@ struct CustomTabBar: View {
         // This frame controls the height of the tab bar
         .frame(maxHeight: 60)
         .background(.white)
-        .overlay(
-            Rectangle()
-                .frame(height: 1)
-                .foregroundColor(.gray),
-            alignment: .top
-        )
+//        .overlay(
+//            Rectangle()
+//                .frame(height: 1)
+//                .foregroundColor(.gray),
+//            alignment: .top
+//        )
     }
 }
 
