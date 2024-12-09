@@ -53,10 +53,14 @@ struct MessageSelectionView: View {
                                 Spacer()
                             }
                             Text(message.content)
-                            .foregroundColor(message.isUser ? .white : .black)
+                                .foregroundColor(message.isUser ? .white : .black)
                                 .padding()
                                 .background(message.isUser ? Color.blue : Color.gray.opacity(0.2))
                                 .clipShape(BubbleShape(isUser: message.isUser))
+                                .onTapGesture {
+                                    toggleSelection(for: message.id)
+                                }
+
                             if !message.isUser {
                                 Spacer()
                             }
@@ -66,6 +70,7 @@ struct MessageSelectionView: View {
                 }
             }
 
+            // Save and cancel buttons
             HStack {
                 Button(action: {
                     if !selectedMessages.isEmpty {
@@ -94,6 +99,14 @@ struct MessageSelectionView: View {
                 }
             }
             .padding()
+        }
+    }
+
+    private func toggleSelection(for id: UUID) {
+        if selectedMessages.contains(id) {
+            selectedMessages.remove(id)
+        } else {
+            selectedMessages.insert(id)
         }
     }
 }

@@ -25,7 +25,11 @@ struct CustomTabBar: View {
                         Text(tab.text)
                     }
                     .padding()
-                    .foregroundColor(selectedTab == tab ? .blue : .gray)
+                    .foregroundColor(
+                        selectedTab == tab 
+                        ? Color(red: 119 / 255, green: 81 / 255, blue: 57 / 255) // 775139 Color
+                        : .gray
+                    )
                 }
                 if tab != tabs.last {
                   Spacer()
