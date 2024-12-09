@@ -36,11 +36,14 @@ struct NoteView: View {
                         // Buttons to switch between tabs
                         tabSwitcher
                         
-                        if contentTab {
-                            contentTabView
-                        } else {
-                            imageTabView
+                        ZStack {
+                          if contentTab {
+                              contentTabView
+                          } else {
+                              imageTabView
+                          }
                         }
+                        // .padding(.horizontal)
                     } else {
                         Text("Loading note...")
                     }
@@ -161,23 +164,46 @@ struct NoteView: View {
     
     // MARK: - Tab Switcher
     private var tabSwitcher: some View {
-        HStack {
+        HStack(spacing: 0) {
             Button(action: { contentTab = true }) {
-                tabButtonText("Content", isSelected: contentTab)
+                tabButtonText("Notes", isSelected: contentTab)
+                  .cornerRadius(8, corners: [.topLeft, .topRight, .bottomRight])
             }
+            // .frame(width: UIScreen.main.bounds.width/2)
             Button(action: { contentTab = false }) {
                 tabButtonText("Images", isSelected: !contentTab)
+                  .cornerRadius(8, corners: [.topLeft, .topRight, .bottomLeft])
+                  .padding(.leading, -2)
             }
+            // .frame(width: UIScreen.main.bounds.width/2)
         }
+        .padding(.horizontal, -20)
+        .frame(maxWidth: .infinity)
     }
     
+    // private func tabButtonText(_ title: String, isSelected: Bool) -> some View {
+    //     Text(title)
+    //         .padding()
+    //         .frame(maxWidth: .infinity)
+    //         .background(isSelected ? Color.blue : Color.clear)
+    //         .foregroundColor(isSelected ? .white : .blue)
+    //         .cornerRadius(8)
+    // }
     private func tabButtonText(_ title: String, isSelected: Bool) -> some View {
         Text(title)
             .padding()
             .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.blue : Color.clear)
-            .foregroundColor(isSelected ? .white : .blue)
-            .cornerRadius(8)
+            .foregroundColor(.black)
+            // .background(isSelected ? Color.blue : Color.clear)
+            // .foregroundColor(isSelected ? .white : .blue)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    // .stroke(Color.blue, lineWidth: 2)
+                    .stroke(Color.black, lineWidth: 2)
+                    // .padding(.bottom, -2) // Extend the border to cover the bottom padding
+                    .padding(.bottom, isSelected ? -2 : 0) // Extend the border to cover the bottom padding
+            )
+            // .cornerRadius(8, corners: [.topLeft, .topRight, .bottomLeft, .bottomRight])
     }
     
     // MARK: - Content Tab View
@@ -236,4 +262,37 @@ struct NoteView: View {
         formatter.timeStyle = .short
         return formatter
     }()
+}
+
+
+// import SwiftUI
+
+struct CornerRadiusStyle: ViewModifier {
+    var radius: CGFloat
+    var corners: UIRectCorner
+
+    func body(content: Content) -> some View {
+        content
+            .clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
+    }
+}
+
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        self.modifier(CornerRadiusStyle(radius: radius, corners: corners))
+    }
 }
