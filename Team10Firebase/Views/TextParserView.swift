@@ -88,75 +88,73 @@ struct TextParserView: View {
                                .padding()
                        }
                        
-                       // Edit/Confirm button
-                       if isEditing {
-                           Button(action: {
-                               isTextEditorFocused = false
-                               content = editedContent
-                               isEditing = false
-                           }) {
-                               Image(systemName: "checkmark.circle.fill")
-                                   .font(.system(size: 40))
-                                   .foregroundColor(.blue)
-                                   .background(Circle().fill(Color.white))
-                                   .shadow(radius: 2)
-                           }
-                           .padding([.trailing, .bottom], 20)
-              
-                       } else {
-                           Button(action: {
-                               editedContent = content ?? ""
-                               isEditing = true
-                               DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                   isTextEditorFocused = true
+                       // Side buttons within content area
+                       VStack(spacing: 8) {
+                           if !isEditing {
+                               Button(action: {
+                                   self.content = nil
+                                   self.isParsing = true
+                                   parseImages()
+                               }) {
+                                   Image(systemName: "arrow.trianglehead.counterclockwise")
+                                       .font(.system(size: 24))
+                                       .foregroundColor(Color.blue.opacity(0.2))
                                }
-                           }) {
-                               Image(systemName: "pencil.circle.fill")
+                               .padding(8)
+                               
+                               Button(action: {
+                                   editedContent = content ?? ""
+                                   isEditing = true
+                                   DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                       isTextEditorFocused = true
+                                   }
+                               }) {
+                                   Image(systemName: "pencil.circle.fill")
                                    .font(.system(size: 40))
-                                   .foregroundColor(.blue)
-                                   .background(Circle().fill(Color.white))
-                                   .shadow(radius: 2)
+                                   .foregroundColor(Color.blue.opacity(0.2))
+                               }
+                               .padding(8)
+                           } else {
+                               Button(action: {
+                                   isTextEditorFocused = false
+                                   content = editedContent
+                                   isEditing = false
+                               }) {
+                                 Image(systemName: "checkmark.circle.fill")
+                                  .font(.system(size: 40))
+                                  .foregroundColor(Color.blue.opacity(0.2))
+                                 
+                               }
+                               .padding(8)
                            }
-                           .padding([.trailing, .bottom], 20)
                        }
+                       .padding(.trailing, 8)
+                       .padding(.bottom, 8)
                    } else {
                        ProgressView("Parsing text...")
                            .padding()
                    }
                }
-               .frame(maxWidth: .infinity)
-               .frame(maxHeight: isEditing ? .infinity : nil)
+               .frame(maxHeight: .infinity)
                .background(
-                   RoundedRectangle(cornerRadius: 8)
-                       .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                       .background(Color.white)
+                   Group {
+                       if !isParsing {
+                           RoundedRectangle(cornerRadius: 12)
+                               .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                               .background(Color.white)
+                       }
+                   }
                )
                .padding()
                
                if !isParsing && !isEditing {
-                   Spacer()
-                   
+                   // Bottom buttons
                    VStack(spacing: 12) {
-                       // Save button
-                       Button(action: {
-                           handleSave()
-                       }) {
-                           Text("Save")
-                               .frame(maxWidth: .infinity)
-                               .padding()
-                               .background(Color(red: 1, green: 0.8, blue: 0.8))
-                               .foregroundColor(.black)
-                               .cornerRadius(8)
-                       }
-                       
-                       // Re-extract and Chat buttons
                        HStack(spacing: 12) {
                            Button(action: {
-                               self.content = nil
-                               self.isParsing = true
-                               parseImages()
+                               isChatViewPresented = true
                            }) {
-                               Text("Re-extract")
+                               Text("Chat Now")
                                    .frame(maxWidth: .infinity)
                                    .padding()
                                    .background(Color.white)
@@ -169,9 +167,9 @@ struct TextParserView: View {
                            }
                            
                            Button(action: {
-                               isChatViewPresented = true
+                               handleSave()
                            }) {
-                               Text("Chat Now")
+                               Text("Save")
                                    .frame(maxWidth: .infinity)
                                    .padding()
                                    .background(Color.blue.opacity(0.2))
@@ -180,8 +178,8 @@ struct TextParserView: View {
                            }
                        }
                    }
-                   .padding()
-               
+                   .padding(.horizontal)
+                   .padding(.bottom, 20)
                }
            }
        }
@@ -205,6 +203,7 @@ struct TextParserView: View {
                Text("Failed to load course")
            }
        }
+       .background(Color.blue.opacity(0.1))
    }
 
     private func setupKeyboardObservers() {
