@@ -18,10 +18,9 @@ extension Color {
 }
 
 //creates a global variable for a color
-public var peach = Color(hex: "EBA793")
-public var maroon = Color(hex: "8B6466")
-public var brown = Color(hex: "3D2829")
-// From lightest to darkest
-public var blue1 = Color(hex: "B6D3E5")
-public var blue2 = Color(hex: "6194B0")
-public var blue3 = Color(hex: "29537C")
+public var lightBrown = Color(hex: "CEA07E")
+public var darkBrown = Color(hex: "775139")
+public var lightBlue = Color(hex: "D8E9F5")
+public var mediumBlue = Color(hex: "89BBDE")
+public var darkBlue = Color(hex: "191D32")
+public var tan = Color(hex: "EBDBCE")
