@@ -93,9 +93,17 @@ struct ChatView: View {
                             Image(systemName: "chevron.down")
                         }
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white)
+                                .shadow(color: Color.gray.opacity(0.4), radius: 4, x: 0, y: 2)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
+                        .foregroundColor(.black)
                     }
 
                     Spacer()
@@ -130,66 +138,110 @@ struct ChatView: View {
                 // Chat messages vertical scroll view
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
-                      
-                      ScopeIndicator(notesOnlySetting: notesOnlyChatScope)
-                          .padding(.top)
-                      
-                        ForEach(messages) { message in
-                            HStack {
-                                if message.isUser {
-                                    Spacer()
-                                }
+                        ScopeIndicator(notesOnlySetting: notesOnlyChatScope)
+                            .padding(.top)
 
-                                Text(message.content)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .foregroundColor(message.isUser ? .white : .primary)
-                                    .background(
-                                        message.isUser ? Color.blue : Color(.systemGray6)
-                                    )
-                                    .clipShape(BubbleShape(isUser: message.isUser))
-                                    .contextMenu {
-                                        Button(action: {
-                                            selectedMessages.insert(message.id)
-                                            isMessageSelectionViewPresented = true
-                                        }) {
-                                            Text("Save to notes")
-                                            Image(systemName: "square.and.arrow.down")
+                        ForEach(messages) { message in
+                            HStack(alignment: .bottom, spacing: 8) {
+                                if message.isUser {
+                                    // User Message Bubble
+                                    Spacer()
+                                    
+                                    HStack(alignment: .bottom, spacing: 8) {
+                                        VStack(alignment: .trailing) {
+                                            Text(message.content)
+                                                .padding(.horizontal, 16)
+                                                .padding(.vertical, 10)
+                                                .foregroundColor(.primary)
+                                                .background(Color(red: 216/255, green: 233/255, blue: 245/255)) // D8E9F5
+                                                .clipShape(BubbleShape(isUser: true))
+                                                .contextMenu {
+                                                    Button(action: {
+                                                        selectedMessages.insert(message.id)
+                                                        isMessageSelectionViewPresented = true
+                                                    }) {
+                                                        Text("Save to notes")
+                                                        Image(systemName: "square.and.arrow.down")
+                                                    }
+                                                }
+                                        }
+                                        Text("EC")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.black)
+                                            .frame(width: 40, height: 40)
+                                            .background(Color(red: 216/255, green: 233/255, blue: 245/255)) // Light Blue
+                                            .clipShape(Circle())
+                                            .padding(.bottom, 4) // Align with bottom of bubble
+                                    }
+                                    .padding(.trailing, 12) // Adjust user message alignment
+                                } else {
+                                    // Bot Message Bubble
+                                    HStack(alignment: .bottom, spacing: 8) {
+                                        Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                                            .resizable()
+                                            .frame(width: 40, height: 40)
+                                            .clipShape(Circle())
+                                            .padding(.bottom, 4) // Align with bottom of bubble
+                                        VStack(alignment: .leading) {
+                                            Text(message.content)
+                                                .padding(.horizontal, 16)
+                                                .padding(.vertical, 10)
+                                                .foregroundColor(.primary)
+                                                .background(Color(red: 235/255, green: 219/255, blue: 206/255)) // EBDBCE
+                                                .clipShape(BubbleShape(isUser: false))
+                                                .contextMenu {
+                                                    Button(action: {
+                                                        selectedMessages.insert(message.id)
+                                                        isMessageSelectionViewPresented = true
+                                                    }) {
+                                                        Text("Save to notes")
+                                                        Image(systemName: "square.and.arrow.down")
+                                                    }
+                                                }
                                         }
                                     }
-
-                                if !message.isUser {
-                                    Spacer()
+                                    .padding(.leading, 0)
                                 }
                             }
-                            .padding(message.isUser ? .leading : .trailing, 60)
                             .padding(.vertical, 4)
                         }
-                      if isLoading {
-                          HStack {
-                              TypingIndicator()
-                              Spacer()
-                          }
-                          .padding(.trailing, 60)
-                          .padding(.vertical, 4)
-                      }
+
+                        if isLoading {
+                            HStack {
+                                TypingIndicator()
+                                Spacer()
+                            }
+                            .padding(.trailing, 60)
+                            .padding(.vertical, 4)
+                        }
                     }
                     .padding(.horizontal)
                 }
-                
+ 
                 // Suggested messages horizontal scroll view
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        ForEach(suggestedMessages, id: \.self) { suggestion in
-                            Button(action: {
-                                userInput = suggestion
-                            }) {
-                                Text(suggestion)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(Color(.systemGray6))
-                                    .cornerRadius(8)
-                                    .foregroundColor(.black)
+                    ForEach(suggestedMessages, id: \.self) { suggestion in
+                        Button(action: {
+                            if userInput == suggestion {
+                                userInput = "" // Deselect if already selected
+                            } else {
+                                userInput = suggestion // Select the prompt
+                            }
+                        }) {
+                            Text(suggestion)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(userInput == suggestion ? Color(red: 216/255, green: 233/255, blue: 245/255) : Color.gray, lineWidth: 2)
+                                        .background(
+                                            userInput == suggestion ?
+                                            RoundedRectangle(cornerRadius: 12).fill(Color(red: 216/255, green: 233/255, blue: 245/255).opacity(0.3))
+                                            : RoundedRectangle(cornerRadius: 12).fill(Color(.systemGray6))
+                                        )
+                                )
+                                .foregroundColor(.black)
                             }
                         }
                     }
@@ -221,7 +273,7 @@ struct ChatView: View {
                             Image(systemName: "arrow.right")
                                 .foregroundColor(.white)
                                 .padding(8)
-                                .background(userInput.isEmpty ? Color.gray : Color.blue)
+                                .background(userInput.isEmpty ? Color(red: 216/255, green: 233/255, blue: 245/255) : Color(red: 137/255, green: 187/255, blue: 222/255)) // Light Blue for inactive State, Dark Blue for active
                                 .cornerRadius(8)
                         }
                         .disabled(userInput.isEmpty || isLoading)
@@ -373,7 +425,8 @@ struct ChatView: View {
             do {
                 let jsonResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                 if let choice = jsonResponse.choices.first {
-                    completion(choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines))
+                    let cleanResponse = stripMarkdown(choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines))
+                    completion(cleanResponse)
                 } else {
                     completion("Unexpected response format.")
                 }
@@ -382,6 +435,24 @@ struct ChatView: View {
                 completion("Failed to parse API response.")
             }
         }.resume()
+    }
+
+    // Helper function to strip Markdown formatting
+    func stripMarkdown(_ text: String) -> String {
+        // Remove bold, italic, and other Markdown formatting
+        let patterns = [
+            "\\*\\*(.*?)\\*\\*", // Bold
+            "\\*(.*?)\\*",       // Italics
+            "_([^_]+)_",         // Underscore-based Italics
+            "`([^`]+)`",         // Inline code
+            "\\[([^\\]]+)\\]\\([^\\)]+\\)" // Links
+        ]
+        var cleanText = text
+        for pattern in patterns {
+            let regex = try? NSRegularExpression(pattern: pattern, options: [])
+            cleanText = regex?.stringByReplacingMatches(in: cleanText, options: [], range: NSRange(location: 0, length: cleanText.utf16.count), withTemplate: "$1") ?? cleanText
+        }
+        return cleanText
     }
 
     // Fetches notes for a specific course and updates courseNotes.
@@ -411,49 +482,43 @@ struct ChatView: View {
         messagesHistory.append(["role": "assistant", "content": welcomeMessage])
     }
 
-    // Calls OpenAI API to get suggested messages for the user
+    // Calls OpenAI API to get suggested short sentence/question starters for the user
     func fetchSuggestions() {
         var contextMessages = messagesHistory
 
         if let course = selectedCourse {
             let coursePrompt = """
             Course: \(course.courseName ?? "Unknown")
-            Context: This is a student-focused study assistant app. The user is chatting about this course and may want to ask questions, explore concepts, or seek clarification related to the course material.
-            Objective: Provide a variety of concise, actionable, and engaging suggestions for prompts the user can ask. These prompts should:
-            1. Include a mix of question styles, such as:
-                - Concept exploration (e.g., "Explain how [concept] works.")
-                - Application (e.g., "How can [concept] be applied in [scenario]?")
-                - Hypotheticals (e.g., "What would happen if [condition]?")
-                - Comparison (e.g., "What are the differences between [topic A] and [topic B]?")
-                - Problem-solving (e.g., "How would you approach solving [specific problem]?")
-            2. Encourage deeper engagement with the course material.
-            3. Be phrased as natural, clear, and thought-provoking suggestions.
+            Context: This is a study assistant app. The user is chatting about this course and may want to ask questions, explore concepts, or seek clarification related to the course material.
+            Objective: Provide concise, actionable, and contextually relevant suggestions for short sentence or question starters. These starters should:
+            - Be 2-6 words in length
+            - Focus on exploring, applying, comparing, or solving course concepts
+            - Encourage the user to elaborate or ask specific questions
             Examples:
-            - "Explain how API versioning helps maintain compatibility."
-            - "What would happen if a database index is poorly designed?"
-            - "How can recursion be applied to solve complex algorithms?"
-            - "Compare the strengths of REST and GraphQL for web APIs."
-            - "What is the best approach to optimize API response times?"
-            Output format: Provide at least 3 such prompts as plain text, separated by commas, with no quotes, bullet points, or special formatting.
+            - "Explain how to_"
+            - "Describe the differences_"
+            - "What happens if_"
+            - "How can I use_"
+            - "Help me solve_"
+            Output format: Provide at least 5 such suggestions as plain text, separated by commas, with no quotes, bullet points, or special formatting.
             """
             contextMessages.append(["role": "system", "content": coursePrompt])
         } else {
             contextMessages.append([
                 "role": "system",
                 "content": """
-                Context: This is a general chat in a study assistant app. The user may want to ask about various topics or seek help on general academic problems.
-                Objective: Provide at least 3 concise, actionable, and engaging suggestions for prompts the user can ask in general academic contexts. 
-                These prompts could include:
-                - Exploration (e.g., "What are the key features of recursion?")
-                - Application (e.g., "How can [topic] be applied to [scenario]?")
-                - Comparison (e.g., "What distinguishes [method A] from [method B]?")
-                - Hypotheticals (e.g., "What if [situation]?")
-                - Problem-solving (e.g., "How would you solve [specific problem]?")
+                Context: This is a general study assistant chat. The user may want to ask about various topics or seek help on academic problems.
+                Objective: Provide concise, actionable, and contextually relevant suggestions for short sentence or question starters. These starters should:
+                - Be 2-6 words in length
+                - Focus on exploring, applying, comparing, or solving general concepts
+                - Encourage the user to elaborate or ask specific questions
                 Examples:
-                - "Explain the concept of recursion in computer science."
-                - "Describe the differences between mitosis and meiosis."
-                - "Summarize the main points of [topic]."
-                Output format: Provide the prompts as plain text, separated by commas, with no quotes, bullet points, or special formatting.
+                - "Explain how to_"
+                - "Describe the differences_"
+                - "What happens if_"
+                - "How can I use_"
+                - "Help me solve_"
+                Output format: Provide at least 5 such suggestions as plain text, separated by commas, with no quotes, bullet points, or special formatting.
                 """
             ])
         }
@@ -464,11 +529,13 @@ struct ChatView: View {
                 let suggestions = response.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 
                 if suggestions.isEmpty {
-                    // Fallback to backup messages if parsing fails
+                    // Fallback to backup suggestions if parsing fails
                     self.suggestedMessages = [
-                        "Explain the concept of recursion in computer science.",
-                        "Describe the differences between functional and object-oriented programming.",
-                        "Summarize the key points of agile methodology."
+                        "Explain how to_",
+                        "Describe the differences_",
+                        "What happens if_",
+                        "How can I use_",
+                        "Help me solve_"
                     ]
                 } else {
                     self.suggestedMessages = suggestions
