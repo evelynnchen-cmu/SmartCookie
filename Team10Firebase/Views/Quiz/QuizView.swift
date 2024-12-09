@@ -11,6 +11,7 @@ struct QuizView: View {
     @StateObject private var viewModel: QuizViewModel
     @ObservedObject var firebase: Firebase
     @State private var userID: String = ""
+    @State private var hasCompletedStreakToday: Bool = false
     @Environment(\.dismiss) private var dismiss
     
     init(note: Note, noteContent: String, firebase: Firebase) {
@@ -20,7 +21,7 @@ struct QuizView: View {
     
     var body: some View {
         ZStack {
-            Color(white: 0.95)
+            Color.white
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
@@ -30,11 +31,31 @@ struct QuizView: View {
                 } else if let error = viewModel.errorMessage {
                     ErrorView(message: error)
                 } else if !viewModel.questions.isEmpty {
-                    QuizHeaderView()
-                        .padding(.bottom, 20)
+                    QuizHeaderView(hasCompletedStreakToday: hasCompletedStreakToday)
+                        .padding(.bottom, 10)
                     
                     if !viewModel.showScore {
-                        QuizContentView(viewModel: viewModel, userID: userID, firebase: firebase)
+                        VStack(spacing: 16) {
+                            HStack {
+                                Spacer()
+                                CookieProgressView(
+                                    currentQuestion: viewModel.currentQuestionIndex + 1,
+                                    totalQuestions: viewModel.questions.count,
+                                    answers: viewModel.questionResults
+                                )
+                            }
+                            .padding(.horizontal)
+                            
+                            QuestionView(viewModel: viewModel)
+                            
+                            VStack {
+                                if viewModel.selectedAnswer != nil {
+                                    NextButton(viewModel: viewModel, userID: userID, firebase: firebase)
+                                }
+                            }
+                            .frame(height: 50)
+                            .padding(.top, 35)
+                        }
                     } else {
                         QuizScoreView(
                             viewModel: viewModel,
@@ -51,11 +72,50 @@ struct QuizView: View {
             firebase.getFirstUser { user in
                 if let user = user {
                     userID = user.id ?? ""
+                    if let lastQuizDate = user.streak.lastQuizCompletedAt {
+                        hasCompletedStreakToday = Calendar.current.isDate(lastQuizDate, inSameDayAs: Date())
+                    }
                     viewModel.loadQuestionsWithHistory(userID: userID, firebase: firebase)
                 }
             }
         }
     }
+}
+
+// Cookie Progress View
+struct CookieProgressView: View {
+   let currentQuestion: Int
+   let totalQuestions: Int
+   let answers: [Bool]
+   
+   var body: some View {
+       HStack(spacing: 8) {
+           ForEach(0..<totalQuestions, id: \.self) { index in
+               ZStack {
+                   if index < answers.count {
+                       if answers[index] {
+                           Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                               .resizable()
+                               .scaledToFit()
+                               .frame(width: 24, height: 24)
+                       } else {
+                           Circle()
+                               .stroke(darkBrown, lineWidth: 2)
+                               .frame(width: 24, height: 24)
+                               .background(Circle().fill(darkBrown.opacity(0.1)))
+                           Image(systemName: "xmark")
+                               .foregroundColor(darkBrown)
+                               .font(.system(size: 16))
+                       }
+                   } else {
+                       Circle()
+                           .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                           .frame(width: 24, height: 24)
+                   }
+               }
+           }
+       }
+   }
 }
 
 // Loading View
@@ -64,16 +124,15 @@ private struct LoadingView: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            // Custom animated loading indicator
             ZStack {
                 Circle()
                     .stroke(lineWidth: 8)
                     .frame(width: 100, height: 100)
-                    .foregroundColor(Color.blue.opacity(0.3))
+                    .foregroundColor(darkBrown)
                 
                 Circle()
                     .trim(from: 0, to: 0.7)
-                    .stroke(Color.blue, lineWidth: 8)
+                    .stroke(darkBrown, lineWidth: 8)
                     .frame(width: 100, height: 100)
                     .rotationEffect(Angle(degrees: isAnimating ? 360 : 0))
                     .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
@@ -86,14 +145,15 @@ private struct LoadingView: View {
                 Text("Preparing Your Quiz")
                     .font(.title2)
                     .fontWeight(.bold)
+                    .foregroundColor(.black)
                 
                 Text("Loading questions and tracking your progress...")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.black)
                     .multilineTextAlignment(.center)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(white: 0.95))
+        .background(Color.white)
     }
 }
 
@@ -105,14 +165,15 @@ private struct ErrorView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50))
-                .foregroundColor(.red)
+                .foregroundColor(darkBrown)
             
             Text("Oops!")
                 .font(.title2)
                 .fontWeight(.bold)
+                .foregroundColor(.black)
             
             Text(message)
-                .foregroundColor(.red)
+                .foregroundColor(.black)
                 .multilineTextAlignment(.center)
                 .padding()
         }
@@ -121,35 +182,33 @@ private struct ErrorView: View {
 
 // Quiz Header
 private struct QuizHeaderView: View {
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Quiz Time!")
-                .font(.title)
-                .fontWeight(.bold)
-            
-            Text("Score >80% to earn points!")
-                .font(.subheadline)
-                .foregroundColor(.primary)
-                .underline()
-        }
-    }
-}
-
-// Quiz Content
-private struct QuizContentView: View {
-    @ObservedObject var viewModel: QuizViewModel
-    let userID: String
-    let firebase: Firebase
+    let hasCompletedStreakToday: Bool
     
     var body: some View {
         VStack(spacing: 16) {
-            QuestionView(viewModel: viewModel)
-            
-            if viewModel.selectedAnswer != nil {
-                NextButton(viewModel: viewModel, userID: userID, firebase: firebase)
-                    .padding()
+            HStack(alignment: .center) {
+                Text("Quiz")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(darkBrown)
+                
+                Spacer()
+                
+                Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40)
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             }
+            .padding(.horizontal)
+            
+//            if !hasCompletedStreakToday {
+//                Text("Score 80% to extend your streak")
+//                    .font(.subheadline)
+//                    .foregroundColor(darkBlue)
+//            }
         }
+        .padding(.vertical, 8)
+        .background(Color.white)
     }
 }
 
@@ -158,30 +217,21 @@ private struct QuestionView: View {
     @ObservedObject var viewModel: QuizViewModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Question \(viewModel.currentQuestionIndex + 1)/\(viewModel.questions.count)")
-                    .font(.headline)
-                
-                Spacer()
-                
-                ProgressView(value: Double(viewModel.currentQuestionIndex + 1),
-                           total: Double(viewModel.questions.count))
-                    .frame(width: 100)
-            }
-            .padding(.bottom, 8)
+        VStack(alignment: .leading, spacing: 20) {
+            Text("Question \(viewModel.currentQuestionIndex + 1)")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(darkBlue)
+                .padding(.bottom, 4)
             
             Text(viewModel.questions[viewModel.currentQuestionIndex].question)
                 .font(.title3)
-                .padding(.bottom, 16)
+                .foregroundColor(.black)
+                .padding(.vertical, 10)
                 .fixedSize(horizontal: false, vertical: true)
             
             AnswerOptionsView(viewModel: viewModel)
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(16)
-        .shadow(radius: 2)
+        .padding(.horizontal)
     }
 }
 
@@ -217,12 +267,12 @@ private struct AnswerButton: View {
             HStack(alignment: .top) {
                 Text("\(letters[index])) ")
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundColor(isSelected ? .white : .black)
                     .padding(.top, 2)
                 
                 Text(answer)
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundColor(isSelected ? .white : .black)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                 
@@ -233,10 +283,10 @@ private struct AnswerButton: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.blue.opacity(0.1) : Color.white)
+                    .fill(isSelected ? darkBrown : tan)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                            .stroke(darkBrown, lineWidth: 1)
                     )
             )
             .contentShape(Rectangle())
@@ -246,21 +296,25 @@ private struct AnswerButton: View {
 
 // Next Button
 private struct NextButton: View {
-    @ObservedObject var viewModel: QuizViewModel
-    let userID: String
-    let firebase: Firebase
-    
-    var body: some View {
-        Button(action: { viewModel.checkAnswerWithPersistence(userID: userID, firebase: firebase) }) {
-            Text(viewModel.currentQuestionIndex == viewModel.questions.count - 1 ? "Finish" : "Next")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.blue)
-                .cornerRadius(12)
-        }
-    }
+   @ObservedObject var viewModel: QuizViewModel
+   let userID: String
+   let firebase: Firebase
+   
+   var body: some View {
+       Button(action: { viewModel.checkAnswerWithPersistence(userID: userID, firebase: firebase) }) {
+           Text(viewModel.currentQuestionIndex == viewModel.questions.count - 1 ? "Finish" : "Next")
+               .font(.headline)
+               .foregroundColor(darkBlue)
+               .frame(maxWidth: 300)
+               .padding()
+               .background(.white)
+               .overlay(
+                   RoundedRectangle(cornerRadius: 12)
+                       .stroke(darkBlue, lineWidth: 2)
+               )
+       }
+       .frame(maxWidth: .infinity)
+   }
 }
 
 private struct QuizScoreView: View {
@@ -273,20 +327,28 @@ private struct QuizScoreView: View {
                 Circle()
                     .stroke(lineWidth: 20)
                     .opacity(0.3)
-                    .foregroundColor(Color.blue)
+                    .foregroundColor(darkBrown)
                 
                 Circle()
                     .trim(from: 0.0, to: CGFloat(viewModel.score) / 100)
                     .stroke(style: StrokeStyle(lineWidth: 20, lineCap: .round, lineJoin: .round))
-                    .foregroundColor(Color.blue)
+                    .foregroundColor(darkBrown)
                     .rotationEffect(Angle(degrees: 270.0))
                 
                 VStack {
                     Text("Score")
                         .font(.title3)
+                        .foregroundColor(.black)
                     Text("\(viewModel.score)%")
                         .font(.system(size: 42, weight: .bold))
+                        .foregroundColor(.black)
                 }
+                
+                Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 40)
+                    .offset(y: -100)
             }
             .frame(width: 200, height: 200)
             .padding(.bottom, 20)
@@ -295,9 +357,9 @@ private struct QuizScoreView: View {
                 Text("Great progress! You correctly answered \(previouslyIncorrectCount) \(previouslyIncorrectCount == 1 ? "question" : "questions") that you previously got wrong.")
                     .font(.headline)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(.green)
+                    .foregroundColor(.black)
                     .padding()
-                    .background(Color.green.opacity(0.1))
+                    .background(lightBlue.opacity(0.3))
                     .cornerRadius(12)
             }
         }
