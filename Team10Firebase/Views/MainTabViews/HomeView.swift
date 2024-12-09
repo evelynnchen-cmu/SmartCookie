@@ -22,11 +22,11 @@ struct RecentNoteCard: View {
             Text(note.summary)
                 .font(.caption)  // Smaller font
                 .lineLimit(2)
-                .foregroundColor(.secondary)
+                .foregroundColor(.gray)
         }
         .padding(8)  // Reduced padding
         .frame(height: 100)  // Reduced height
-        .background(Color.blue.opacity(0.1))
+        .background(lightBlue)
         .cornerRadius(8)  // Slightly reduced corner radius
     }
 }
@@ -55,7 +55,20 @@ struct HomeView: View {
             VStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        Spacer().frame(height: 40)
+                        // Spacer().frame(height: 40)
+//                        Spacer().frame(height: 20)
+//                      Spacer().frame(height: 2)
+
+                        HStack(alignment: .top) {
+                            Spacer()
+                            NavigationLink(destination: SettingsView()) {
+                                Image(systemName: "gearshape")
+                                    .font(.title2)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 3)
 
                         HStack(alignment: .top) {
                             VStack(alignment: .leading) {
@@ -65,25 +78,37 @@ struct HomeView: View {
                                 Text(userName)
                                     .font(.title)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(lightBrown)
                               
                               StreakIndicator(count: streakLength, isActiveToday: hasCompletedStreakToday)
                             }
 
-                            Spacer()
+                        //   Spacer().frame(width: 40)
+                         Spacer().frame(width: 50)
+
+//                          VStack(alignment: .center) {
+                            Image("cookieIcon")
+                               .resizable()
+                              .aspectRatio(contentMode: .fit)
+//                               .frame(width: 120, height: 120)
+                              .frame(height: 120)
+//                          }
                           
-                            NavigationLink(destination: SettingsView()) {
-                                Image(systemName: "gearshape")
-                                    .font(.title2)
-                                    .foregroundColor(.black)
-                            }
+                            // NavigationLink(destination: SettingsView()) {
+                            //     Image(systemName: "gearshape")
+                            //         .font(.title2)
+                            //         .foregroundColor(.black)
+                            // }
                         }
                         .padding(.horizontal)
                       
                       VStack(alignment: .leading) {
-                          Text("Recently Updated Notes")
-                              .font(.headline)
-                              .foregroundColor(.blue)
+                        //   Text("Recently Updated Notes")
+                            Text("Dive back in!🥛")
+                            //   .font(.headline)
+                            .font(.title3)
+                            .fontWeight(.medium)
+                        //   .foregroundColor(.blue)
                               .padding(.leading, 20)
                           
                           ScrollView(.horizontal, showsIndicators: false) {
@@ -114,10 +139,14 @@ struct HomeView: View {
                             }) {
                                 Image(systemName: "plus")
                                     .font(.title3)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(darkBrown)
                                     .frame(width: 25, height: 25)
-                                    .background(Color.blue)
+                                    .background(.white)
                                     .clipShape(Circle())
+                                    .overlay(
+                                        Circle()
+                                            .stroke(darkBrown, lineWidth: 2)
+                                    )
                             }
                             Spacer()
                         }
@@ -136,7 +165,7 @@ struct HomeView: View {
                                         .font(.headline)
                                         .frame(height: 100)
                                         .frame(maxWidth: .infinity)
-                                        .background(Color.blue.opacity(0.2))
+                                        .background(lightBlue)
                                         .cornerRadius(12)
                                         .foregroundColor(.primary)
                                 }
@@ -260,7 +289,7 @@ struct StreakIndicator: View {
     
     var body: some View {
         HStack(spacing: 4) {
-            Text("\(count)")
+            Text("\(count) day streak")
                 .font(.title2)
                 .fontWeight(.bold)
                 .foregroundColor(isActiveToday ? .orange : .gray)
