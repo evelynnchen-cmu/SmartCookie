@@ -283,13 +283,19 @@ struct CourseGrid: View {
                     onEdit: { onEdit(course) },
                     onSelect: { onSelect(course) }
                 )
-                .contentShape(Rectangle())
-                .simultaneousGesture(
-                    LongPressGesture()
-                        .onEnded { _ in
-                            onDelete(course)
-                        }
-                )
+                .contextMenu {
+                    Button(action: {
+                        onEdit(course)
+                    }) {
+                        Label("Edit Course", systemImage: "pencil")
+                    }
+                    
+                    Button(role: .destructive, action: {
+                        onDelete(course)
+                    }) {
+                        Label("Delete Course", systemImage: "trash")
+                    }
+                }
             }
         }
         .padding(.horizontal)
@@ -325,13 +331,6 @@ struct CourseCard: View {
                         .padding(.vertical, 12)
                     
                     Spacer()
-                    
-                    Button(action: onEdit) {
-                        Image(systemName: "pencil")
-                            .foregroundColor(.black)
-                            .font(.system(size: 20))
-                    }
-                    .padding(.trailing, 12)
                 }
                 .frame(height: 42)
                 .background(Color.white)
