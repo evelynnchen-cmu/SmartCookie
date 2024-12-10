@@ -215,12 +215,7 @@ struct CourseView: View {
                             startPoint: .top,
                             endPoint: .bottom
                         )
-                        .frame(height: 30)
-                        
-                        Image(systemName: "chevron.down")
-                            .foregroundColor(darkBrown.opacity(0.5))
-                            .padding(.trailing, 12)
-                            .padding(.bottom, 8)
+                        .frame(height: 30)                  
                     }
                     .frame(maxWidth: .infinity)
                     .frame(maxHeight: UIScreen.main.bounds.height / 5)
