@@ -208,81 +208,71 @@ struct CourseView: View {
                 ],
                 spacing: 10
             ) {
-                ForEach(viewModel.folders, id: \.id) { folder in
-                    ZStack(alignment: .topTrailing) {
-                        NavigationLink(
-                            destination: FolderView(
-                                firebase: viewModel.firebase,
-                                course: viewModel.course,
-                                folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
-                            )
-                        ) {
-                            VStack {
-                                Image("folder")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 70, height: 70)
-                                Text(folder.folderName)
-                                    .font(.body)
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.black)
-                            }
-                        }
-                        Button(action: {
-                            editStates.folderToEdit = folder
-                            editStates.showEditFolderModal = true
-                        }) {
-                            Image(systemName: "pencil.circle")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 24, height: 24)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            folderToDelete = folder
-                            activeAlert = .deleteFolder
-                        } label: {
-                            Label("Delete Folder", systemImage: "trash")
-                        }
-                    }
-                }
+              ForEach(viewModel.folders, id: \.id) { folder in
+                  NavigationLink(
+                      destination: FolderView(
+                          firebase: viewModel.firebase,
+                          course: viewModel.course,
+                          folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
+                      )
+                  ) {
+                      VStack {
+                          Image("folder")
+                              .resizable()
+                              .aspectRatio(contentMode: .fit)
+                              .frame(width: 70, height: 70)
+                          Text(folder.folderName)
+                              .font(.body)
+                              .frame(maxWidth: .infinity)
+                              .foregroundColor(.black)
+                      }
+                  }
+                  .contextMenu {
+                      Button(action: {
+                          editStates.folderToEdit = folder
+                          editStates.showEditFolderModal = true
+                      }) {
+                          Label("Edit Folder", systemImage: "pencil")
+                      }
+                      
+                      Button(role: .destructive) {
+                          folderToDelete = folder
+                          activeAlert = .deleteFolder
+                      } label: {
+                          Label("Delete Folder", systemImage: "trash")
+                      }
+                  }
+              }
 
-                ForEach(viewModel.notes, id: \.id) { note in
-                  ZStack(alignment: .topTrailing) {
-                        NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
-                            VStack {
-                                Image("note")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 70, height: 70)
-                                Text(note.title)
-                                    .font(.body)
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.black)
-                            }
-                        }
-                        Button(action: {
-                            editStates.noteToEdit = note
-                            editStates.showEditNoteModal = true
-                        }) {
-                            Image(systemName: "pencil.circle")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 24, height: 24)
-                                .foregroundColor(.blue)
-                        }
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            noteToDelete = note
-                            activeAlert = .deleteNote
-                        } label: {
-                            Label("Delete Note", systemImage: "trash")
-                        }
-                    }
-                }
+              ForEach(viewModel.notes, id: \.id) { note in
+                  NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
+                      VStack {
+                          Image("note")
+                              .resizable()
+                              .aspectRatio(contentMode: .fit)
+                              .frame(width: 70, height: 70)
+                          Text(note.title)
+                              .font(.body)
+                              .frame(maxWidth: .infinity)
+                              .foregroundColor(.black)
+                      }
+                  }
+                  .contextMenu {
+                      Button(action: {
+                          editStates.noteToEdit = note
+                          editStates.showEditNoteModal = true
+                      }) {
+                          Label("Edit Note", systemImage: "pencil")
+                      }
+                      
+                      Button(role: .destructive) {
+                          noteToDelete = note
+                          activeAlert = .deleteNote
+                      } label: {
+                          Label("Delete Note", systemImage: "trash")
+                      }
+                  }
+              }
             }
         }
     }
