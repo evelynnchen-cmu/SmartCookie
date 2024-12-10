@@ -64,9 +64,10 @@ struct CourseView: View {
             ScrollView {
               VStack(alignment: .leading, spacing: 8) {
                 recentNoteSummarySection
+                  .padding(.top)
                 fileSection
               }
-              .padding(.horizontal, 20)
+              .padding(.bottom, 80)
               .frame(maxWidth: .infinity, alignment: .leading)
             }
             .sheet(isPresented: $isAddingFolder) {
@@ -115,7 +116,6 @@ struct CourseView: View {
             .onAppear {
               viewModel.fetchData()
             }
-            .navigationTitle(viewModel.course.courseName)
             .alert(item: $activeAlert) { alert in
               switch alert {
               case .deleteFolder:
@@ -156,17 +156,12 @@ struct CourseView: View {
               Spacer()
                 Button(action: {
                     editStates.showPlusActions = true
-                }) {
-                Image(systemName: "plus")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 24, height: 24)
-                    .padding(20)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Circle())
-                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
-                }
+                }){
+                  Image(systemName: "plus.square.fill")
+                      .resizable()
+                      .frame(width: 50, height: 50)
+                      .foregroundColor(.black)
+              }
             }
             .padding(.bottom, 20)
             .padding(.trailing, 20)
@@ -183,31 +178,83 @@ struct CourseView: View {
         }
     }
 
-    private var recentNoteSummarySection: some View {
-        Group {
-            if let recentNote = viewModel.getMostRecentlyAccessedNote() {
-                SummaryComponent(summary: recentNote.summary, title: "What happened last class?")
-            } else {
-                EmptyView()
-            }
-        }
-    }
+  private var recentNoteSummarySection: some View {
+      VStack(alignment: .leading, spacing: 16) {
 
-    private var fileSection: some View {
-        VStack(alignment: .leading) {
-            Text("Files")
-                .font(.headline)
-                .padding(.top, 10)
-            
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), alignment: .top),
-                    GridItem(.flexible(), alignment: .top),
-                    GridItem(.flexible(), alignment: .top),
-                    GridItem(.flexible(), alignment: .top)
-                ],
-                spacing: 10
-            ) {
+          Text(viewModel.course.courseName)
+              .font(.title)
+              .fontWeight(.bold)
+              .foregroundColor(.black)
+              .padding(.horizontal)
+
+
+          VStack(alignment: .leading, spacing: 8) {
+              Text("Get caught up!")
+                  .font(.title2)
+                  .fontWeight(.semibold)
+                  .foregroundColor(.black)
+                  .padding(.horizontal)
+              
+              if let recentNote = viewModel.getMostRecentlyAccessedNote() {
+                  VStack(alignment: .leading, spacing: 4) {
+
+                      ZStack(alignment: .bottomTrailing) {
+                          ScrollView {
+                              Text(recentNote.summary)
+                                  .font(.body)
+                                  .foregroundColor(.black)
+                                  .multilineTextAlignment(.leading)
+                                  .padding()
+                                  .padding(.bottom, 20)
+                          }
+                          
+                          LinearGradient(
+                              gradient: Gradient(colors: [.white.opacity(0), .white]),
+                              startPoint: .top,
+                              endPoint: .bottom
+                          )
+                          .frame(height: 30)
+                          
+                          Image(systemName: "chevron.down")
+                              .foregroundColor(darkBrown.opacity(0.5))
+                              .padding(.trailing, 12)
+                              .padding(.bottom, 8)
+                      }
+                      .frame(maxWidth: .infinity)
+                      .frame(height: UIScreen.main.bounds.height / 5)
+                      .background(Color.white)
+                      .overlay(
+                          RoundedRectangle(cornerRadius: 12)
+                              .stroke(darkBrown, lineWidth: 2)
+                      )
+                      
+                      Text("Summary from \(dateFormatter.string(from: recentNote.createdAt))")
+                          .font(.caption)
+                          .foregroundColor(.gray)
+                          .frame(maxWidth: .infinity, alignment: .trailing)
+                  }
+                  .padding(.horizontal)
+              }
+          }
+      }
+  }
+
+  private var fileSection: some View {
+      VStack(alignment: .leading, spacing: 16) {
+//          Text("Files")
+//              .font(.headline)
+//              .padding(.top, 10)
+//              .padding(.horizontal, 20)
+//          
+          LazyVGrid(
+              columns: [
+                  GridItem(.flexible()),
+                  GridItem(.flexible()),
+                  GridItem(.flexible()),
+                  GridItem(.flexible())
+              ],
+              spacing: 20
+          ) {
               ForEach(viewModel.folders, id: \.id) { folder in
                   NavigationLink(
                       destination: FolderView(
@@ -216,14 +263,17 @@ struct CourseView: View {
                           folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
                       )
                   ) {
-                      VStack {
-                          Image("folder")
+                      VStack(spacing: 8) {
+                          Image(systemName: "folder.fill")
                               .resizable()
                               .aspectRatio(contentMode: .fit)
                               .frame(width: 70, height: 70)
+                              .foregroundColor(darkBrown)
                           Text(folder.folderName)
-                              .font(.body)
-                              .frame(maxWidth: .infinity)
+                              .font(.subheadline)
+                              .lineLimit(2)
+                              .multilineTextAlignment(.center)
+                              .frame(height: 40)
                               .foregroundColor(.black)
                       }
                   }
@@ -246,14 +296,17 @@ struct CourseView: View {
 
               ForEach(viewModel.notes, id: \.id) { note in
                   NavigationLink(destination: NoteView(firebase: viewModel.firebase, note: note, course: viewModel.course)) {
-                      VStack {
-                          Image("note")
+                      VStack(spacing: 8) {
+                          Image(systemName: "text.document.fill")
                               .resizable()
                               .aspectRatio(contentMode: .fit)
                               .frame(width: 70, height: 70)
+                              .foregroundColor(tan)
                           Text(note.title)
-                              .font(.body)
-                              .frame(maxWidth: .infinity)
+                              .font(.subheadline)
+                              .lineLimit(2)
+                              .multilineTextAlignment(.center)
+                              .frame(height: 40)
                               .foregroundColor(.black)
                       }
                   }
@@ -273,9 +326,10 @@ struct CourseView: View {
                       }
                   }
               }
-            }
-        }
-    }
+          }
+          .padding(.top, 10)
+      }
+  }
 
     private func fetchFoldersForCourse() {
         firebase.getFolders { allFolders in
