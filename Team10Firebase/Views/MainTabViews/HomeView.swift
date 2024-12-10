@@ -40,7 +40,7 @@ struct HomeView: View {
     @State private var isLoading = false
     @State private var showDeleteAlert = false
     @State private var courseToDelete: Course?
-    @State private var userName: String = "User"
+    @State private var userName: String = "Evelynn"
     @State private var streakLength: Int = 0
     @State private var hasCompletedStreakToday: Bool = false
     @StateObject private var editState = EditCourseState()
@@ -50,15 +50,10 @@ struct HomeView: View {
     @State private var navigationPath = NavigationPath()
     
     var body: some View {
-        // NavigationView {
         NavigationStack(path: $navigationPath) {
             VStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        // Spacer().frame(height: 40)
-//                        Spacer().frame(height: 20)
-//                      Spacer().frame(height: 2)
-
                         HStack(alignment: .top) {
                             Spacer()
                             NavigationLink(destination: SettingsView()) {
@@ -83,32 +78,19 @@ struct HomeView: View {
                               StreakIndicator(count: streakLength, isActiveToday: hasCompletedStreakToday)
                             }
 
-                        //   Spacer().frame(width: 40)
                          Spacer().frame(width: 50)
 
-//                          VStack(alignment: .center) {
                             Image("cookieIcon")
                                .resizable()
                               .aspectRatio(contentMode: .fit)
-//                               .frame(width: 120, height: 120)
                               .frame(height: 120)
-//                          }
-                          
-                            // NavigationLink(destination: SettingsView()) {
-                            //     Image(systemName: "gearshape")
-                            //         .font(.title2)
-                            //         .foregroundColor(.black)
-                            // }
                         }
                         .padding(.horizontal)
                       
                       VStack(alignment: .leading) {
-                        //   Text("Recently Updated Notes")
                             Text("Dive back in!🥛")
-                            //   .font(.headline)
                             .font(.title3)
                             .fontWeight(.medium)
-                        //   .foregroundColor(.blue)
                               .padding(.leading, 20)
                           
                           ScrollView(.horizontal, showsIndicators: false) {
@@ -118,7 +100,7 @@ struct HomeView: View {
                                       
                                       NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
                                           RecentNoteCard(note: note, course: course)
-                                              .frame(width: 150)  // Reduced width for each card
+                                              .frame(width: 150)
                                       }
                                       .buttonStyle(PlainButtonStyle())
                                   }
@@ -151,51 +133,21 @@ struct HomeView: View {
                             Spacer()
                         }
                         .padding(.horizontal)
-                        
-                      LazyVGrid(columns: [
-                          GridItem(.flexible(), spacing: 16),
-                          GridItem(.flexible(), spacing: 16)
-                      ], spacing: 16) {
-                          ForEach(firebase.courses, id: \.id) { course in
-                              ZStack(alignment: .topTrailing) {
-                                Button(action: {
-                                    navigationPath.append(course)
-                                }) {
-                                    Text(course.courseName)
-                                        .font(.headline)
-                                        .frame(height: 100)
-                                        .frame(maxWidth: .infinity)
-                                        .background(lightBlue)
-                                        .cornerRadius(12)
-                                        .foregroundColor(.primary)
-                                }
-                                  
-                                  HStack {
-                                      Button(action: {
-                                          editState.courseToEdit = course
-                                          editState.showEditModal = true
-                                      }) {
-                                          Image(systemName: "pencil.circle.fill")
-                                              .font(.title3)
-                                              .foregroundColor(.blue)
-                                              .background(Color.white.opacity(0.8))
-                                              .clipShape(Circle())
-                                      }
-                                      .padding(8)
-                                      .zIndex(1)
-                                  }
-                              }
-                              .contentShape(Rectangle())
-                              .simultaneousGesture(
-                                  LongPressGesture()
-                                      .onEnded { _ in
-                                          courseToDelete = course
-                                          showDeleteAlert = true
-                                      }
-                              )
+                      
+                      CourseGrid(
+                          courses: firebase.courses,
+                          onEdit: { course in
+                              editState.courseToEdit = course
+                              editState.showEditModal = true
+                          },
+                          onDelete: { course in
+                              courseToDelete = course
+                              showDeleteAlert = true
+                          },
+                          onSelect: { course in
+                              navigationPath.append(course)
                           }
-                      }
-                      .padding(.horizontal)
+                      )
                     }
                 }
                 .sheet(isPresented: $showAddCourseModal) {
@@ -308,3 +260,89 @@ struct StreakIndicator: View {
     }
 }
 
+struct CourseGrid: View {
+    let courses: [Course]
+    let colors: [Color] = [darkBrown, lightBrown, mediumBlue, darkBlue, lightBlue]
+    let onEdit: (Course) -> Void
+    let onDelete: (Course) -> Void
+    let onSelect: (Course) -> Void
+    
+    func getColorForIndex(_ index: Int) -> Color {
+        colors[index % colors.count]
+    }
+    
+    var body: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: 16) {
+            ForEach(Array(courses.enumerated()), id: \.element.id) { index, course in
+                CourseCard(
+                    course: course,
+                    backgroundColor: getColorForIndex(index),
+                    onEdit: { onEdit(course) },
+                    onSelect: { onSelect(course) }
+                )
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    LongPressGesture()
+                        .onEnded { _ in
+                            onDelete(course)
+                        }
+                )
+            }
+        }
+        .padding(.horizontal)
+    }
+}
+
+struct CourseCard: View {
+    let course: Course
+    let backgroundColor: Color
+    let onEdit: () -> Void
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            VStack(spacing: 0) {
+                // Top colored portion (80%)
+                Rectangle()
+                    .fill(backgroundColor)
+                    .frame(height: 80)
+                
+                // line between color and white section
+                Rectangle()
+                    .fill(Color.gray)
+                    .frame(height: 1)
+                
+                // Bottom white portion (20%)
+                HStack {
+                    Text(course.courseName)
+                        .font(.subheadline)
+                        .foregroundColor(.black)
+                        .lineLimit(1)
+                        .padding(.leading, 12)
+                        .padding(.vertical, 12)
+                    
+                    Spacer()
+                    
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil")
+                            .foregroundColor(.black)
+                            .font(.system(size: 20))
+                    }
+                    .padding(.trailing, 12)
+                }
+                .frame(height: 42)
+                .background(Color.white)
+            }
+            .frame(height: 122)
+            .background(Color.white)
+            .overlay(  // Main border around the entire card
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.gray, lineWidth: 1)
+            )
+            .cornerRadius(12)
+        }
+    }
+}
