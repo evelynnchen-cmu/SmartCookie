@@ -25,47 +25,43 @@ struct FolderView: View {
           VStack(alignment: .leading) {
             Text("Notes")
               .font(.headline)
-        LazyVGrid(columns: [
-            GridItem(.flexible(), alignment: .top),
-            GridItem(.flexible(), alignment: .top),
-            GridItem(.flexible(), alignment: .top),
-            GridItem(.flexible(), alignment: .top)
-          ], spacing: 10) {
-            ForEach(folderViewModel.notes, id: \.id) { note in
-              ZStack(alignment: .topTrailing) {
-                NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {                     
-                    VStack {
-                        Image("note")
-                        .resizable()
-                        .frame(width: 70, height: 70)
-                    Text(note.title)
-                        .font(.body)
-                        .frame(maxWidth: .infinity)
-                        .foregroundColor(.black)
+            LazyVGrid(columns: [
+                GridItem(.flexible(), alignment: .top),
+                GridItem(.flexible(), alignment: .top),
+                GridItem(.flexible(), alignment: .top),
+                GridItem(.flexible(), alignment: .top)
+            ], spacing: 10) {
+                ForEach(folderViewModel.notes, id: \.id) { note in
+                    ZStack(alignment: .topTrailing) {
+                        NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
+                            VStack {
+                                Image("note")
+                                    .resizable()
+                                    .frame(width: 70, height: 70)
+                                Text(note.title)
+                                    .font(.body)
+                                    .frame(maxWidth: .infinity)
+                                    .foregroundColor(.black)
+                            }
+                        }
                     }
-                  }
-
-                  Button(action: {
-                        editStates.noteToEdit = note
-                        editStates.showEditNoteModal = true
-                    }) {
-                        Image(systemName: "pencil.circle")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 24, height: 24)
-                            .foregroundColor(.blue)
-                  }
-              }
-              .contextMenu {
-                  Button(role: .destructive) {
-                      noteToDelete = note
-                      showDeleteNoteAlert = true
-                  } label: {
-                      Label("Delete Note", systemImage: "trash")
-                  }
-              }
+                    .contextMenu {
+                        Button(action: {
+                            editStates.noteToEdit = note
+                            editStates.showEditNoteModal = true
+                        }) {
+                            Label("Edit Note", systemImage: "pencil")
+                        }
+                        
+                        Button(role: .destructive) {
+                            noteToDelete = note
+                            showDeleteNoteAlert = true
+                        } label: {
+                            Label("Delete Note", systemImage: "trash")
+                        }
+                    }
+                }
             }
-          }
             Spacer()
           }
         }
