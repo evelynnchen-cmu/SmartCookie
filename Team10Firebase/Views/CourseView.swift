@@ -198,35 +198,37 @@ struct CourseView: View {
               if let recentNote = viewModel.getMostRecentlyAccessedNote() {
                   VStack(alignment: .leading, spacing: 4) {
 
-                      ZStack(alignment: .bottomTrailing) {
-                          ScrollView {
-                              Text(recentNote.summary)
-                                  .font(.body)
-                                  .foregroundColor(.black)
-                                  .multilineTextAlignment(.leading)
-                                  .padding()
-                                  .padding(.bottom, 20)
-                          }
-                          
-                          LinearGradient(
-                              gradient: Gradient(colors: [.white.opacity(0), .white]),
-                              startPoint: .top,
-                              endPoint: .bottom
-                          )
-                          .frame(height: 30)
-                          
-                          Image(systemName: "chevron.down")
-                              .foregroundColor(darkBrown.opacity(0.5))
-                              .padding(.trailing, 12)
-                              .padding(.bottom, 8)
-                      }
-                      .frame(maxWidth: .infinity)
-                      .frame(height: UIScreen.main.bounds.height / 5)
-                      .background(Color.white)
-                      .overlay(
-                          RoundedRectangle(cornerRadius: 12)
-                              .stroke(darkBrown, lineWidth: 2)
-                      )
+                    ZStack(alignment: .bottomTrailing) {
+                        ScrollView {
+                            Text(recentNote.summary)
+                                .font(.body)
+                                .foregroundColor(.black)
+                                .multilineTextAlignment(.leading)
+                                .padding()
+                                .padding(.bottom, 20)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: UIScreen.main.bounds.height / 5)
+                        
+                        LinearGradient(
+                            gradient: Gradient(colors: [.white.opacity(0), .white]),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 30)
+                        
+                        Image(systemName: "chevron.down")
+                            .foregroundColor(darkBrown.opacity(0.5))
+                            .padding(.trailing, 12)
+                            .padding(.bottom, 8)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(maxHeight: UIScreen.main.bounds.height / 5)
+                    .background(Color.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(darkBrown, lineWidth: 2)
+                    )
                       
                       Text("Summary from \(dateFormatter.string(from: recentNote.createdAt))")
                           .font(.caption)
@@ -241,11 +243,6 @@ struct CourseView: View {
 
   private var fileSection: some View {
       VStack(alignment: .leading, spacing: 16) {
-//          Text("Files")
-//              .font(.headline)
-//              .padding(.top, 10)
-//              .padding(.horizontal, 20)
-//          
           LazyVGrid(
               columns: [
                   GridItem(.flexible()),
