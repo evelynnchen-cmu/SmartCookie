@@ -25,33 +25,33 @@ struct ScanView: View {
     var body: some View {
       NavigationStack {
         ZStack {
-          lightBlue.edgesIgnoringSafeArea(.all) // Background color for the entire view
+          tan.edgesIgnoringSafeArea(.all) // Background color for the entire view
           VStack {
-            Text("Scan Results")
+            Text("Images Taken")
               .font(.title)
               .padding(.top)
             
             TabView(selection: $selectedTab) {
               // iPhone 11 image size: 3024.0 x 4032.0
-              ForEach(capturedImages.indices, id: \.self) { index in
+             ForEach(capturedImages.indices, id: \.self) { index in
                 Image(uiImage: capturedImages[index])
                   .resizable()
                   .scaledToFit()
                   .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
-                //                          .padding()
                   .tag(index) // Tag each image with its index
               }
               
               
               ZStack {
                 Rectangle()
-                  .fill(Color.gray.opacity(0.5))
+                  //  .fill(Color.gray.opacity(0.5))
+                  .fill(.white)
                   .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
                   .overlay(
                     //                                RoundedRectangle(cornerRadius: 10)
                     Rectangle()
                       .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                      .foregroundColor(.black)
+                      .foregroundColor(darkBrown)
                   )
                   .onTapGesture {
                     showCamera = true
@@ -59,14 +59,15 @@ struct ScanView: View {
                 VStack {
                   Image(systemName: "plus")
                     .font(.largeTitle)
-                  Text("Add new Picture")
+                    .padding()
+                  Text("Add new picture")
                     .font(.headline)
                 }
-                .foregroundColor(.white)
+                // .foregroundColor(.white)
+                .foregroundColor(.black)
               }
               .tag(capturedImages.count)
             }
-            //                .background(Color.blue.opacity(0.2))
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
             .frame(maxHeight: UIScreen.main.bounds.height - 300)
             .onAppear {
@@ -78,9 +79,13 @@ struct ScanView: View {
                 showTextParserView = true
               }
               .padding()
-              .background(.white)
-              .foregroundColor(.black)
+              .background(darkBrown)
+              .foregroundColor(.white)
               .cornerRadius(8)
+              .overlay(
+                  RoundedRectangle(cornerRadius: 8)
+                      .stroke(tan, lineWidth: 1)
+              )
             }
           }
           .fullScreenCover(isPresented: $showCamera) {
@@ -139,8 +144,9 @@ struct ScanView: View {
     }
 
     private func setupPageControlAppearance() {
-        UIPageControl.appearance().currentPageIndicatorTintColor = .blue
-        UIPageControl.appearance().pageIndicatorTintColor = UIColor.blue.withAlphaComponent(0.2)
+      // Colors for the progress state dots at the bottom
+        UIPageControl.appearance().currentPageIndicatorTintColor = UIColor(darkBrown)
+      UIPageControl.appearance().pageIndicatorTintColor = UIColor(.white)
     }
 }
 
