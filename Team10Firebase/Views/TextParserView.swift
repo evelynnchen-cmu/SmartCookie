@@ -175,8 +175,12 @@ struct TextParserView: View {
                            }
                            
                            Button(action: {
-                            //    handleSave()
+                            if note == nil {
                                 showSaveForm = true
+                            } else {
+                                isSaving = true
+                                handleSave()
+                            }
                            }) {
                                Text("Save")
                                    .frame(maxWidth: .infinity)
@@ -211,7 +215,7 @@ struct TextParserView: View {
            if let course = course {
                ChatView(selectedCourse: course, isChatViewPresented: $isChatViewPresented)
            } else {
-               Text("Failed to load course")
+                ChatView(isChatViewPresented: $isChatViewPresented)
            }
        }
        .overlay(

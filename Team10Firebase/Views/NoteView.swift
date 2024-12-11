@@ -21,7 +21,7 @@ struct NoteView: View {
         self.firebase = firebase
         _viewModel = StateObject(wrappedValue: NoteViewModel(note: note))
         self.note = note
-        self.course = course
+        _course = State(initialValue: course)
     }
     
     var body: some View {
@@ -175,7 +175,7 @@ struct NoteView: View {
             )
         }
         .alert(isPresented: $showAlert) {
-            Alert(title: Text("Error"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+          Alert(title: Text("Note Update"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
         .actionSheet(isPresented: $isActionSheetPresented) {
             ActionSheet(

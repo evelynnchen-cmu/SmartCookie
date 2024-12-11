@@ -3,6 +3,7 @@ import SwiftUI
 struct PDFParserView: View {
     var pdfText: String
     var firebase: Firebase
+    var openAI: OpenAI = OpenAI()
     @Binding var isPresented: Bool
     @State private var alertMessage = ""
     @State private var showAlert = false
@@ -71,6 +72,29 @@ struct PDFParserView: View {
                     showAlert = true
                 }
             }
+        }
+        Task {
+          var updatedSummary = "No summary"
+          if let updatedNote = self.note {
+            var updatedSummary = note.summary
+            do {
+              updatedSummary = try await openAI.summarizeContent(content: updatedContent)
+              print("new summary done")
+            } catch {
+              alertMessage = "Failed to summarize content"
+              showAlert = true
+            }
+            firebase.updateNoteSummary(note: updatedNote, newSummary: updatedSummary) { updatedNote in
+              if let updatedNote = updatedNote {
+                self.note = updatedNote
+                showAlert = false
+              } else {
+                print("Failed to update summary")
+                alertMessage = "Failed to update summary"
+                showAlert = true
+              }
+            }
+          }
         }
     }
 }
