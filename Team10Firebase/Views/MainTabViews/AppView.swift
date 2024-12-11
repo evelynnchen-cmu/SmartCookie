@@ -40,7 +40,7 @@ struct AppView: View {
                         ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote,
                         needToSave: $needToSave)
                     case .chat:
-                        ChatView()
+                        ChatView(needToSave: $needToSave)
                     }
                 }
                 Spacer()
