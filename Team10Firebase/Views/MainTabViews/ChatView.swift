@@ -28,6 +28,7 @@ struct ChatView: View {
     
     @ObservedObject private var firebase = Firebase()
     @Binding var isChatViewPresented: Bool?
+    @Binding var needToSave: Bool
   
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
@@ -42,20 +43,25 @@ struct ChatView: View {
         return key
     }()
     
-  init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil) {
+  init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil,
+    needToSave: Binding<Bool>? = .constant(false)) {
     if let isPresented = isChatViewPresented {
       self._isChatViewPresented = isPresented
     }
     else {
       self._isChatViewPresented = .constant(nil)
     }
+    if let needToSave = needToSave {
+      self._needToSave = needToSave
+    }
+    else {
+      self._needToSave = .constant(false)
+    }
     if let course = selectedCourse {
-      print(course)
       self.selectedCourse = course
       self.selectedScope = course.id ?? "General"
     }
     else {
-      print("no course")
       self.selectedScope = "General"
     }
   }
@@ -321,6 +327,9 @@ struct ChatView: View {
                 }
             }
             .onChange(of: messages) {
+                if messages.count > 1 {
+                    needToSave = true
+                }
                 fetchSuggestions()
             }
             .onChange(of: selectedScope) { oldScope, newScope in
@@ -336,7 +345,7 @@ struct ChatView: View {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
             }
             .onReceive(NotificationCenter.default.publisher(for: .resetChatView)) { _ in
-                clearChat()
+                resetChatView()
             }
         }
     }
@@ -543,6 +552,14 @@ struct ChatView: View {
                 print("Updated Suggested Messages: \(self.suggestedMessages)")
             }
         }
+    }
+
+    private func resetChatView() {
+        clearChat()
+        userInput = ""
+        isLoading = false
+        selectedCourse = nil
+        selectedScope = "General"
     }
 }
 

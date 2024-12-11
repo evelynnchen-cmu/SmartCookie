@@ -230,9 +230,9 @@ struct CourseView: View {
       VStack(alignment: .leading, spacing: 16) {
           LazyVGrid(
               columns: [
-                  GridItem(.flexible()),
-                  GridItem(.flexible()),
-                  GridItem(.flexible())
+                  GridItem(.flexible(), alignment: .top),
+                  GridItem(.flexible(), alignment: .top),
+                  GridItem(.flexible(), alignment: .top)
               ],
               spacing: 20
           ) {

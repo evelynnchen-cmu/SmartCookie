@@ -11,14 +11,12 @@ struct AppView: View {
   @State private var selectedTabIndex = 0 // For home
   @State private var navigateToCourse: Course?
   @State private var navigateToNote: Note?
-
   @State private var selectedTab = Tab.house
   @State private var path = NavigationPath()
-
-  @State private var showAlert = false
   @State private var pendingTab: Tab?
-
+  @State private var showAlert = false
   @State private var isKeyboardVisible = false
+  @State private var needToSave = false
 
   var body: some View {
         ZStack {
@@ -26,7 +24,8 @@ struct AppView: View {
                 NavigationStack(path: $path) {
                     switch selectedTab {
                     case .house:
-                        HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                        HomeView(navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote,
+                            navigationPath: $path)
                             .onAppear {
                                 if let course = navigateToCourse, let note = navigateToNote {
                                     path.append(course)
@@ -36,9 +35,10 @@ struct AppView: View {
                                 }
                             }
                     case .scan:
-                        ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                        ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote,
+                        needToSave: $needToSave)
                     case .chat:
-                        ChatView()
+                        ChatView(needToSave: $needToSave)
                     }
                 }
                 Spacer()
@@ -49,15 +49,12 @@ struct AppView: View {
             VStack {
              Spacer()
              CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases, onTabSelected: { tab in
-               // Shows alert only if swtiching away from chat and scan tab
-               if selectedTab == .chat || selectedTab == .scan {
+               if (selectedTab == .chat || selectedTab == .scan) && needToSave {
                  pendingTab = tab
                  showAlert = true
                } else {
-                // if selectedTab == .house {
-                //         path.removeLast(path.count) // Reset the navigation stack
-                //     }
                  selectedTab = tab
+                 path.removeLast(path.count)
                  NotificationCenter.default.post(name: tab.notificationName, object: nil)
                }
              })
@@ -74,7 +71,7 @@ struct AppView: View {
             }
             NotificationCenter.default.addObserver(forName: .resetHomeView, object: nil, queue: .main) { _ in
                 selectedTab = .house
-                path.removeLast(path.count) // Reset the navigation stack
+                path.removeLast(path.count)
             }
         }
         .onDisappear {
@@ -88,6 +85,7 @@ struct AppView: View {
                 message: Text("You will lose any unsaved data."),
                 primaryButton: .destructive(Text("Switch")) {
                    if let tab = pendingTab {
+                        path.removeLast(path.count)
                         if tab == .house {
                             NotificationCenter.default.post(name: .resetHomeView, object: nil)
                         } else if tab == .scan {
@@ -96,6 +94,7 @@ struct AppView: View {
                             NotificationCenter.default.post(name: .resetChatView, object: nil)
                         }
                         selectedTab = tab
+                        needToSave = false
                    }
                 },
                 secondaryButton: .cancel()
