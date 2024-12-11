@@ -143,7 +143,11 @@ struct ChatView: View {
                 
                 updateSelectedCourse()
 
-                if selectedScope != "General" {
+                if selectedScope == "General" {
+                    courseNotes = [] // Clear course notes for general chat
+                    clearChat()      // Ensure general welcome message is shown
+                } else {
+                    updateSelectedCourse()
                     fetchNotes(for: selectedScope) { _ in
                         clearChat()
                     }
@@ -155,14 +159,6 @@ struct ChatView: View {
                 }
                 fetchSuggestions()
             }
-            // .onChange(of: selectedScope) { oldScope, newScope in
-            //     if newScope != "General" {
-            //         fetchNotes(for: newScope)
-            //     } else {
-            //         courseNotes = []
-            //         clearChat()
-            //     }
-            // }
             .onChange(of: selectedScope) { oldScope, newScope in
                 guard newScope != oldScope else { return }
                 
