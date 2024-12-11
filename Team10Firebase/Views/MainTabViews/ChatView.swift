@@ -136,11 +136,6 @@ struct ChatView: View {
             }
             .onChange(of: isTextFieldFocused) { isFocused in
                 print("TextField focus changed: \(isFocused)")
-                print("current course is \(selectedScope)")
-                for course in firebase.courses {
-                    print("\(course.id ?? "unknown ID") => \(course.courseName ?? "unknown name")")
-                }
-
                 // if isFocused && isCoursesLoaded && !firebase.courses.isEmpty {
                 //     ensureScopeIntegrity()
                 // }

@@ -14,7 +14,7 @@ struct ChatHeaderView: View {
     @Binding var isChatViewPresented: Bool?
     @ObservedObject var firebase: Firebase
 
-    @FocusState private var isTextFieldFocused: Bool
+    @State private var localCourses: [Course] = []
 
     var body: some View {
         HStack {
@@ -37,14 +37,17 @@ struct ChatHeaderView: View {
                     Text("General")
                 }
 
-                let _ = print("Rendering menu with \(firebase.courses.count) courses")
+                let _ = print("Rendering menu with firebase: \(firebase.courses.count) courses, local: \(localCourses.count) courses")
+                
+                // Use either firebase courses or local cached courses
+                let coursesToDisplay = !firebase.courses.isEmpty ? firebase.courses : localCourses
 
-                if firebase.courses.isEmpty {
+                if coursesToDisplay.isEmpty {
                     Button(action: {}) {
                         Text("No courses available").foregroundColor(.gray)
                     }
                 } else {
-                    ForEach(firebase.courses, id: \.id) { course in
+                    ForEach(coursesToDisplay, id: \.id) { course in
                         Button(action: {
                             print("Selected course: \(course.courseName ?? "unknown") with ID: \(course.id ?? "unknown")")
                             if let courseId = course.id {
@@ -52,9 +55,6 @@ struct ChatHeaderView: View {
                             }
                         }) {
                             Text(course.courseName ?? "Unknown")
-                                .onAppear {
-                                    print("Course option appeared: \(course.courseName ?? "unknown")")
-                                }
                         }
                     }
                 }
@@ -63,7 +63,7 @@ struct ChatHeaderView: View {
                     let displayName = if selectedScope == "General" {
                         "General"
                     } else {
-                        firebase.courses.first { $0.id == selectedScope }?.courseName ?? selectedScope
+                        localCourses.first { $0.id == selectedScope }?.courseName ?? selectedScope
                     }
                     Text(displayName)
                     Image(systemName: "chevron.down")
@@ -82,18 +82,6 @@ struct ChatHeaderView: View {
                 .foregroundColor(.black)
             }
             .id(firebase.courses.count)
-            .onChange(of: isTextFieldFocused) { focused in
-                print("TextField focus changed to: \(focused)")
-                if focused {
-                    // Reload courses when keyboard appears
-                    loadCoursesIfNeeded()
-                }
-            }
-            .onAppear {
-                print("Menu appeared with scope: \(selectedScope)")
-                print("Menu opened with \(firebase.courses.count) courses")
-                loadCoursesIfNeeded()
-            }
 
             Spacer()
 
@@ -114,20 +102,25 @@ struct ChatHeaderView: View {
 
             loadCoursesIfNeeded()
         }
-        .onDisappear {
-            print("ChatHeaderView disappeared with \(firebase.courses.count) courses")
+        .onChange(of: firebase.courses) { newCourses in
+            print("Firebase courses changed to \(newCourses.count) courses")
+            if !newCourses.isEmpty {
+                localCourses = newCourses
+            }
         }
     }
 
     private func loadCoursesIfNeeded() {
-        print("Checking courses need loading. Current count: \(firebase.courses.count)")
-        if firebase.courses.isEmpty {
-            print("Loading courses as they were empty")
+        print("Loading check - Firebase: \(firebase.courses.count) courses, Local: \(localCourses.count) courses")
+        if firebase.courses.isEmpty && localCourses.isEmpty {
+            print("Loading courses as both caches are empty")
             firebase.getCourses()
         } else {
-            print("Courses already loaded: \(firebase.courses.count)")
-            // Add a refresh anyway to ensure we have latest data
-            firebase.getCourses()
+            print("Using cached courses")
+            // Only refresh if we don't have local courses
+            if localCourses.isEmpty {
+                firebase.getCourses()
+            }
         }
     }
 }
