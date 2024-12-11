@@ -39,6 +39,8 @@ struct ChatView: View {
     @State private var isClearingChat = false
     @State private var localCourses: [Course] = []
     @State private var localNotes: [String: [Note]] = [:]
+    @State private var currentFetchOperation: UUID?
+    @State private var courseChangeDebouncer: Timer?
 
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
@@ -131,6 +133,8 @@ struct ChatView: View {
             }
             .onAppear {
                 print("ChatView appeared with selectedScope: \(selectedScope)")
+                
+                updateSelectedCourse()
 
                 if selectedScope != "General" {
                     fetchNotes(for: selectedScope) { _ in
@@ -141,15 +145,21 @@ struct ChatView: View {
                     clearChat()
                 }
             }
-            .onChange(of: messages) {
-                fetchSuggestions()
-            }
             .onChange(of: selectedScope) { oldScope, newScope in
-                guard newScope != oldScope else { return } // Prevent unnecessary updates
-                print("Scope changed from \(oldScope) to \(newScope)")
+                guard newScope != oldScope else { return }
                 
-                // Clear chat and fetch notes for the new scope
-                clearChat()
+                // Cancel existing timer
+                courseChangeDebouncer?.invalidate()
+                
+                // Set new timer
+                courseChangeDebouncer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+                    updateSelectedCourse()
+                    if newScope == "General" {
+                        courseNotes = []
+                    }
+                    clearChat()
+                    fetchSuggestions()
+                }
             }
             .alert(isPresented: $showSaveConfirmation) {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
@@ -158,19 +168,6 @@ struct ChatView: View {
                 clearChat()
             }
         }
-    }
-
-    private func loadInitialData() {
-        print("Loading initial data...")
-        firebase.getCourses()
-
-        firebase.$courses
-            .receive(on: DispatchQueue.main)
-            .sink { courses in
-                print("Received courses update: \(courses.count) courses")
-                self.isCoursesLoaded = true
-            }
-            .store(in: &cancellables)
     }
 
     private func appendMessagesToNoteContent(note: Note) {
@@ -183,6 +180,14 @@ struct ChatView: View {
 
     private func dismissKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+
+    private func updateSelectedCourse() {
+        if selectedScope == "General" {
+            selectedCourse = nil
+        } else {
+            selectedCourse = firebase.courses.first { $0.id == selectedScope }
+        }
     }
 
     func sendMessage() {
@@ -307,9 +312,7 @@ struct ChatView: View {
     // Fetches notes for a specific course and updates courseNotes.
     // - Parameter courseID: The ID of the course for which to fetch notes.
     func fetchNotes(for courseID: String, completion: @escaping ([Note]) -> Void) {
-        print("Fetching notes for course ID: \(courseID)")
-
-        // Try fetching from Firebase
+        cancellables.removeAll()
         firebase.getNotes()
 
         firebase.$notes
@@ -333,7 +336,7 @@ struct ChatView: View {
 
     // Clears the chat view and resets the message history.
     func clearChat() {
-        // Remove all messages and reset history
+        // Clear all existing messages and reset the message history
         messages.removeAll()
         messagesHistory = [["role": "system", "content": systemPrompt]]
 
@@ -348,10 +351,19 @@ struct ChatView: View {
             messages.append(MessageBubble(content: generalWelcomeMessage, isUser: false, isMarkdown: true))
             messagesHistory.append(["role": "assistant", "content": generalWelcomeMessage])
         } else {
-            // Fetch course-specific notes
-            fetchNotes(for: selectedScope) { notes in
+            let operationId = UUID() // Create unique ID for this operation
+            currentFetchOperation = operationId
+            
+            let loadingMessage = "Loading chat for the selected course..."
+            messages.append(MessageBubble(content: loadingMessage, isUser: false, isMarkdown: false))
+
+            // Fetch course-specific notes asynchronously
+            fetchNotes(for: selectedScope) { [operationId] notes in
                 DispatchQueue.main.async {
-                    // Ensure we are clearing previous welcome messages for consistency
+                    guard self.currentFetchOperation == operationId else {
+                        // Cancel if this isn't the most recent operation
+                        return
+                    }
                     self.messages.removeAll()
 
                     let courseName = self.firebase.courses.first(where: { $0.id == self.selectedScope })?.courseName ?? "selected course"
@@ -378,66 +390,21 @@ struct ChatView: View {
             }
         }
     }
-    
+
+    @State private var currentSuggestionOperation: UUID?
+
     // Calls OpenAI API to get suggested short sentence/question starters for the user
     func fetchSuggestions() {
-        var contextMessages = messagesHistory
+        let operationId = UUID()
+        currentSuggestionOperation = operationId
 
-        if let course = selectedCourse {
-            let coursePrompt = """
-            Course: \(course.courseName ?? "Unknown")
-            Context: This is a study assistant app. The user is chatting about this course and may want to ask questions, explore concepts, or seek clarification related to the course material.
-            Objective: Provide concise, actionable, and contextually relevant suggestions for short sentence or question starters. These starters should:
-            - Be 2-6 words in length
-            - Focus on exploring, applying, comparing, or solving course concepts
-            - Encourage the user to elaborate or ask specific questions
-            Examples:
-            - "Explain how to_"
-            - "Describe the differences_"
-            - "What happens if_"
-            - "How can I use_"
-            - "Help me solve_"
-            Output format: Provide at least 5 such suggestions as plain text, separated by commas, with no quotes, bullet points, or special formatting.
-            """
-            contextMessages.append(["role": "system", "content": coursePrompt])
-        } else {
-            contextMessages.append([
-                "role": "system",
-                "content": """
-                Context: This is a general study assistant chat. The user may want to ask about various topics or seek help on academic problems.
-                Objective: Provide concise, actionable, and contextually relevant suggestions for short sentence or question starters. These starters should:
-                - Be 2-6 words in length
-                - Focus on exploring, applying, comparing, or solving general concepts
-                - Encourage the user to elaborate or ask specific questions
-                Examples:
-                - "Explain how to_"
-                - "Describe the differences_"
-                - "What happens if_"
-                - "How can I use_"
-                - "Help me solve_"
-                Output format: Provide at least 5 such suggestions as plain text, separated by commas, with no quotes, bullet points, or special formatting.
-                """
-            ])
-        }
-
-        callChatGPTAPI(with: contextMessages) { response in
-            DispatchQueue.main.async {
-                let suggestions = response.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                
-                if suggestions.isEmpty {
-                    // Fallback to backup suggestions if parsing fails
-                    self.suggestedMessages = [
-                        "Explain how to_",
-                        "Describe the differences_",
-                        "What happens if_",
-                        "How can I use_",
-                        "Help me solve_"
-                    ]
-                } else {
-                    self.suggestedMessages = suggestions
-                }
-            }
-        }
+        suggestedMessages = [
+            "Help me understand ",
+            "Can you explain ",
+            "Tell me about ",
+            "What is the difference between ",
+            "How does this work "
+        ]
     }
 }
 
@@ -483,4 +450,3 @@ struct ChatInputView: View {
         .padding()
     }
 }
-
