@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+import Combine
 
 struct ChatView: View {
     @State private var messages: [MessageBubble] = []
@@ -31,7 +32,11 @@ struct ChatView: View {
     @Binding var isChatViewPresented: Bool?
 
     @FocusState private var isTextFieldFocused: Bool
-  
+    @State private var lastValidScope: String
+    @State private var isCoursesLoaded: Bool = false
+    @State private var cancellables = Set<AnyCancellable>()
+    @State private var isInitialLoadComplete = false
+
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
     
@@ -54,8 +59,10 @@ struct ChatView: View {
         if let course = selectedCourse {
             self.selectedCourse = course
             self.selectedScope = course.id ?? "General"
+            self.lastValidScope = course.id ?? "General"
         } else {
             self.selectedScope = "General"
+            self.lastValidScope = "General"
         }
     }
 
@@ -120,26 +127,23 @@ struct ChatView: View {
                     }
             }
             .onAppear {
-                firebase.getCourses()
-                firebase.getNotes()
-                clearChat()
-                fetchSuggestions()
-                firebase.getFirstUser { user in
-                    if let user = user {
-                        self.notesOnlyChatScope = user.settings.notesOnlyChatScope
-                        
-                        if user.settings.notesOnlyChatScope {
-                            systemPrompt = "You are an expert study assistant who is knowledgeable in any subject matter and can breakdown and explain concepts better than anyone else. Today's date and time are \(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .short)). You will only converse about topics related to the courses. Do not ask or answer any questions about personal matters or unrelated topics. You will do your best to provide accurate and helpful information to the user. You will ask clarifying questions if need be. You will be concise in your answers and know that your entire message could be saved to notes for later, so don't add any extra fluff. You will always refer to your context and knowledge base first, and cite from the user's courseNotes when possible. You will be encouraging but not too overexcited. You will do this because you care very much about the user's learning and productivity, and your entire objective is to teach the user and assist them with their problems. Additionally, your knowledge base is only the user's notes and what they tell you. You may not supplement with any outside knowledge."
-                        } else {
-                            systemPrompt = "You are an expert study assistant who is knowledgeable in any subject matter and can breakdown and explain concepts better than anyone else. Today's date and time are \(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .short)). You will only converse about topics related to the courses. Do not ask or answer any questions about personal matters or unrelated topics. You will do your best to provide accurate and helpful information to the user. You will ask clarifying questions if need be. You will be concise in your answers and know that your entire message could be saved to notes for later, so don't add any extra fluff. You will always refer to your context and knowledge base first, and cite from the user's courseNotes when possible. You will be encouraging but not too overexcited. You will do this because you care very much about the user's learning and productivity, and your entire objective is to teach the user and assist them with their problems."
-                        }
-                    } else {
-                        print("Failed to fetch user.")
-                    }
+                print("ChatView appeared with selectedScope: \(selectedScope)")
+                if !isCoursesLoaded {
+                    loadInitialData()
+                } else {
+                    validateScope()
                 }
             }
-            .onDisappear {
-                isTextFieldFocused = false
+            .onChange(of: isTextFieldFocused) { isFocused in
+                print("TextField focus changed: \(isFocused)")
+                print("current course is \(selectedScope)")
+                for course in firebase.courses {
+                    print("\(course.id ?? "unknown ID") => \(course.courseName ?? "unknown name")")
+                }
+
+                // if isFocused && isCoursesLoaded && !firebase.courses.isEmpty {
+                //     ensureScopeIntegrity()
+                // }
             }
             .onChange(of: messages) {
                 fetchSuggestions()
@@ -148,7 +152,7 @@ struct ChatView: View {
                 if newScope != "General" {
                     fetchNotes(for: newScope)
                 } else {
-                    courseNotes = []
+                    courseNotes = [] // Clear notes only for General
                 }
                 clearChat()
                 fetchSuggestions()
@@ -160,6 +164,75 @@ struct ChatView: View {
                 clearChat()
             }
         }
+    }
+
+    private func loadInitialData() {
+        print("Loading initial data...")
+        firebase.getCourses()
+
+        firebase.$courses
+            .receive(on: DispatchQueue.main)
+            .sink { courses in
+                print("Received courses update: \(courses.count) courses")
+                self.isInitialLoadComplete = true
+                self.isCoursesLoaded = true
+                self.validateScope()
+            }
+            .store(in: &cancellables)
+    }
+
+    func validateScope() {
+        guard !firebase.courses.isEmpty else {
+            print("Waiting for courses to load...")
+            return
+        }
+        
+        // Validate current scope
+        if selectedScope != "General" && !firebase.courses.contains(where: { $0.id == selectedScope }) {
+            print("Invalid scope detected, resetting to last valid: \(lastValidScope)")
+            selectedScope = lastValidScope
+        }
+    }
+
+    private func validateScopeAfterCoursesLoaded() {
+        guard !firebase.courses.isEmpty else {
+            print("Courses not loaded yet.")
+            return
+        }
+
+        if selectedScope != "General" && !firebase.courses.contains(where: { $0.id == selectedScope }) {
+            print("Invalid selected scope (\(selectedScope)). Resetting to General.")
+            selectedScope = lastValidScope // Use last known valid scope
+        } else {
+            print("Scope integrity validated: \(selectedScope)")
+        }
+    }
+
+
+    private func ensureScopeIntegrity() {
+        print("Ensuring scope integrity for: \(selectedScope)")
+        print("Available courses: \(firebase.courses.map { $0.id ?? "Unknown" })")
+
+        // Validate the current scope only if necessary
+        if !firebase.courses.isEmpty && selectedScope != "General" {
+            if !firebase.courses.contains(where: { $0.id == selectedScope }) {
+                print("Invalid selected scope: \(selectedScope). Resetting to lastValidScope: \(lastValidScope)")
+                selectedScope = lastValidScope
+            } else {
+                print("Scope integrity is valid. Current scope: \(selectedScope)")
+                lastValidScope = selectedScope
+            }
+        }
+    }
+
+    private func handleScopeChange(newScope: String) {
+        if newScope != "General" {
+            fetchNotes(for: newScope)
+        } else {
+            courseNotes = []
+        }
+        clearChat()
+        fetchSuggestions()
     }
 
     private func appendMessagesToNoteContent(note: Note) {
@@ -341,7 +414,6 @@ struct ChatView: View {
 
         callChatGPTAPI(with: contextMessages) { response in
             DispatchQueue.main.async {
-                print("Suggestions API Response: \(response)")
                 let suggestions = response.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 
                 if suggestions.isEmpty {
@@ -356,7 +428,6 @@ struct ChatView: View {
                 } else {
                     self.suggestedMessages = suggestions
                 }
-                print("Updated Suggested Messages: \(self.suggestedMessages)")
             }
         }
     }
@@ -404,3 +475,4 @@ struct ChatInputView: View {
         .padding()
     }
 }
+

@@ -46,13 +46,13 @@ struct ChatMessagesView: View {
                             // Assistant Profile Picture
                             Image("cookieIcon")
                                 .resizable()
-                                .frame(width: 40, height: 40)
+                                .frame(width: 30, height: 30)
                                 .clipShape(Circle())
                                 .offset(y: 20)
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(message.content)
-                                    .padding(.horizontal, 16)
+                                    .padding(.horizontal, 12)
                                     .padding(.vertical, 10)
                                     .background(tan)
                                     .foregroundColor(.black)
@@ -75,7 +75,7 @@ struct ChatMessagesView: View {
                     HStack(alignment: .bottom, spacing: 8) {
                         Image("cookieIcon")
                             .resizable()
-                            .frame(width: 40, height: 40)
+                            .frame(width: 30, height: 30)
                             .clipShape(Circle())
                             .offset(y: 20)
                         
