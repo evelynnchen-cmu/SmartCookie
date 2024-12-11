@@ -15,7 +15,8 @@ struct AddNoteModalCourse: View {
     
     @ObservedObject var firebase: Firebase
     @State var course: Course?
-    var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
+    @State var courseFolders: [Folder] = []
+    @State var folder: Folder?
   
     var completion: ((String, Course?) -> Void)
 
@@ -29,13 +30,17 @@ struct AddNoteModalCourse: View {
                         Text(course.courseName).tag(course.courseName)
                     }
                   }
+                  Picker("Folder", selection: $folder) {
+                      ForEach(courseFolders) { folder in
+                        Text(folder.folderName).tag(folder.folderName)
+                    }
+                  }
               Button("Next") {
                   if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
                       self.course = selectedCourse
                   }
                 completion(title, course)
                   isPresented = false
-                //   dismiss()
               }
               .disabled(courseName.isEmpty)
             }
@@ -54,8 +59,21 @@ struct AddNoteModalCourse: View {
               courses = firebase.courses
               if let firstCourse = courses.first {
                   courseName = firstCourse.courseName
+                //   get the folders in FB for a course
+                fetchFolders(for: firstCourse)
               }
+            }
+            .onChange(of: courseName) { _ in
+                if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
+                    fetchFolders(for: selectedCourse)
+                }
             }
         }
     }
+
+    private func fetchFolders(for course: Course) {
+    firebase.getFoldersById(folderIDs: course.folders) { fetchedFolders in
+        self.courseFolders = fetchedFolders
+    }
+}
 }
