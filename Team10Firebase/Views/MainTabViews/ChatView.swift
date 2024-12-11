@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Foundation
+
 struct ChatView: View {
     @State private var messages: [MessageBubble] = []
     @State private var userInput: String = ""
@@ -41,246 +42,53 @@ struct ChatView: View {
         }
         return key
     }()
-    
-  init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil) {
-    if let isPresented = isChatViewPresented {
-      self._isChatViewPresented = isPresented
+
+    init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil) {
+        if let isPresented = isChatViewPresented {
+            self._isChatViewPresented = isPresented
+        } else {
+            self._isChatViewPresented = .constant(nil)
+        }
+        if let course = selectedCourse {
+            self.selectedCourse = course
+            self.selectedScope = course.id ?? "General"
+        } else {
+            self.selectedScope = "General"
+        }
     }
-    else {
-      self._isChatViewPresented = .constant(nil)
-    }
-    if let course = selectedCourse {
-      print(course)
-      self.selectedCourse = course
-      self.selectedScope = course.id ?? "General"
-    }
-    else {
-      print("no course")
-      self.selectedScope = "General"
-    }
-  }
 
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Header with course selection and message selection buttons
-                HStack {
-                    Button(action: {
-                        isMessageSelectionViewPresented = true
-                    }) {
-                        Image(systemName: "square.and.arrow.down.on.square")
-                            .foregroundColor(.black)
-                    }
-                    
-                    Spacer()
-                    
-                    Menu {
-                        Button("General") {
-                            selectedScope = "General"
-                            courseNotes = []
-                            clearChat()
-                        }
-                        ForEach(firebase.courses, id: \.id) { course in
-                            Button(course.courseName) {
-                                selectedScope = course.id ?? "General"
-                                fetchNotes(for: selectedScope)
-                                clearChat()
-                            }
-                        }
-                    } label: {
-                        HStack {
-                          Text(self.selectedScope == "General" ? "General" : firebase.courses.first { $0.id == self.selectedScope }?.courseName ?? "General")
-                            Image(systemName: "chevron.down")
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white)
-                                .shadow(color: Color.gray.opacity(0.4), radius: 4, x: 0, y: 2)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.gray, lineWidth: 1)
-                        )
-                        .foregroundColor(.black)
-                    }
+                ChatHeaderView(
+                    selectedScope: $selectedScope,
+                    isMessageSelectionViewPresented: $isMessageSelectionViewPresented,
+                    isChatViewPresented: $isChatViewPresented,
+                    firebase: firebase
+                )
 
-                    Spacer()
-
-                  if isChatViewPresented != nil {
-                    Button(action: {
-                      isChatViewPresented = false
-                    }) {
-                      Image(systemName: "xmark")
-                        .foregroundColor(.black)
-                    }
-                  }
-                }
-                .padding()
-                
                 if messages.isEmpty {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            Text("To save tidbits from this conversation, make sure to add responses to your file before exiting.")
-                                .foregroundColor(.gray).opacity(0.7)
-                                .multilineTextAlignment(.center)
-                                .padding(.vertical)
-                                .padding(.horizontal, 46)
-                            Spacer()
-                        }
-                        Spacer()
-                    }
-                }
-                
-                // Chat messages vertical scroll view
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ScopeIndicator(notesOnlySetting: notesOnlyChatScope)
-                            .padding(.top)
-
-                        ForEach(messages) { message in
-                            HStack(alignment: .bottom, spacing: 8) {
-                                if message.isUser {
-                                    // User Message Bubble
-                                    Spacer()
-                                    
-                                    HStack(alignment: .bottom, spacing: 8) {
-                                        VStack(alignment: .trailing) {
-                                            Text(message.content)
-                                                .padding(.horizontal, 16)
-                                                .padding(.vertical, 10)
-                                                .foregroundColor(.primary)
-                                                .background(Color(red: 216/255, green: 233/255, blue: 245/255)) // D8E9F5
-                                                .clipShape(BubbleShape(isUser: true))
-                                                .contextMenu {
-                                                    Button(action: {
-                                                        selectedMessages.insert(message.id)
-                                                        isMessageSelectionViewPresented = true
-                                                    }) {
-                                                        Text("Save to notes")
-                                                        Image(systemName: "square.and.arrow.down")
-                                                    }
-                                                }
-                                        }
-                                        Text("EC")
-                                            .font(.system(size: 16, weight: .bold))
-                                            .foregroundColor(.black)
-                                            .frame(width: 40, height: 40)
-                                            .background(Color(red: 216/255, green: 233/255, blue: 245/255)) // Light Blue
-                                            .clipShape(Circle())
-                                            .padding(.bottom, 4) // Align with bottom of bubble
-                                    }
-                                    .padding(.trailing, 12) // Adjust user message alignment
-                                } else {
-                                    // Bot Message Bubble
-                                    HStack(alignment: .bottom, spacing: 8) {
-                                        Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
-                                            .resizable()
-                                            .frame(width: 40, height: 40)
-                                            .clipShape(Circle())
-                                            .padding(.bottom, 4) // Align with bottom of bubble
-                                        VStack(alignment: .leading) {
-                                            Text(message.content)
-                                                .padding(.horizontal, 16)
-                                                .padding(.vertical, 10)
-                                                .foregroundColor(.primary)
-                                                .background(Color(red: 235/255, green: 219/255, blue: 206/255)) // EBDBCE
-                                                .clipShape(BubbleShape(isUser: false))
-                                                .contextMenu {
-                                                    Button(action: {
-                                                        selectedMessages.insert(message.id)
-                                                        isMessageSelectionViewPresented = true
-                                                    }) {
-                                                        Text("Save to notes")
-                                                        Image(systemName: "square.and.arrow.down")
-                                                    }
-                                                }
-                                        }
-                                    }
-                                    .padding(.leading, 0)
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-
-                        if isLoading {
-                            HStack {
-                                TypingIndicator()
-                                Spacer()
-                            }
-                            .padding(.trailing, 60)
-                            .padding(.vertical, 4)
-                        }
-                    }
-                    .padding(.horizontal)
-                }
- 
-                // Suggested messages horizontal scroll view
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                    ForEach(suggestedMessages, id: \.self) { suggestion in
-                        Button(action: {
-                            if userInput == suggestion {
-                                userInput = "" // Deselect if already selected
-                            } else {
-                                userInput = suggestion // Select the prompt
-                            }
-                        }) {
-                            Text(suggestion)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(userInput == suggestion ? Color(red: 216/255, green: 233/255, blue: 245/255) : Color.gray, lineWidth: 2)
-                                        .background(
-                                            userInput == suggestion ?
-                                            RoundedRectangle(cornerRadius: 12).fill(Color(red: 216/255, green: 233/255, blue: 245/255).opacity(0.3))
-                                            : RoundedRectangle(cornerRadius: 12).fill(Color(.systemGray6))
-                                        )
-                                )
-                                .foregroundColor(.black)
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(Color.white)
+                    EmptyChatView()
+                } else {
+                    ChatMessagesView(
+                        messages: $messages,
+                        selectedMessages: $selectedMessages,
+                        isMessageSelectionViewPresented: $isMessageSelectionViewPresented,
+                        isLoading: $isLoading,
+                        notesOnlyChatScope: notesOnlyChatScope
+                    )
                 }
 
-                // Input text field and send button
-                VStack(spacing: 0) {
-                    Divider()
-                    HStack(spacing: 12) {
-                        TextField("Type a message", text: $userInput, axis: .vertical)
-                            .lineLimit(1...5)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                            .gesture(
-                                DragGesture(minimumDistance: 30)
-                                    .onEnded { value in
-                                        if value.translation.height > 100 {
-                                            dismissKeyboard()
-                                        }
-                                    }
-                            )
-                        
-                        Button(action: sendMessage) {
-                            Image(systemName: "arrow.right")
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(userInput.isEmpty ? Color(red: 216/255, green: 233/255, blue: 245/255) : Color(red: 137/255, green: 187/255, blue: 222/255)) // Light Blue for inactive State, Dark Blue for active
-                                .cornerRadius(8)
-                        }
-                        .disabled(userInput.isEmpty || isLoading)
-                    }
-                    .padding()
-                }
-                .background(Color.white)
+                SuggestedMessagesView(
+                    userInput: $userInput,
+                    suggestedMessages: $suggestedMessages
+                )
+
+                ChatInputView(
+                    userInput: $userInput,
+                    isLoading: $isLoading,
+                    sendMessage: sendMessage
+                )
             }
             .sheet(isPresented: $isMessageSelectionViewPresented) {
                 MessageSelectionView(
@@ -309,11 +117,11 @@ struct ChatView: View {
                 firebase.getFirstUser { user in
                     if let user = user {
                         self.notesOnlyChatScope = user.settings.notesOnlyChatScope
-                    
+                        
                         if user.settings.notesOnlyChatScope {
                             systemPrompt = "You are an expert study assistant who is knowledgeable in any subject matter and can breakdown and explain concepts better than anyone else. Today's date and time are \(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .short)). You will only converse about topics related to the courses. Do not ask or answer any questions about personal matters or unrelated topics. You will do your best to provide accurate and helpful information to the user. You will ask clarifying questions if need be. You will be concise in your answers and know that your entire message could be saved to notes for later, so don't add any extra fluff. You will always refer to your context and knowledge base first, and cite from the user's courseNotes when possible. You will be encouraging but not too overexcited. You will do this because you care very much about the user's learning and productivity, and your entire objective is to teach the user and assist them with their problems. Additionally, your knowledge base is only the user's notes and what they tell you. You may not supplement with any outside knowledge."
                         } else {
-                        systemPrompt = "You are an expert study assistant who is knowledgeable in any subject matter and can breakdown and explain concepts better than anyone else. Today's date and time are \(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .short)). You will only converse about topics related to the courses. Do not ask or answer any questions about personal matters or unrelated topics. You will do your best to provide accurate and helpful information to the user. You will ask clarifying questions if need be. You will be concise in your answers and know that your entire message could be saved to notes for later, so don't add any extra fluff. You will always refer to your context and knowledge base first, and cite from the user's courseNotes when possible. You will be encouraging but not too overexcited. You will do this because you care very much about the user's learning and productivity, and your entire objective is to teach the user and assist them with their problems."
+                            systemPrompt = "You are an expert study assistant who is knowledgeable in any subject matter and can breakdown and explain concepts better than anyone else. Today's date and time are \(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .short)). You will only converse about topics related to the courses. Do not ask or answer any questions about personal matters or unrelated topics. You will do your best to provide accurate and helpful information to the user. You will ask clarifying questions if need be. You will be concise in your answers and know that your entire message could be saved to notes for later, so don't add any extra fluff. You will always refer to your context and knowledge base first, and cite from the user's courseNotes when possible. You will be encouraging but not too overexcited. You will do this because you care very much about the user's learning and productivity, and your entire objective is to teach the user and assist them with their problems."
                         }
                     } else {
                         print("Failed to fetch user.")
@@ -348,12 +156,11 @@ struct ChatView: View {
             firebase.updateNoteContent(noteID: noteID, newContent: newContent)
         }
     }
-    
+
     private func dismissKeyboard() {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
-    // Handles the user's input message, appends it to chat, and sends it to the API.
     func sendMessage() {
         let userMessage = userInput
         messages.append(MessageBubble(content: userMessage, isUser: true, isMarkdown: false))
@@ -461,27 +268,22 @@ struct ChatView: View {
         courseNotes = firebase.notes.filter { $0.courseID == courseID }
     }
 
-    // Clears the chat view and resets the message history.
     func clearChat() {
         messages.removeAll()
-        messagesHistory = [
-            ["role": "system", "content": systemPrompt]
-        ]
-        
+        messagesHistory = [["role": "system", "content": systemPrompt]]
+
         let welcomeMessage: String
         if selectedScope == "General" {
-            welcomeMessage = "Hello, you're in the general chat, where you can ask questions about any topic. If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. You can also use the clickable prompts at the bottom to start a conversation. Don't forget to save any useful responses to your notes before exiting!"
+            welcomeMessage = "Hello, you're in the general chat. Use the dropdown to select a course."
         } else {
             let courseName = firebase.courses.first(where: { $0.id == selectedScope })?.courseName ?? "selected course"
-            let sampleNotes = courseNotes.prefix(3).map { $0.title }.joined(separator: ", ")
-            
-            welcomeMessage = "Hello, you're in the \(courseName) chat, and I can see your notes including \(sampleNotes). Feel free to type out any questions about the material from this course, or use the clickable prompts at the bottom of the screen to start a conversation. Don't forget to save any useful responses to your notes before exiting!"
+            welcomeMessage = "Hello, you're in the \(courseName) chat."
         }
-        
+
         messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
         messagesHistory.append(["role": "assistant", "content": welcomeMessage])
     }
-
+    
     // Calls OpenAI API to get suggested short sentence/question starters for the user
     func fetchSuggestions() {
         var contextMessages = messagesHistory
@@ -542,6 +344,132 @@ struct ChatView: View {
                 }
                 print("Updated Suggested Messages: \(self.suggestedMessages)")
             }
+        }
+    }
+
+    struct ChatHeaderView: View {
+        @Binding var selectedScope: String
+        @Binding var isMessageSelectionViewPresented: Bool
+        @Binding var isChatViewPresented: Bool?
+        @ObservedObject var firebase: Firebase
+
+        var body: some View {
+            HStack {
+                Button(action: { isMessageSelectionViewPresented = true }) {
+                    Image(systemName: "square.and.arrow.down.on.square")
+                        .foregroundColor(.black)
+                }
+                Spacer()
+                Menu {
+                    Button("General") {
+                        selectedScope = "General"
+                    }
+                    ForEach(firebase.courses, id: \.id) { course in
+                        Button(course.courseName) {
+                            selectedScope = course.id ?? "General"
+                        }
+                    }
+                } label: {
+                    Text(selectedScope)
+                }
+                Spacer()
+                if let isPresented = isChatViewPresented {
+                    Button(action: { isChatViewPresented = false }) {
+                        Image(systemName: "xmark").foregroundColor(.black)
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+
+    struct EmptyChatView: View {
+        var body: some View {
+            VStack {
+                Spacer()
+                Text("No messages yet. Start a conversation!")
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding()
+                Spacer()
+            }
+        }
+    }
+
+    struct ChatMessagesView: View {
+        @Binding var messages: [MessageBubble]
+        @Binding var selectedMessages: Set<UUID>
+        @Binding var isMessageSelectionViewPresented: Bool
+        @Binding var isLoading: Bool
+        var notesOnlyChatScope: Bool
+
+        var body: some View {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(messages) { message in
+                        HStack {
+                            if message.isUser {
+                                Spacer()
+                                Text(message.content)
+                                    .padding()
+                                    .background(Color.blue.opacity(0.2))
+                                    .cornerRadius(8)
+                            } else {
+                                Text(message.content)
+                                    .padding()
+                                    .background(Color.gray.opacity(0.2))
+                                    .cornerRadius(8)
+                                Spacer()
+                            }
+                        }
+                    }
+                    if isLoading {
+                        Text("Loading...").foregroundColor(.gray)
+                    }
+                }
+            }
+        }
+    }
+
+    struct SuggestedMessagesView: View {
+        @Binding var userInput: String
+        @Binding var suggestedMessages: [String]
+
+        var body: some View {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(suggestedMessages, id: \.self) { suggestion in
+                        Button(action: { userInput = suggestion }) {
+                            Text(suggestion)
+                                .padding()
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(8)
+                        }
+                    }
+                }
+                .padding()
+            }
+        }
+    }
+
+    struct ChatInputView: View {
+        @Binding var userInput: String
+        @Binding var isLoading: Bool
+        var sendMessage: () -> Void
+
+        var body: some View {
+            HStack {
+                TextField("Type a message...", text: $userInput)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                Button(action: sendMessage) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 24))
+                }
+                .disabled(isLoading || userInput.isEmpty)
+            }
+            .padding()
         }
     }
 }

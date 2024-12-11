@@ -8,14 +8,23 @@
 import Foundation
 import SwiftUI
 
+//struct MessageBubble: Identifiable {
+//    let id: UUID
+//    let content: String
+//    let isUser: Bool
+//}
+
 struct MessageSelectionView: View {
     let messages: [MessageBubble]
     @Binding var selectedMessages: Set<UUID>
     @Binding var isPresented: Bool
     @Binding var isFilePickerPresented: Bool
-    
+
+    var lightBlue: Color = Color.blue.opacity(0.3) // Replace with your actual `lightBlue` definition if available
+
     var body: some View {
         VStack {
+            // Header
             HStack {
                 Image(systemName: "minus")
                     .foregroundColor(.black)
@@ -34,28 +43,26 @@ struct MessageSelectionView: View {
             }
             .padding()
 
+            // Message selection list
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(messages) { message in
+                    ForEach(messages, id: \.id) { message in
                         HStack {
                             Button(action: {
-                                if selectedMessages.contains(message.id) {
-                                    selectedMessages.remove(message.id)
-                                } else {
-                                    selectedMessages.insert(message.id)
-                                }
+                                toggleSelection(for: message.id)
                             }) {
                                 Image(systemName: selectedMessages.contains(message.id) ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(selectedMessages.contains(message.id) ? .blue : .gray)
+                                    .foregroundColor(selectedMessages.contains(message.id) ? lightBlue : .gray)
                             }
-                            
+
                             if message.isUser {
                                 Spacer()
                             }
+
                             Text(message.content)
-                                .foregroundColor(message.isUser ? .white : .black)
+                                .foregroundColor(.primary)
                                 .padding()
-                                .background(message.isUser ? Color.blue : Color.gray.opacity(0.2))
+                                .background(message.isUser ? lightBlue : Color.gray.opacity(0.2))
                                 .clipShape(BubbleShape(isUser: message.isUser))
                                 .onTapGesture {
                                     toggleSelection(for: message.id)
@@ -81,11 +88,12 @@ struct MessageSelectionView: View {
                     Text("Save")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(selectedMessages.isEmpty ? Color.gray : Color.blue)
+                        .background(selectedMessages.isEmpty ? Color.gray : lightBlue)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                 }
-                
+                .disabled(selectedMessages.isEmpty)
+
                 Button(action: {
                     isPresented = false
                     selectedMessages.removeAll()
@@ -94,7 +102,7 @@ struct MessageSelectionView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.gray.opacity(0.2))
-                        .foregroundColor(.blue)
+                        .foregroundColor(lightBlue)
                         .cornerRadius(8)
                 }
             }
