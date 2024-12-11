@@ -36,8 +36,14 @@ struct NoteView: View {
                     
                     recentNoteSummarySection
 
-                    Text(note.content)
-                        .padding()
+                    // Render markdown content
+                    if #available(iOS 15.0, *) {
+                        Text(.init(note.content))
+                            .padding()
+                    } else {
+                        Text(note.content)
+                            .padding()
+                    }
                 }
             }
 
@@ -62,18 +68,18 @@ struct NoteView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 16) {
                     Button(action: {
-                        isActionSheetPresented = true
+                        showGalleryView = true
                     }) {
-                        Image(systemName: "document.badge.arrow.up")
+                        Image(systemName: "photo.fill.on.rectangle.fill")
                             .foregroundColor(darkBrown)
                             .imageScale(.large)
                             .frame(height: 44)
                     }
-                    
+                  
                     Button(action: {
-                        showGalleryView = true
+                        isActionSheetPresented = true
                     }) {
-                        Image(systemName: "photo.fill.on.rectangle.fill")
+                        Image(systemName: "document.badge.arrow.up")
                             .foregroundColor(darkBrown)
                             .imageScale(.large)
                             .frame(height: 44)
@@ -108,7 +114,7 @@ struct NoteView: View {
                     if !viewModel.images.isEmpty {
                         ScrollView {
                             VStack(spacing: 16) {
-                                ForEach(viewModel.images, id: \.self) { image in
+                                ForEach(viewModel.images, id: \ .self) { image in
                                     Image(uiImage: image)
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
