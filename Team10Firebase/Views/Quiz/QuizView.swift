@@ -142,7 +142,7 @@ private struct LoadingView: View {
             .frame(height: 50)
             
             VStack(spacing: 16) {
-                Text("Loading Questions")
+                Text("Loading Questions...")
                     .font(.system(size: 26, weight: .bold))
                     .foregroundColor(darkBrown)
                 
@@ -158,7 +158,7 @@ private struct LoadingView: View {
                         
                         Text("Score 80% or better to\nextend your streak!")
                             .font(.subheadline)
-                            .foregroundColor(darkBrown.opacity(0.8))
+                            .foregroundColor(.black)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
