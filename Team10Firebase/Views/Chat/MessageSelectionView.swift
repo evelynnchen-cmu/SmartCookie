@@ -19,8 +19,6 @@ struct MessageSelectionView: View {
         VStack {
             // Header
             HStack {
-                // Image(systemName: "minus")
-                //     .foregroundColor(.black)
                 Spacer()
                 Text("Choose to save")
                     .font(.title2)
@@ -45,7 +43,7 @@ struct MessageSelectionView: View {
                                 toggleSelection(for: message.id)
                             }) {
                                 Image(systemName: selectedMessages.contains(message.id) ? "checkmark.square.fill" : "square")
-                                    .foregroundColor(selectedMessages.contains(message.id) ? lightBlue : .gray)
+                                    .foregroundColor(selectedMessages.contains(message.id) ? darkBrown : .gray)
                             }
 
                             if message.isUser {
@@ -55,7 +53,7 @@ struct MessageSelectionView: View {
                             Text(message.content)
                                 .foregroundColor(.primary)
                                 .padding()
-                                .background(message.isUser ? lightBlue : Color.gray.opacity(0.2))
+                                .background(message.isUser ? lightBlue : tan)
                                 .clipShape(BubbleShape(isUser: message.isUser))
                                 .onTapGesture {
                                     toggleSelection(for: message.id)
@@ -81,9 +79,9 @@ struct MessageSelectionView: View {
                     Text("Save")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(selectedMessages.isEmpty ? Color.gray : lightBlue)
+                        .background(selectedMessages.isEmpty ? Color.gray : mediumBlue)
                         .foregroundColor(.white)
-                        .cornerRadius(8)
+                        .cornerRadius(12)
                 }
                 .disabled(selectedMessages.isEmpty)
 
@@ -94,9 +92,9 @@ struct MessageSelectionView: View {
                     Text("Cancel")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .foregroundColor(lightBlue)
-                        .cornerRadius(8)
+                        .background(lightBlue.opacity(0.2))
+                        .foregroundColor(.black)
+                        .cornerRadius(12)
                 }
             }
             .padding()

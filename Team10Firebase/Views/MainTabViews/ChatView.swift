@@ -67,17 +67,13 @@ struct ChatView: View {
                     firebase: firebase
                 )
 
-                if messages.isEmpty {
-                    EmptyChatView()
-                } else {
-                    ChatMessagesView(
-                        messages: $messages,
-                        selectedMessages: $selectedMessages,
-                        isMessageSelectionViewPresented: $isMessageSelectionViewPresented,
-                        isLoading: $isLoading,
-                        notesOnlyChatScope: notesOnlyChatScope
-                    )
-                }
+                ChatMessagesView(
+                    messages: $messages,
+                    selectedMessages: $selectedMessages,
+                    isMessageSelectionViewPresented: $isMessageSelectionViewPresented,
+                    isLoading: $isLoading,
+                    notesOnlyChatScope: notesOnlyChatScope
+                )
 
                 SuggestedMessagesView(
                     userInput: $userInput,
@@ -274,10 +270,11 @@ struct ChatView: View {
 
         let welcomeMessage: String
         if selectedScope == "General" {
-            welcomeMessage = "Hello, you're in the general chat. Use the dropdown to select a course."
+            welcomeMessage = "Hello, you're in the general chat, where you can ask questions about any topic. If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. Don't forget to save any useful responses to your notes before exiting!"
         } else {
             let courseName = firebase.courses.first(where: { $0.id == selectedScope })?.courseName ?? "selected course"
-            welcomeMessage = "Hello, you're in the \(courseName) chat."
+            let sampleNotes = courseNotes.prefix(3).map { $0.title }.joined(separator: ", ")
+            welcomeMessage = "Hello, you're in the \(courseName) chat. I can see your notes, including \(sampleNotes). Ask me anything!"
         }
 
         messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
@@ -378,7 +375,7 @@ struct ChatInputView: View {
             TextField("Type a message...", text: $userInput)
                 .padding()
                 .background(Color(.systemGray6))
-                .cornerRadius(8)
+                .cornerRadius(12)
             
             Button(action: sendMessage) {
                 Image(systemName: "arrow.up.circle.fill")
@@ -388,54 +385,5 @@ struct ChatInputView: View {
             .disabled(isLoading || userInput.isEmpty)
         }
         .padding()
-    }
-}
-
-struct ChatHeaderView: View {
-    @Binding var selectedScope: String
-    @Binding var isMessageSelectionViewPresented: Bool
-    @Binding var isChatViewPresented: Bool?
-    @ObservedObject var firebase: Firebase
-
-    var body: some View {
-        HStack {
-            Button(action: { isMessageSelectionViewPresented = true }) {
-                Image(systemName: "square.and.arrow.down.on.square")
-                    .foregroundColor(.black)
-            }
-            Spacer()
-            Menu {
-                Button("General") {
-                    selectedScope = "General"
-                }
-                ForEach(firebase.courses, id: \.id) { course in
-                    Button(course.courseName) {
-                        selectedScope = course.id ?? "General"
-                    }
-                }
-            } label: {
-                Text(selectedScope)
-            }
-            Spacer()
-            if let isPresented = isChatViewPresented {
-                Button(action: { isChatViewPresented = false }) {
-                    Image(systemName: "xmark").foregroundColor(.black)
-                }
-            }
-        }
-        .padding()
-    }
-}
-
-struct EmptyChatView: View {
-    var body: some View {
-        VStack {
-            Spacer()
-            Text("No messages yet. Start a conversation!")
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding()
-            Spacer()
-        }
     }
 }

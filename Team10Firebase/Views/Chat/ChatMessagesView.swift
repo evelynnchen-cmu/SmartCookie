@@ -18,6 +18,9 @@ struct ChatMessagesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
+                ScopeIndicator(notesOnlySetting: notesOnlyChatScope)
+                    .padding(.top)
+
                 ForEach(messages) { message in
                     HStack(alignment: .bottom, spacing: 8) {
                         if message.isUser {
@@ -45,7 +48,7 @@ struct ChatMessagesView: View {
                                 .resizable()
                                 .frame(width: 40, height: 40)
                                 .clipShape(Circle())
-                                .offset(y: 8)
+                                .offset(y: 20)
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(message.content)
@@ -69,12 +72,16 @@ struct ChatMessagesView: View {
                 }
 
                 if isLoading {
-                    HStack {
-                        Spacer()
+                    HStack(alignment: .bottom, spacing: 8) {
+                        Image("cookieIcon")
+                            .resizable()
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                            .offset(y: 20)
+                        
                         TypingIndicator()
-                        Spacer()
+                            .padding(.vertical, 8)
                     }
-                    .padding(.vertical, 8)
                 }
             }
             .padding(.horizontal)
