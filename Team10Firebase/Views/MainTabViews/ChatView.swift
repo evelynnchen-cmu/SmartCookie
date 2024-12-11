@@ -29,6 +29,8 @@ struct ChatView: View {
     
     @ObservedObject private var firebase = Firebase()
     @Binding var isChatViewPresented: Bool?
+
+    @FocusState private var isTextFieldFocused: Bool
   
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
@@ -85,7 +87,19 @@ struct ChatView: View {
                     isLoading: $isLoading,
                     sendMessage: sendMessage
                 )
+                .focused($isTextFieldFocused)
+                .onTapGesture {
+                    isTextFieldFocused = true
+                }
             }
+            .gesture(
+                DragGesture()
+                    .onChanged { value in
+                        if value.translation.height > 50 {
+                            isTextFieldFocused = false // Dismiss keyboard on swipe down
+                        }
+                    }
+            )
             .sheet(isPresented: $isMessageSelectionViewPresented) {
                 MessageSelectionView(
                     messages: messages,
@@ -123,6 +137,9 @@ struct ChatView: View {
                         print("Failed to fetch user.")
                     }
                 }
+            }
+            .onDisappear {
+                isTextFieldFocused = false
             }
             .onChange(of: messages) {
                 fetchSuggestions()

@@ -17,6 +17,9 @@ struct MessageSelectionView: View {
 
     var body: some View {
         VStack {
+            Spacer()
+                .frame(height: 12)
+
             // Header
             HStack {
                 Spacer()
@@ -79,7 +82,7 @@ struct MessageSelectionView: View {
                     Text("Save")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(selectedMessages.isEmpty ? Color.gray : mediumBlue)
+                        .background(selectedMessages.isEmpty ? darkBrown.opacity(0.5) : darkBrown)
                         .foregroundColor(.white)
                         .cornerRadius(12)
                 }
@@ -92,7 +95,7 @@ struct MessageSelectionView: View {
                     Text("Cancel")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(lightBlue.opacity(0.2))
+                        .background(tan)
                         .foregroundColor(.black)
                         .cornerRadius(12)
                 }

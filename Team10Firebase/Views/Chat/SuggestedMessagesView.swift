@@ -35,6 +35,7 @@ struct SuggestedMessagesView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
+            .padding(.top, 16)
             .background(Color.white)
         }
     }
