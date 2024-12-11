@@ -35,7 +35,6 @@ struct ChatView: View {
     @State private var lastValidScope: String
     @State private var isCoursesLoaded: Bool = false
     @State private var cancellables = Set<AnyCancellable>()
-    @State private var isInitialLoadComplete = false
 
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
@@ -128,17 +127,18 @@ struct ChatView: View {
             }
             .onAppear {
                 print("ChatView appeared with selectedScope: \(selectedScope)")
-                if !isCoursesLoaded {
-                    loadInitialData()
+                
+                if selectedScope != "General" {
+                    firebase.getNotes() // Add this line
+                    fetchNotes(for: selectedScope)
                 } else {
-                    validateScope()
+                    courseNotes = []
                 }
+
+                clearChat()
             }
             .onChange(of: isTextFieldFocused) { isFocused in
                 print("TextField focus changed: \(isFocused)")
-                // if isFocused && isCoursesLoaded && !firebase.courses.isEmpty {
-                //     ensureScopeIntegrity()
-                // }
             }
             .onChange(of: messages) {
                 fetchSuggestions()
@@ -169,7 +169,6 @@ struct ChatView: View {
             .receive(on: DispatchQueue.main)
             .sink { courses in
                 print("Received courses update: \(courses.count) courses")
-                self.isInitialLoadComplete = true
                 self.isCoursesLoaded = true
                 self.validateScope()
             }
@@ -187,6 +186,10 @@ struct ChatView: View {
             print("Invalid scope detected, resetting to last valid: \(lastValidScope)")
             selectedScope = lastValidScope
         }
+
+        if messages.isEmpty || selectedScope == "General" {
+            clearChat()
+        }
     }
 
     private func validateScopeAfterCoursesLoaded() {
@@ -203,22 +206,6 @@ struct ChatView: View {
         }
     }
 
-
-    private func ensureScopeIntegrity() {
-        print("Ensuring scope integrity for: \(selectedScope)")
-        print("Available courses: \(firebase.courses.map { $0.id ?? "Unknown" })")
-
-        // Validate the current scope only if necessary
-        if !firebase.courses.isEmpty && selectedScope != "General" {
-            if !firebase.courses.contains(where: { $0.id == selectedScope }) {
-                print("Invalid selected scope: \(selectedScope). Resetting to lastValidScope: \(lastValidScope)")
-                selectedScope = lastValidScope
-            } else {
-                print("Scope integrity is valid. Current scope: \(selectedScope)")
-                lastValidScope = selectedScope
-            }
-        }
-    }
 
     private func handleScopeChange(newScope: String) {
         if newScope != "General" {
@@ -263,7 +250,7 @@ struct ChatView: View {
     // - messagesHistory: The conversation history as an array of role-content pairs. Roles are system (sets up context), user (what the user inputted), and assistant (the AI's response).
     // - completion: Completion handler to receive the AI's response.
     func callChatGPTAPI(with messagesHistory: [[String: String]], completion: @escaping (String) -> Void) {
-      guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
+        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
             print("Invalid URL")
             return
         }
@@ -273,21 +260,44 @@ struct ChatView: View {
         request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let notesContent = courseNotes.map { note in
+        // Add notes context
+        let notesContext = courseNotes.map { note in
             let formattedDate = DateFormatter.localizedString(from: note.createdAt, dateStyle: .long, timeStyle: .short)
-            return ["role": "system", "content": "Title: \(note.title)\nSummary: \(note.summary)\nDate: \(formattedDate)\nContent: \(note.content)"]
+            return """
+            Title: \(note.title)
+            Summary: \(note.summary)
+            Date: \(formattedDate)
+            Content: \(note.content)
+            """
+        }.joined(separator: "\n\n")
+
+        // Check if notes are empty
+        if notesContext.isEmpty {
+            print("No notes available for context.")
         }
-        let combinedMessages = notesContent + messagesHistory
 
-        let requestBody = OpenAIRequest(
-            model: "gpt-4o-mini",
-            messages: combinedMessages.map { Message(role: $0["role"]!, content: [MessageContent(type: "text", text: $0["content"], imageURL: nil)]) },
-            maxTokens: 300
-        )
+        // Prepare the system message
+        let systemMessage = [
+            "role": "system",
+            "content": """
+            You are a study assistant with access to the user's course notes. Here are the notes:
+            \(notesContext.isEmpty ? "No notes available." : notesContext)
 
-        guard let jsonData = try? JSONEncoder().encode(requestBody) else {
-            print("Failed to create JSON payload.")
-            completion("Failed to create JSON payload.")
+            Assist the user by answering their questions or summarizing these notes. If the user asks about a specific lecture or concept, provide details from the notes above.
+            """
+        ]
+
+        // Combine the system message and user messages
+        let combinedMessages = [systemMessage] + messagesHistory
+
+        let requestBody = [
+            "model": "gpt-4o-mini",
+            "messages": combinedMessages,
+            "max_tokens": 300
+        ] as [String: Any]
+
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
+            print("Failed to serialize JSON.")
             return
         }
 
@@ -300,10 +310,6 @@ struct ChatView: View {
                 return
             }
 
-            if let httpResponse = response as? HTTPURLResponse {
-                print("HTTP Status: \(httpResponse.statusCode)")
-            }
-
             guard let data = data else {
                 print("No data received")
                 completion("No data received from the API.")
@@ -313,13 +319,12 @@ struct ChatView: View {
             do {
                 let jsonResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
                 if let choice = jsonResponse.choices.first {
-                    let cleanResponse = stripMarkdown(choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines))
-                    completion(cleanResponse)
+                    completion(choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines))
                 } else {
                     completion("Unexpected response format.")
                 }
             } catch {
-                print("Failed to parse JSON: \(error)")
+                print("Failed to parse JSON: \(error.localizedDescription)")
                 completion("Failed to parse API response.")
             }
         }.resume()
@@ -346,24 +351,67 @@ struct ChatView: View {
     // Fetches notes for a specific course and updates courseNotes.
     // - Parameter courseID: The ID of the course for which to fetch notes.
     func fetchNotes(for courseID: String) {
-        courseNotes = firebase.notes.filter { $0.courseID == courseID }
+        print("Attempting to fetch notes for course ID: \(courseID)")
+        
+        // Watch for changes in firebase.notes
+        firebase.$notes
+            .receive(on: DispatchQueue.main)
+            .sink { notes in
+                print("Received \(notes.count) total notes")
+                let filteredNotes = notes.filter { note in
+                    note.courseID == courseID
+                }
+                print("Found \(filteredNotes.count) notes for course \(courseID)")
+                self.courseNotes = filteredNotes
+                
+                // Debug print the filtered notes
+                filteredNotes.forEach { note in
+                    print("Note for course \(courseID): \(note.title)")
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Make sure we have fresh notes data
+        firebase.getNotes()
     }
 
     func clearChat() {
         messages.removeAll()
-        messagesHistory = [["role": "system", "content": systemPrompt]]
-
-        let welcomeMessage: String
+        messagesHistory = [
+            ["role": "system", "content": systemPrompt]
+        ]
+        
         if selectedScope == "General" {
-            welcomeMessage = "Hello, you're in the general chat, where you can ask questions about any topic. If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. Don't forget to save any useful responses to your notes before exiting!"
+            let welcomeMessage = "Hello, you're in the general chat, where you can ask questions about any topic. If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. You can also use the clickable prompts at the bottom to start a conversation. Don't forget to save any useful responses to your notes before exiting!"
+            messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
+            messagesHistory.append(["role": "assistant", "content": welcomeMessage])
         } else {
-            let courseName = firebase.courses.first(where: { $0.id == selectedScope })?.courseName ?? "selected course"
-            let sampleNotes = courseNotes.prefix(3).map { $0.title }.joined(separator: ", ")
-            welcomeMessage = "Hello, you're in the \(courseName) chat. I can see your notes, including \(sampleNotes). Ask me anything!"
+            // Fetch notes and wait for them before showing welcome message
+            fetchNotes(for: selectedScope)
+            
+            // Create a new cancellable for just the welcome message
+            let welcomeSubscription = firebase.$notes
+                .receive(on: DispatchQueue.main)
+                .first() // Only take the first emission
+                .sink { notes in
+                    let courseName = firebase.courses.first(where: { $0.id == selectedScope })?.courseName ?? "selected course"
+                    let courseSpecificNotes = notes.filter { $0.courseID == selectedScope }
+                    
+                    let welcomeMessage: String
+                    if courseSpecificNotes.isEmpty {
+                        welcomeMessage = "Hello, you're in the \(courseName) chat. I don't see any notes for this course yet. Feel free to ask general questions about \(courseName), or use the clickable prompts at the bottom of the screen to start a conversation."
+                    } else {
+                        let sampleNotes = courseSpecificNotes.prefix(3).map { $0.title }.joined(separator: ", ")
+                        welcomeMessage = "Hello, you're in the \(courseName) chat, and I can see your notes including \(sampleNotes). Feel free to type out any questions about the material from this course, or use the clickable prompts at the bottom of the screen to start a conversation. Don't forget to save any useful responses to your notes before exiting!"
+                    }
+                    
+                    messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
+                    messagesHistory.append(["role": "assistant", "content": welcomeMessage])
+                }
+            
+            // Store the subscription so it's not immediately deallocated
+            cancellables.insert(welcomeSubscription)
         }
-
-        messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
-        messagesHistory.append(["role": "assistant", "content": welcomeMessage])
     }
     
     // Calls OpenAI API to get suggested short sentence/question starters for the user

@@ -31,7 +31,6 @@ struct ChatHeaderView: View {
             // Dropdown menu for course selection
             Menu {
                 Button(action: {
-                    print("Selected General explicitly")
                     selectedScope = "General"
                 }) {
                     Text("General")
@@ -49,7 +48,6 @@ struct ChatHeaderView: View {
                 } else {
                     ForEach(coursesToDisplay, id: \.id) { course in
                         Button(action: {
-                            print("Selected course: \(course.courseName ?? "unknown") with ID: \(course.id ?? "unknown")")
                             if let courseId = course.id {
                                 selectedScope = courseId
                             }
@@ -97,13 +95,9 @@ struct ChatHeaderView: View {
         }
         .padding()
         .onAppear {
-            print("ChatHeaderView appeared with scope: \(selectedScope)")
-            print("Available courses: \(firebase.courses.map { "\($0.id ?? "unknown"): \($0.courseName ?? "unknown")" })")
-
             loadCoursesIfNeeded()
         }
         .onChange(of: firebase.courses) { newCourses in
-            print("Firebase courses changed to \(newCourses.count) courses")
             if !newCourses.isEmpty {
                 localCourses = newCourses
             }
@@ -111,12 +105,9 @@ struct ChatHeaderView: View {
     }
 
     private func loadCoursesIfNeeded() {
-        print("Loading check - Firebase: \(firebase.courses.count) courses, Local: \(localCourses.count) courses")
         if firebase.courses.isEmpty && localCourses.isEmpty {
-            print("Loading courses as both caches are empty")
             firebase.getCourses()
         } else {
-            print("Using cached courses")
             // Only refresh if we don't have local courses
             if localCourses.isEmpty {
                 firebase.getCourses()
