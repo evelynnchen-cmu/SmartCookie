@@ -15,7 +15,7 @@ struct NoteView: View {
     @State private var alertMessage = ""
     @State private var isActionSheetPresented = false
     var note: Note
-    var course: Course
+    @State var course: Course?
     
     init(firebase: Firebase, note: Note, course: Course) {
         self.firebase = firebase
@@ -79,7 +79,7 @@ struct NoteView: View {
                             images: [image],
                             firebase: firebase,
                             isPresented: $showTextParserView,
-                            course: course,
+                            course: $course,
                             title: note.title,
                             note: $viewModel.note
                         ) { message in

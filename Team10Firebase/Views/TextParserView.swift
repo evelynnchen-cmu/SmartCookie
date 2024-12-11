@@ -12,14 +12,15 @@ struct TextParserView: View {
   var firebaseStorage: FirebaseStorage = FirebaseStorage()
   var firebase: Firebase
   @Binding var isPresented: Bool
+  @Binding var course: Course?
+  @Binding var note: Note?
+
   @State private var selectedImage: UIImage? = nil
   @State private var alertMessage = ""
   @State private var showAlert = false
   @State private var navigateToNoteView = false
   @State private var isChatViewPresented: Bool? = false
-  var course: Course?
-  var title: String
-  @Binding var note: Note?
+  @State private var title: String // Passed in init
   @State private var courseID: String = ""
   @State private var userID: String = ""
   @State private var content: String? = nil
@@ -28,6 +29,7 @@ struct TextParserView: View {
   @State private var isEditing = false
   @State private var editedContent: String = ""
   @State private var keyboardHeight: CGFloat = 0
+  @State private var showSaveForm = false
   private var openAI = OpenAI()
   @FocusState private var isTextEditorFocused: Bool
   public var tan = Color(hex: "775139")
@@ -38,11 +40,11 @@ struct TextParserView: View {
   
   var completion: ((String) -> Void)?
 
-  init(images: [UIImage], firebase: Firebase, isPresented: Binding<Bool>, course: Course?, title: String, note: Binding<Note?>? = .constant(nil), completion: ((String) -> Void)? = nil) {
+  init(images: [UIImage], firebase: Firebase, isPresented: Binding<Bool>, course: Binding<Course?>, title: String, note: Binding<Note?>? = .constant(nil), completion: ((String) -> Void)? = nil) {
         self.images = images
         self.firebase = firebase
         self._isPresented = isPresented
-        self.course = course
+        self._course = course
         self.title = title
         self._note = note ?? .constant(nil)
         self.completion = completion
@@ -172,7 +174,8 @@ struct TextParserView: View {
                            }
                            
                            Button(action: {
-                               handleSave()
+                            //    handleSave()
+                                showSaveForm = true
                            }) {
                                Text("Save")
                                    .frame(maxWidth: .infinity)
@@ -209,7 +212,16 @@ struct TextParserView: View {
                Text("Failed to load course")
            }
        }
-//       .background(Color.blue.opacity(0.1))
+       .sheet(isPresented: $showSaveForm) {
+            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
+              if let courseObj = course {
+                self.course = courseObj
+              }
+              self.title = title
+
+              handleSave()
+            }
+          }
        .background(tan1)
    }
 

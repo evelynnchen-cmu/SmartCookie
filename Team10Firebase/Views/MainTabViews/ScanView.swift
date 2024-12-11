@@ -4,7 +4,6 @@
 import SwiftUI
 
 struct ScanView: View {
-    // @State var capturedImage: UIImage?
     @State private var capturedImages: [UIImage] = []
     @State private var showCamera = true
 //  TODO: Refactor so scanview and noteview use same fb object
@@ -15,14 +14,10 @@ struct ScanView: View {
     @State private var alertMessage = ""
     @State private var courses: [Course] = []
     @State private var course: Course? = nil
-    @State private var showSaveForm = false
     @State private var courseName = ""
     @State private var noteTitle = ""
     @State private var selectedTab = 0 // For the images
 
-    // @State private var selectedTabIndex = 0 // For home
-    // @State private var navigateToCourse: Course?
-    // @State private var navigateToNote: Note?
     @Binding var selectedTabIndex: Int
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
@@ -30,7 +25,7 @@ struct ScanView: View {
     var body: some View {
       NavigationStack {
         ZStack {
-          Color.blue.opacity(0.2).edgesIgnoringSafeArea(.all) // Background color for the entire view
+          lightBlue.edgesIgnoringSafeArea(.all) // Background color for the entire view
           VStack {
             Text("Scan Results")
               .font(.title)
@@ -80,19 +75,14 @@ struct ScanView: View {
             
             if !capturedImages.isEmpty {
               Button("Extract All") {
-                showSaveForm = true
+                showTextParserView = true
               }
               .padding()
-              // .background(Color.green)
-              // .background(Color.gray.opacity(0.2))
               .background(.white)
-              // .foregroundColor(.white)
               .foregroundColor(.black)
               .cornerRadius(8)
             }
           }
-          //            }
-          //            .background(Color.blue.opacity(0.2))
           .fullScreenCover(isPresented: $showCamera) {
             CameraContainerView { image in
               self.capturedImages.append(image)
@@ -101,40 +91,21 @@ struct ScanView: View {
             }
           }
           .fullScreenCover(isPresented: $showTextParserView) {
-            if let course = course {
-              TextParserView(
-                images: self.capturedImages,
-                firebase: firebase,
-                isPresented: $showTextParserView,
-                course: course,
-                title: noteTitle,
-                note: $navigateToNote
-              ) { message in
-                self.capturedImages = []
-                alertMessage = message
-                showAlert = true
-                self.selectedTabIndex = 0
-                self.navigateToCourse = course
-               self.navigateToNote = navigateToNote
-                NotificationCenter.default.post(name: .resetHomeView, object: nil)
-              }
-            }
-            else {
-              Text("Nil course")
-            }
-          }
-          .sheet(isPresented: $showSaveForm) {
-            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
-              if let courseObj = course {
-                self.course = courseObj
-              }
-              self.noteTitle = title
-            }
-          }
-          .onChange(of: showSaveForm) {
-            print("showSaveForm changed")
-            if course != nil {
-              showTextParserView = true
+            TextParserView(
+              images: self.capturedImages,
+              firebase: firebase,
+              isPresented: $showTextParserView,
+              course: $course,
+              title: noteTitle,
+              note: $navigateToNote
+            ) { message in
+              self.capturedImages = []
+              alertMessage = message
+              showAlert = true
+              self.selectedTabIndex = 0
+              self.navigateToCourse = course
+              self.navigateToNote = navigateToNote
+              NotificationCenter.default.post(name: .resetHomeView, object: nil)
             }
           }
           .onAppear() {
