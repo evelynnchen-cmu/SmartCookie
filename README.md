@@ -8,10 +8,6 @@ README requirements
 
 - how to downgrade xcode version if installation problems
 
-## Intended Flows
-- Scan Image
-- Review Note
-
 ## Design Decisions
 - Upload pdf only possible within course view, not in any other views
 - Majority of our design decisions were informed by user feedback during user testing, see reports (link here)
@@ -19,5 +15,6 @@ README requirements
   - Supporting functionality of allowing users to select if they want chat responses and quiz questions to be limited to their notes only or also be able to access intern
 - Chat prompt recommendations - quick usability
 - Upload pdfs since most users have notes as pdf
+- Clarify intended flows and flows TAs/prof H should not attempt
 
 
