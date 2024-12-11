@@ -23,6 +23,8 @@ struct ChatView: View {
     @State private var isMessageSelectionViewPresented = false
     @State private var showSaveConfirmation = false
     @State private var saveConfirmationMessage = ""
+    @State private var showSwitchConfirmation = false
+    @State private var scopeToSwitch = ""
     @State private var notesOnlyChatScope: Bool = false
     @State private var suggestedMessages: [String] = []
     
@@ -333,16 +335,21 @@ struct ChatView: View {
                 fetchSuggestions()
             }
             .onChange(of: selectedScope) { oldScope, newScope in
-                if newScope != "General" {
-                    fetchNotes(for: newScope)
-                } else {
-                    courseNotes = []
+                if oldScope != newScope && messages.count > 1 {
+                    switchScope(newScope)
                 }
-                clearChat()
-                fetchSuggestions()
+                else {
+                    showSwitchConfirmation = true
+                    scopeToSwitch = newScope
+                }
             }
             .alert(isPresented: $showSaveConfirmation) {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
+            }
+            .alert(isPresented: $showSwitchConfirmation) {
+                Alert(title: Text("Switching Courses"), message: Text("Are you sure you want to switch courses? You will lose any unsaved data."), primaryButton: .destructive(Text("Switch")) {
+                    switchScope(scopeToSwitch)
+                }, secondaryButton: .cancel())
             }
             .onReceive(NotificationCenter.default.publisher(for: .resetChatView)) { _ in
                 resetChatView()
@@ -560,6 +567,16 @@ struct ChatView: View {
         isLoading = false
         selectedCourse = nil
         selectedScope = "General"
+    }
+
+  private func switchScope(newScope: String) {
+        if newScope != "" && newScope != "General" {
+            fetchNotes(for: newScope)
+        } else {
+            courseNotes = []
+        }
+        clearChat()
+        fetchSuggestions()
     }
 }
 
