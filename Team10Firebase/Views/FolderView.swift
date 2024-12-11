@@ -1,6 +1,3 @@
-
-
-
 import SwiftUI
 
 class FolderEditStates: ObservableObject {
@@ -18,74 +15,66 @@ struct FolderView: View {
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
 
-
     var body: some View {
-      ZStack {
-        ScrollView {
-          VStack(alignment: .leading) {
-            Text("Notes")
-              .font(.headline)
-            LazyVGrid(columns: [
-                GridItem(.flexible(), alignment: .top),
-                GridItem(.flexible(), alignment: .top),
-                GridItem(.flexible(), alignment: .top),
-                GridItem(.flexible(), alignment: .top)
-            ], spacing: 10) {
-                ForEach(folderViewModel.notes, id: \.id) { note in
-                    ZStack(alignment: .topTrailing) {
-                        NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
-                            VStack {
-                                Image("note")
-                                    .resizable()
-                                    .frame(width: 70, height: 70)
-                                Text(note.title)
-                                    .font(.body)
-                                    .frame(maxWidth: .infinity)
-                                    .foregroundColor(.black)
+        VStack(alignment: .leading, spacing: 16) {
+            Text(folderViewModel.folder.folderName)
+                .font(.largeTitle)
+                .bold()
+                .padding(.horizontal)
+            
+            ScrollView {
+                LazyVGrid(columns: [
+                    GridItem(.flexible(), alignment: .top),
+                    GridItem(.flexible(), alignment: .top),
+                    GridItem(.flexible(), alignment: .top)
+                ], spacing: 10) {
+                    ForEach(folderViewModel.notes, id: \.id) { note in
+                        ZStack(alignment: .topTrailing) {
+                            NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course)) {
+                                VStack {
+                                  Image(systemName: "text.document.fill")
+                                      .resizable()
+                                      .aspectRatio(contentMode: .fit)
+                                      .frame(width: 70, height: 70)
+                                      .foregroundColor(tan)
+                                    Text(note.title)
+                                        .font(.body)
+                                        .frame(maxWidth: .infinity)
+                                        .foregroundColor(.black)
+                                }
+                            }
+                        }
+                        .contextMenu {
+                            Button(action: {
+                                editStates.noteToEdit = note
+                                editStates.showEditNoteModal = true
+                            }) {
+                                Label("Edit Note", systemImage: "pencil")
+                            }
+                            
+                            Button(role: .destructive) {
+                                noteToDelete = note
+                                showDeleteNoteAlert = true
+                            } label: {
+                                Label("Delete Note", systemImage: "trash")
                             }
                         }
                     }
-                    .contextMenu {
-                        Button(action: {
-                            editStates.noteToEdit = note
-                            editStates.showEditNoteModal = true
-                        }) {
-                            Label("Edit Note", systemImage: "pencil")
-                        }
-                        
-                        Button(role: .destructive) {
-                            noteToDelete = note
-                            showDeleteNoteAlert = true
-                        } label: {
-                            Label("Delete Note", systemImage: "trash")
-                        }
-                    }
                 }
+                .padding()
             }
-            Spacer()
-          }
         }
-        
-        VStack {
-            Spacer()
-            HStack {
-              Spacer()
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: {
                     editStates.showPlusActions = true
                 }) {
-                Image(systemName: "plus")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 24, height: 24)
-                    .padding(20)
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .clipShape(Circle())
-                    .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                    Image(systemName: "document.badge.plus")
+                        .foregroundColor(darkBrown)
+                        .imageScale(.large)
                 }
             }
-            .padding(.bottom, 20)
-            .padding(.trailing, 20)
         }
         .confirmationDialog("Create", isPresented: $editStates.showPlusActions, titleVisibility: .hidden) {
             Button("New Note") {
@@ -93,59 +82,50 @@ struct FolderView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-        .padding(.top, 20)
         .sheet(isPresented: $showAddNoteModal) {
             AddNoteModal(
                 onNoteCreated: {
-                  folderViewModel.fetchNotes()
+                    folderViewModel.fetchNotes()
                 },
-                // updateFolderNotes: {
-                //   folderViewModel.updateFolderNotes()
-                // },
                 firebase: firebase,
                 course: course,
                 folder: folderViewModel.folder
             )
         }
-      }
-      .sheet(isPresented: $editStates.showEditNoteModal) {
-          if let note = editStates.noteToEdit {
-              EditNoteModal(
-                  note: note,
-                  firebase: firebase,
-                  onNoteUpdated: {
-                      folderViewModel.fetchNotes()
-                      editStates.showEditNoteModal = false
-                  }
-              )
-          }
-      }
-
-      .padding()
-      .navigationTitle("\(folderViewModel.folder.folderName)")
-      .onAppear {
-        folderViewModel.fetchNotes()
-      }
-      .alert(isPresented: $showDeleteNoteAlert) {
-          Alert(
-              title: Text("Delete Note"),
-              message: Text("Are you sure you want to delete this note?"),
-              primaryButton: .destructive(Text("Delete")) {
-                  if let note = noteToDelete {
-                    firebase.deleteNote(note: note, folderID: folderViewModel.folder.id ?? "") { error in
-                          if let error = error {
-                              print("Error deleting note: \(error.localizedDescription)")
-                          } else {
-                            folderViewModel.fetchNotes() 
-                          }
-                      }
-                  }
-              },
-              secondaryButton: .cancel()
-          )
-      }
+        .sheet(isPresented: $editStates.showEditNoteModal) {
+            if let note = editStates.noteToEdit {
+                EditNoteModal(
+                    note: note,
+                    firebase: firebase,
+                    onNoteUpdated: {
+                        folderViewModel.fetchNotes()
+                        editStates.showEditNoteModal = false
+                    }
+                )
+            }
+        }
+        .onAppear {
+            folderViewModel.fetchNotes()
+        }
+        .alert(isPresented: $showDeleteNoteAlert) {
+            Alert(
+                title: Text("Delete Note"),
+                message: Text("Are you sure you want to delete this note?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    if let note = noteToDelete {
+                        firebase.deleteNote(note: note, folderID: folderViewModel.folder.id ?? "") { error in
+                            if let error = error {
+                                print("Error deleting note: \(error.localizedDescription)")
+                            } else {
+                                folderViewModel.fetchNotes()
+                            }
+                        }
+                    }
+                },
+                secondaryButton: .cancel()
+            )
+        }
     }
-
 }
 
 private let dateFormatter: DateFormatter = {

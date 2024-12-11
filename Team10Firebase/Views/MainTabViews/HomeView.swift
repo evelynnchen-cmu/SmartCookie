@@ -47,7 +47,7 @@ struct HomeView: View {
 
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
-    @State private var navigationPath = NavigationPath()
+    @Binding var navigationPath: NavigationPath
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -208,7 +208,7 @@ struct HomeView: View {
             }
             .onReceive(NotificationCenter.default.publisher(for: .resetHomeView)) { _ in
                 // Reset the HomeView to its root
-                navigationPath = NavigationPath()
+                navigationPath.removeLast(navigationPath.count)
             }
             .navigationDestination(for: Course.self) { course in
                 CourseView(course: course, firebase: firebase, navigationPath: $navigationPath)

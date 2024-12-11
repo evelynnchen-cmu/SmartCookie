@@ -59,135 +59,125 @@ struct CourseView: View {
         }
     }
 
-    var body: some View {
-        ZStack {
-            ScrollView {
-              VStack(alignment: .leading, spacing: 8) {
-                recentNoteSummarySection
-                  .padding(.top)
-                fileSection
+  var body: some View {
+      VStack(alignment: .leading, spacing: 16) {
+          Text(viewModel.course.courseName)
+              .font(.largeTitle)
+              .bold()
+              .padding(.horizontal)
+
+          ScrollView {
+              VStack(alignment: .leading, spacing: 16) {
+                  recentNoteSummarySection
+                  fileSection
               }
-              .padding(.bottom, 80)
+              .padding(.bottom, 20)
               .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .sheet(isPresented: $isAddingFolder) {
-              FolderModal(
-                onFolderCreated: {
+          }
+      }
+      .navigationBarTitleDisplayMode(.inline)
+      .toolbar {
+          ToolbarItem(placement: .navigationBarTrailing) {
+              Button(action: {
+                  editStates.showPlusActions = true
+              }) {
+                  Image(systemName: "document.badge.plus")
+                      .foregroundColor(darkBrown)
+                      .imageScale(.large)
+              }
+          }
+      }
+      .confirmationDialog("Create", isPresented: $editStates.showPlusActions, titleVisibility: .hidden) {
+          Button("New Note") {
+              isAddingNote = true
+          }
+          Button("New Folder") {
+              isAddingFolder = true
+          }
+          Button("Cancel", role: .cancel) {}
+      }
+      .sheet(isPresented: $isAddingFolder) {
+          FolderModal(
+              onFolderCreated: {
                   viewModel.fetchData()
-                },
-                firebase: viewModel.firebase,
-                course: viewModel.course
-              )
-            }
-            .sheet(isPresented: $isAddingNote) {
-              AddNoteModal(
-                onNoteCreated: {
+              },
+              firebase: viewModel.firebase,
+              course: viewModel.course
+          )
+      }
+      .sheet(isPresented: $isAddingNote) {
+          AddNoteModal(
+              onNoteCreated: {
                   viewModel.fetchData()
-                },
-                firebase: viewModel.firebase,
-                course: viewModel.course,
-                folder: nil
-              )
-            }
-            .sheet(isPresented: $editStates.showEditFolderModal) {
-              if let folder = editStates.folderToEdit {
-                EditFolderModal(
+              },
+              firebase: viewModel.firebase,
+              course: viewModel.course,
+              folder: nil
+          )
+      }
+      .sheet(isPresented: $editStates.showEditFolderModal) {
+          if let folder = editStates.folderToEdit {
+              EditFolderModal(
                   folder: folder,
                   firebase: viewModel.firebase,
                   onFolderUpdated: {
-                    viewModel.fetchData()
-                    editStates.showEditFolderModal = false
+                      viewModel.fetchData()
+                      editStates.showEditFolderModal = false
                   }
-                )
-              }
-            }
-            .sheet(isPresented: $editStates.showEditNoteModal) {
-              if let note = editStates.noteToEdit {
-                EditNoteModal(
+              )
+          }
+      }
+      .sheet(isPresented: $editStates.showEditNoteModal) {
+          if let note = editStates.noteToEdit {
+              EditNoteModal(
                   note: note,
                   firebase: viewModel.firebase,
                   onNoteUpdated: {
-                    viewModel.fetchData()
-                    editStates.showEditNoteModal = false
+                      viewModel.fetchData()
+                      editStates.showEditNoteModal = false
                   }
-                )
-              }
-            }
-            .onAppear {
-              viewModel.fetchData()
-            }
-            .alert(item: $activeAlert) { alert in
-              switch alert {
-              case .deleteFolder:
-                return Alert(
+              )
+          }
+      }
+      .onAppear {
+          viewModel.fetchData()
+      }
+      .alert(item: $activeAlert) { alert in
+          switch alert {
+          case .deleteFolder:
+              return Alert(
                   title: Text("Delete Folder"),
                   message: Text("Are you sure you want to delete this folder and all its notes?"),
                   primaryButton: .destructive(Text("Delete")) {
-                    if let folder = folderToDelete {
-                      viewModel.deleteFolder(folder)
-                    }
+                      if let folder = folderToDelete {
+                          viewModel.deleteFolder(folder)
+                      }
                   },
                   secondaryButton: .cancel()
-                )
-              case .deleteNote:
-                return Alert(
+              )
+          case .deleteNote:
+              return Alert(
                   title: Text("Delete Note"),
                   message: Text("Are you sure you want to delete this note?"),
                   primaryButton: .destructive(Text("Delete")) {
-                    if let note = noteToDelete {
-                      viewModel.deleteNote(note)
-                    }
+                      if let note = noteToDelete {
+                          viewModel.deleteNote(note)
+                      }
                   },
                   secondaryButton: .cancel()
-                )
-              }
-            }
-            .navigationDestination(for: Note.self) { note in
-              NoteView(firebase: firebase, note: note, course: course)
-            }
-            .navigationDestination(for: Folder.self) { folder in
-              FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
-            }
-            
-            VStack {
-            Spacer()
-            
-            HStack {
-              Spacer()
-                Button(action: {
-                    editStates.showPlusActions = true
-                }){
-                  Image(systemName: "plus.square.fill")
-                      .resizable()
-                      .frame(width: 50, height: 50)
-                      .foregroundColor(.black)
-              }
-            }
-            .padding(.bottom, 20)
-            .padding(.trailing, 20)
+              )
           }
-        }
-        .confirmationDialog("Create", isPresented: $editStates.showPlusActions, titleVisibility: .hidden) {
-            Button("New Note") {
-                isAddingNote = true
-            }
-            Button("New Folder") {
-                isAddingFolder = true
-            }
-            Button("Cancel", role: .cancel) {}
-        }
-    }
+      }
+      .navigationDestination(for: Note.self) { note in
+          NoteView(firebase: firebase, note: note, course: course)
+      }
+      .navigationDestination(for: Folder.self) { folder in
+          FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
+      }
+  }
 
   private var recentNoteSummarySection: some View {
       VStack(alignment: .leading, spacing: 16) {
-
-          Text(viewModel.course.courseName)
-              .font(.title)
-              .fontWeight(.bold)
-              .foregroundColor(.black)
-              .padding(.horizontal)
-
-
           VStack(alignment: .leading, spacing: 8) {
               Text("Get caught up!")
                   .font(.title2)
@@ -240,10 +230,9 @@ struct CourseView: View {
       VStack(alignment: .leading, spacing: 16) {
           LazyVGrid(
               columns: [
-                  GridItem(.flexible()),
-                  GridItem(.flexible()),
-                  GridItem(.flexible()),
-                  GridItem(.flexible())
+                  GridItem(.flexible(), alignment: .top),
+                  GridItem(.flexible(), alignment: .top),
+                  GridItem(.flexible(), alignment: .top)
               ],
               spacing: 20
           ) {
@@ -263,11 +252,11 @@ struct CourseView: View {
                               .foregroundColor(darkBrown)
                           Text(folder.folderName)
                               .font(.subheadline)
-                              .lineLimit(2)
+                              .lineLimit(nil)
                               .multilineTextAlignment(.center)
-                              .frame(height: 40)
                               .foregroundColor(.black)
                       }
+                      .frame(height: 120)
                   }
                   .contextMenu {
                       Button(action: {
@@ -296,11 +285,11 @@ struct CourseView: View {
                               .foregroundColor(tan)
                           Text(note.title)
                               .font(.subheadline)
-                              .lineLimit(2)
+                              .lineLimit(nil)
                               .multilineTextAlignment(.center)
-                              .frame(height: 40)
                               .foregroundColor(.black)
                       }
+                      .frame(height: 120)
                   }
                   .contextMenu {
                       Button(action: {
