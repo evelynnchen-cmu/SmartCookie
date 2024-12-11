@@ -8,11 +8,6 @@
 import Foundation
 import SwiftUI
 
-//struct MessageBubble: Identifiable {
-//    let id: UUID
-//    let content: String
-//    let isUser: Bool
-//}
 
 struct MessageSelectionView: View {
     let messages: [MessageBubble]
@@ -26,8 +21,8 @@ struct MessageSelectionView: View {
         VStack {
             // Header
             HStack {
-                Image(systemName: "minus")
-                    .foregroundColor(.black)
+                // Image(systemName: "minus")
+                //     .foregroundColor(.black)
                 Spacer()
                 Text("Choose to save")
                     .font(.title2)

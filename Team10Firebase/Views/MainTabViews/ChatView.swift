@@ -346,132 +346,6 @@ struct ChatView: View {
             }
         }
     }
-
-    struct ChatHeaderView: View {
-        @Binding var selectedScope: String
-        @Binding var isMessageSelectionViewPresented: Bool
-        @Binding var isChatViewPresented: Bool?
-        @ObservedObject var firebase: Firebase
-
-        var body: some View {
-            HStack {
-                Button(action: { isMessageSelectionViewPresented = true }) {
-                    Image(systemName: "square.and.arrow.down.on.square")
-                        .foregroundColor(.black)
-                }
-                Spacer()
-                Menu {
-                    Button("General") {
-                        selectedScope = "General"
-                    }
-                    ForEach(firebase.courses, id: \.id) { course in
-                        Button(course.courseName) {
-                            selectedScope = course.id ?? "General"
-                        }
-                    }
-                } label: {
-                    Text(selectedScope)
-                }
-                Spacer()
-                if let isPresented = isChatViewPresented {
-                    Button(action: { isChatViewPresented = false }) {
-                        Image(systemName: "xmark").foregroundColor(.black)
-                    }
-                }
-            }
-            .padding()
-        }
-    }
-
-    struct EmptyChatView: View {
-        var body: some View {
-            VStack {
-                Spacer()
-                Text("No messages yet. Start a conversation!")
-                    .foregroundColor(.gray)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Spacer()
-            }
-        }
-    }
-
-    struct ChatMessagesView: View {
-        @Binding var messages: [MessageBubble]
-        @Binding var selectedMessages: Set<UUID>
-        @Binding var isMessageSelectionViewPresented: Bool
-        @Binding var isLoading: Bool
-        var notesOnlyChatScope: Bool
-
-        var body: some View {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(messages) { message in
-                        HStack {
-                            if message.isUser {
-                                Spacer()
-                                Text(message.content)
-                                    .padding()
-                                    .background(Color.blue.opacity(0.2))
-                                    .cornerRadius(8)
-                            } else {
-                                Text(message.content)
-                                    .padding()
-                                    .background(Color.gray.opacity(0.2))
-                                    .cornerRadius(8)
-                                Spacer()
-                            }
-                        }
-                    }
-                    if isLoading {
-                        Text("Loading...").foregroundColor(.gray)
-                    }
-                }
-            }
-        }
-    }
-
-    struct SuggestedMessagesView: View {
-        @Binding var userInput: String
-        @Binding var suggestedMessages: [String]
-
-        var body: some View {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    ForEach(suggestedMessages, id: \.self) { suggestion in
-                        Button(action: { userInput = suggestion }) {
-                            Text(suggestion)
-                                .padding()
-                                .background(Color.blue.opacity(0.1))
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-                .padding()
-            }
-        }
-    }
-
-    struct ChatInputView: View {
-        @Binding var userInput: String
-        @Binding var isLoading: Bool
-        var sendMessage: () -> Void
-
-        var body: some View {
-            HStack {
-                TextField("Type a message...", text: $userInput)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                Button(action: sendMessage) {
-                    Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 24))
-                }
-                .disabled(isLoading || userInput.isEmpty)
-            }
-            .padding()
-        }
-    }
 }
 
 struct MessageBubble: Identifiable, Equatable {
@@ -491,5 +365,75 @@ struct ScopeIndicator: View {
             .foregroundColor(.gray)
             .frame(maxWidth: .infinity, alignment: .center)
             .padding(.vertical, 4)
+    }
+}
+
+struct ChatInputView: View {
+    @Binding var userInput: String
+    @Binding var isLoading: Bool
+    var sendMessage: () -> Void
+
+    var body: some View {
+        HStack {
+            TextField("Type a message...", text: $userInput)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(8)
+            Button(action: sendMessage) {
+                Image(systemName: "arrow.up.circle.fill")
+                    .font(.system(size: 24))
+            }
+            .disabled(isLoading || userInput.isEmpty)
+        }
+        .padding()
+    }
+}
+
+struct ChatHeaderView: View {
+    @Binding var selectedScope: String
+    @Binding var isMessageSelectionViewPresented: Bool
+    @Binding var isChatViewPresented: Bool?
+    @ObservedObject var firebase: Firebase
+
+    var body: some View {
+        HStack {
+            Button(action: { isMessageSelectionViewPresented = true }) {
+                Image(systemName: "square.and.arrow.down.on.square")
+                    .foregroundColor(.black)
+            }
+            Spacer()
+            Menu {
+                Button("General") {
+                    selectedScope = "General"
+                }
+                ForEach(firebase.courses, id: \.id) { course in
+                    Button(course.courseName) {
+                        selectedScope = course.id ?? "General"
+                    }
+                }
+            } label: {
+                Text(selectedScope)
+            }
+            Spacer()
+            if let isPresented = isChatViewPresented {
+                Button(action: { isChatViewPresented = false }) {
+                    Image(systemName: "xmark").foregroundColor(.black)
+                }
+            }
+        }
+        .padding()
+    }
+}
+
+struct EmptyChatView: View {
+    var body: some View {
+        VStack {
+            Spacer()
+            Text("No messages yet. Start a conversation!")
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+                .padding()
+            Spacer()
+        }
     }
 }
