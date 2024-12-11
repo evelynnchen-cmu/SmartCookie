@@ -15,8 +15,6 @@ struct MessageSelectionView: View {
     @Binding var isPresented: Bool
     @Binding var isFilePickerPresented: Bool
 
-    var lightBlue: Color = Color.blue.opacity(0.3) // Replace with your actual `lightBlue` definition if available
-
     var body: some View {
         VStack {
             // Header

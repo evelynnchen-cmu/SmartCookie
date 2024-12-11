@@ -379,9 +379,11 @@ struct ChatInputView: View {
                 .padding()
                 .background(Color(.systemGray6))
                 .cornerRadius(8)
+            
             Button(action: sendMessage) {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.system(size: 24))
+                    .foregroundColor(userInput.isEmpty ? lightBlue : mediumBlue)
             }
             .disabled(isLoading || userInput.isEmpty)
         }

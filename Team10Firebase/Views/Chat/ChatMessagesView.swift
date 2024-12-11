@@ -19,10 +19,10 @@ struct ChatMessagesView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(messages) { message in
-                    HStack(alignment: .bottom, spacing: 12) {
+                    HStack(alignment: .bottom, spacing: 8) {
                         if message.isUser {
-                            Spacer()
-
+                            Spacer() // Push user message to the right
+                            
                             VStack(alignment: .trailing, spacing: 4) {
                                 Text(message.content)
                                     .padding(.horizontal, 16)
@@ -30,7 +30,6 @@ struct ChatMessagesView: View {
                                     .background(lightBlue)
                                     .foregroundColor(.black)
                                     .clipShape(BubbleShape(isUser: true))
-                                    .offset(y: 25)
                                     .contextMenu {
                                         Button(action: {
                                             selectedMessages.insert(message.id)
@@ -40,20 +39,13 @@ struct ChatMessagesView: View {
                                         }
                                     }
                             }
-
-                            // User Profile Picture
-                            Text("EC")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(darkBlue)
-                                .frame(width: 40, height: 40)
-                                .background(lightBlue)
-                                .clipShape(Circle())
                         } else {
                             // Assistant Profile Picture
                             Image("cookieIcon")
                                 .resizable()
                                 .frame(width: 40, height: 40)
                                 .clipShape(Circle())
+                                .offset(y: 8)
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(message.content)
@@ -62,7 +54,6 @@ struct ChatMessagesView: View {
                                     .background(tan)
                                     .foregroundColor(.black)
                                     .clipShape(BubbleShape(isUser: false))
-                                    .offset(y: 25)
                                     .contextMenu {
                                         Button(action: {
                                             selectedMessages.insert(message.id)
@@ -72,8 +63,6 @@ struct ChatMessagesView: View {
                                         }
                                     }
                             }
-
-                            Spacer()
                         }
                     }
                     .padding(.vertical, 4)
