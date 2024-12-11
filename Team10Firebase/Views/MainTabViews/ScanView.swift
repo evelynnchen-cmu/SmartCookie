@@ -4,7 +4,6 @@
 import SwiftUI
 
 struct ScanView: View {
-    // @State var capturedImage: UIImage?
     @State private var capturedImages: [UIImage] = []
     @State private var showCamera = true
 //  TODO: Refactor so scanview and noteview use same fb object
@@ -15,14 +14,10 @@ struct ScanView: View {
     @State private var alertMessage = ""
     @State private var courses: [Course] = []
     @State private var course: Course? = nil
-    @State private var showSaveForm = false
     @State private var courseName = ""
     @State private var noteTitle = ""
     @State private var selectedTab = 0 // For the images
 
-    // @State private var selectedTabIndex = 0 // For home
-    // @State private var navigateToCourse: Course?
-    // @State private var navigateToNote: Note?
     @Binding var selectedTabIndex: Int
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
@@ -30,33 +25,33 @@ struct ScanView: View {
     var body: some View {
       NavigationStack {
         ZStack {
-          Color.blue.opacity(0.2).edgesIgnoringSafeArea(.all) // Background color for the entire view
+          tan.edgesIgnoringSafeArea(.all) // Background color for the entire view
           VStack {
-            Text("Scan Results")
+            Text("Images Taken")
               .font(.title)
               .padding(.top)
             
             TabView(selection: $selectedTab) {
               // iPhone 11 image size: 3024.0 x 4032.0
-              ForEach(capturedImages.indices, id: \.self) { index in
+             ForEach(capturedImages.indices, id: \.self) { index in
                 Image(uiImage: capturedImages[index])
                   .resizable()
                   .scaledToFit()
                   .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
-                //                          .padding()
                   .tag(index) // Tag each image with its index
               }
               
               
               ZStack {
                 Rectangle()
-                  .fill(Color.gray.opacity(0.5))
+                  //  .fill(Color.gray.opacity(0.5))
+                  .fill(.white)
                   .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
                   .overlay(
                     //                                RoundedRectangle(cornerRadius: 10)
                     Rectangle()
                       .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
-                      .foregroundColor(.black)
+                      .foregroundColor(darkBrown)
                   )
                   .onTapGesture {
                     showCamera = true
@@ -64,14 +59,15 @@ struct ScanView: View {
                 VStack {
                   Image(systemName: "plus")
                     .font(.largeTitle)
-                  Text("Add new Picture")
+                    .padding()
+                  Text("Add new picture")
                     .font(.headline)
                 }
-                .foregroundColor(.white)
+                // .foregroundColor(.white)
+                .foregroundColor(.black)
               }
               .tag(capturedImages.count)
             }
-            //                .background(Color.blue.opacity(0.2))
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .always))
             .frame(maxHeight: UIScreen.main.bounds.height - 300)
             .onAppear {
@@ -80,19 +76,18 @@ struct ScanView: View {
             
             if !capturedImages.isEmpty {
               Button("Extract All") {
-                showSaveForm = true
+                showTextParserView = true
               }
               .padding()
-              // .background(Color.green)
-              // .background(Color.gray.opacity(0.2))
-              .background(.white)
-              // .foregroundColor(.white)
-              .foregroundColor(.black)
+              .background(darkBrown)
+              .foregroundColor(.white)
               .cornerRadius(8)
+              .overlay(
+                  RoundedRectangle(cornerRadius: 8)
+                      .stroke(tan, lineWidth: 1)
+              )
             }
           }
-          //            }
-          //            .background(Color.blue.opacity(0.2))
           .fullScreenCover(isPresented: $showCamera) {
             CameraContainerView { image in
               self.capturedImages.append(image)
@@ -101,40 +96,21 @@ struct ScanView: View {
             }
           }
           .fullScreenCover(isPresented: $showTextParserView) {
-            if let course = course {
-              TextParserView(
-                images: self.capturedImages,
-                firebase: firebase,
-                isPresented: $showTextParserView,
-                course: course,
-                title: noteTitle,
-                note: $navigateToNote
-              ) { message in
-                self.capturedImages = []
-                alertMessage = message
-                showAlert = true
-                self.selectedTabIndex = 0
-                self.navigateToCourse = course
-               self.navigateToNote = navigateToNote
-                NotificationCenter.default.post(name: .resetHomeView, object: nil)
-              }
-            }
-            else {
-              Text("Nil course")
-            }
-          }
-          .sheet(isPresented: $showSaveForm) {
-            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
-              if let courseObj = course {
-                self.course = courseObj
-              }
-              self.noteTitle = title
-            }
-          }
-          .onChange(of: showSaveForm) {
-            print("showSaveForm changed")
-            if course != nil {
-              showTextParserView = true
+            TextParserView(
+              images: self.capturedImages,
+              firebase: firebase,
+              isPresented: $showTextParserView,
+              course: $course,
+              title: noteTitle,
+              note: $navigateToNote
+            ) { message in
+              self.capturedImages = []
+              alertMessage = message
+              showAlert = true
+              self.selectedTabIndex = 0
+              self.navigateToCourse = course
+              self.navigateToNote = navigateToNote
+              NotificationCenter.default.post(name: .resetHomeView, object: nil)
             }
           }
           .onAppear() {
@@ -168,8 +144,9 @@ struct ScanView: View {
     }
 
     private func setupPageControlAppearance() {
-        UIPageControl.appearance().currentPageIndicatorTintColor = .blue
-        UIPageControl.appearance().pageIndicatorTintColor = UIColor.blue.withAlphaComponent(0.2)
+      // Colors for the progress state dots at the bottom
+        UIPageControl.appearance().currentPageIndicatorTintColor = UIColor(darkBrown)
+      UIPageControl.appearance().pageIndicatorTintColor = UIColor(.white)
     }
 }
 
