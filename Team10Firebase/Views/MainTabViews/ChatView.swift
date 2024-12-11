@@ -58,12 +58,10 @@ struct ChatView: View {
       self._needToSave = .constant(false)
     }
     if let course = selectedCourse {
-      print(course)
       self.selectedCourse = course
       self.selectedScope = course.id ?? "General"
     }
     else {
-      print("no course")
       self.selectedScope = "General"
     }
   }
@@ -331,7 +329,6 @@ struct ChatView: View {
             .onChange(of: messages) {
                 if messages.count > 1 {
                     needToSave = true
-                    print("NEEDTOSAVE")
                 }
                 fetchSuggestions()
             }
@@ -348,7 +345,7 @@ struct ChatView: View {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
             }
             .onReceive(NotificationCenter.default.publisher(for: .resetChatView)) { _ in
-                clearChat()
+                resetChatView()
             }
         }
     }
@@ -555,6 +552,14 @@ struct ChatView: View {
                 print("Updated Suggested Messages: \(self.suggestedMessages)")
             }
         }
+    }
+
+    private func resetChatView() {
+        clearChat()
+        userInput = ""
+        isLoading = false
+        selectedCourse = nil
+        selectedScope = "General"
     }
 }
 
