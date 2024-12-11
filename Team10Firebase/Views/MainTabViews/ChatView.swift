@@ -35,6 +35,10 @@ struct ChatView: View {
     @State private var lastValidScope: String
     @State private var isCoursesLoaded: Bool = false
     @State private var cancellables = Set<AnyCancellable>()
+    @State private var lastWelcomeScope: String?
+    @State private var isClearingChat = false
+    @State private var localCourses: [Course] = []
+    @State private var localNotes: [String: [Note]] = [:]
 
     // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
@@ -127,30 +131,25 @@ struct ChatView: View {
             }
             .onAppear {
                 print("ChatView appeared with selectedScope: \(selectedScope)")
-                
+
                 if selectedScope != "General" {
-                    firebase.getNotes() // Add this line
-                    fetchNotes(for: selectedScope)
+                    fetchNotes(for: selectedScope) { _ in
+                        clearChat()
+                    }
                 } else {
                     courseNotes = []
+                    clearChat()
                 }
-
-                clearChat()
-            }
-            .onChange(of: isTextFieldFocused) { isFocused in
-                print("TextField focus changed: \(isFocused)")
             }
             .onChange(of: messages) {
                 fetchSuggestions()
             }
             .onChange(of: selectedScope) { oldScope, newScope in
-                if newScope != "General" {
-                    fetchNotes(for: newScope)
-                } else {
-                    courseNotes = [] // Clear notes only for General
-                }
+                guard newScope != oldScope else { return } // Prevent unnecessary updates
+                print("Scope changed from \(oldScope) to \(newScope)")
+                
+                // Clear chat and fetch notes for the new scope
                 clearChat()
-                fetchSuggestions()
             }
             .alert(isPresented: $showSaveConfirmation) {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
@@ -170,51 +169,8 @@ struct ChatView: View {
             .sink { courses in
                 print("Received courses update: \(courses.count) courses")
                 self.isCoursesLoaded = true
-                self.validateScope()
             }
             .store(in: &cancellables)
-    }
-
-    func validateScope() {
-        guard !firebase.courses.isEmpty else {
-            print("Waiting for courses to load...")
-            return
-        }
-        
-        // Validate current scope
-        if selectedScope != "General" && !firebase.courses.contains(where: { $0.id == selectedScope }) {
-            print("Invalid scope detected, resetting to last valid: \(lastValidScope)")
-            selectedScope = lastValidScope
-        }
-
-        if messages.isEmpty || selectedScope == "General" {
-            clearChat()
-        }
-    }
-
-    private func validateScopeAfterCoursesLoaded() {
-        guard !firebase.courses.isEmpty else {
-            print("Courses not loaded yet.")
-            return
-        }
-
-        if selectedScope != "General" && !firebase.courses.contains(where: { $0.id == selectedScope }) {
-            print("Invalid selected scope (\(selectedScope)). Resetting to General.")
-            selectedScope = lastValidScope // Use last known valid scope
-        } else {
-            print("Scope integrity validated: \(selectedScope)")
-        }
-    }
-
-
-    private func handleScopeChange(newScope: String) {
-        if newScope != "General" {
-            fetchNotes(for: newScope)
-        } else {
-            courseNotes = []
-        }
-        clearChat()
-        fetchSuggestions()
     }
 
     private func appendMessagesToNoteContent(note: Note) {
@@ -350,67 +306,76 @@ struct ChatView: View {
 
     // Fetches notes for a specific course and updates courseNotes.
     // - Parameter courseID: The ID of the course for which to fetch notes.
-    func fetchNotes(for courseID: String) {
-        print("Attempting to fetch notes for course ID: \(courseID)")
-        
-        // Watch for changes in firebase.notes
+    func fetchNotes(for courseID: String, completion: @escaping ([Note]) -> Void) {
+        print("Fetching notes for course ID: \(courseID)")
+
+        // Try fetching from Firebase
+        firebase.getNotes()
+
         firebase.$notes
             .receive(on: DispatchQueue.main)
             .sink { notes in
-                print("Received \(notes.count) total notes")
-                let filteredNotes = notes.filter { note in
-                    note.courseID == courseID
-                }
-                print("Found \(filteredNotes.count) notes for course \(courseID)")
-                self.courseNotes = filteredNotes
-                
-                // Debug print the filtered notes
-                filteredNotes.forEach { note in
-                    print("Note for course \(courseID): \(note.title)")
+                let filteredNotes = notes.filter { $0.courseID == courseID }
+                if !filteredNotes.isEmpty {
+                    print("Fetched \(filteredNotes.count) notes from Firebase for course \(courseID)")
+                    self.courseNotes = filteredNotes
+                    completion(filteredNotes)
+                } else {
+                    // Fallback to local notes if Firebase fetch fails or is empty
+                    print("Using local notes for course \(courseID)")
+                    let localFilteredNotes = self.localNotes[courseID] ?? []
+                    self.courseNotes = localFilteredNotes
+                    completion(localFilteredNotes)
                 }
             }
             .store(in: &cancellables)
-        
-        // Make sure we have fresh notes data
-        firebase.getNotes()
     }
 
+    // Clears the chat view and resets the message history.
     func clearChat() {
+        // Remove all messages and reset history
         messages.removeAll()
-        messagesHistory = [
-            ["role": "system", "content": systemPrompt]
-        ]
-        
+        messagesHistory = [["role": "system", "content": systemPrompt]]
+
         if selectedScope == "General" {
-            let welcomeMessage = "Hello, you're in the general chat, where you can ask questions about any topic. If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. You can also use the clickable prompts at the bottom to start a conversation. Don't forget to save any useful responses to your notes before exiting!"
-            messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
-            messagesHistory.append(["role": "assistant", "content": welcomeMessage])
+            let generalWelcomeMessage = """
+            Hello, you're in the general chat, where you can ask questions about any topic. 
+            If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. 
+            You can also use the clickable prompts at the bottom to start a conversation. 
+            Don't forget to save any useful responses to your notes before exiting!
+            """
+            // Add general chat welcome message
+            messages.append(MessageBubble(content: generalWelcomeMessage, isUser: false, isMarkdown: true))
+            messagesHistory.append(["role": "assistant", "content": generalWelcomeMessage])
         } else {
-            // Fetch notes and wait for them before showing welcome message
-            fetchNotes(for: selectedScope)
-            
-            // Create a new cancellable for just the welcome message
-            let welcomeSubscription = firebase.$notes
-                .receive(on: DispatchQueue.main)
-                .first() // Only take the first emission
-                .sink { notes in
-                    let courseName = firebase.courses.first(where: { $0.id == selectedScope })?.courseName ?? "selected course"
-                    let courseSpecificNotes = notes.filter { $0.courseID == selectedScope }
-                    
-                    let welcomeMessage: String
-                    if courseSpecificNotes.isEmpty {
-                        welcomeMessage = "Hello, you're in the \(courseName) chat. I don't see any notes for this course yet. Feel free to ask general questions about \(courseName), or use the clickable prompts at the bottom of the screen to start a conversation."
+            // Fetch course-specific notes
+            fetchNotes(for: selectedScope) { notes in
+                DispatchQueue.main.async {
+                    // Ensure we are clearing previous welcome messages for consistency
+                    self.messages.removeAll()
+
+                    let courseName = self.firebase.courses.first(where: { $0.id == self.selectedScope })?.courseName ?? "selected course"
+                    let courseWelcomeMessage: String
+
+                    if notes.isEmpty {
+                        courseWelcomeMessage = """
+                        Hello, you're in the \(courseName) chat. I don't see any notes for this course yet. 
+                        Feel free to ask general questions about \(courseName), or use the clickable prompts at the bottom of the screen to start a conversation.
+                        """
                     } else {
-                        let sampleNotes = courseSpecificNotes.prefix(3).map { $0.title }.joined(separator: ", ")
-                        welcomeMessage = "Hello, you're in the \(courseName) chat, and I can see your notes including \(sampleNotes). Feel free to type out any questions about the material from this course, or use the clickable prompts at the bottom of the screen to start a conversation. Don't forget to save any useful responses to your notes before exiting!"
+                        let sampleNotes = notes.prefix(3).map { $0.title }.joined(separator: ", ")
+                        courseWelcomeMessage = """
+                        Hello, you're in the \(courseName) chat, and I can see your notes including \(sampleNotes). 
+                        Feel free to type out any questions about the material from this course, or use the clickable prompts at the bottom to start a conversation. 
+                        Don't forget to save any useful responses to your notes before exiting!
+                        """
                     }
-                    
-                    messages.append(MessageBubble(content: welcomeMessage, isUser: false, isMarkdown: true))
-                    messagesHistory.append(["role": "assistant", "content": welcomeMessage])
+
+                    // Add the welcome message for the specific course
+                    self.messages.append(MessageBubble(content: courseWelcomeMessage, isUser: false, isMarkdown: true))
+                    self.messagesHistory.append(["role": "assistant", "content": courseWelcomeMessage])
                 }
-            
-            // Store the subscription so it's not immediately deallocated
-            cancellables.insert(welcomeSubscription)
+            }
         }
     }
     
@@ -509,7 +474,7 @@ struct ChatInputView: View {
                 .cornerRadius(12)
             
             Button(action: sendMessage) {
-                Image(systemName: "arrow.up.circle.fill")
+                Image(systemName: "arrow.right.circle.fill")
                     .font(.system(size: 24))
                     .foregroundColor(userInput.isEmpty ? lightBlue : mediumBlue)
             }
