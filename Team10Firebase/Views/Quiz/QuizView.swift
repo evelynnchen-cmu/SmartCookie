@@ -128,69 +128,72 @@ private struct LoadingView: View {
     let hasCompletedStreakToday: Bool
     let streakLength: Int
     
-    private func cookieOpacity(for index: Int, currentRotation: Double) -> Double {
-        let normalizedIndex = Int(currentRotation / 45) % 8
-        if index == normalizedIndex {
-            return 1.0
-        } else if index == (normalizedIndex + 1) % 8 {
-            return 0.7
-        } else {
-            return 0.4
-        }
-    }
-    
     var body: some View {
         VStack(spacing: 32) {
-            TimelineView(.animation(minimumInterval: 0.01)) { timeline in
-                ZStack {
-                    ForEach(0..<8) { index in
-                        Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30, height: 30)
-                            .offset(y: -50)
-                            .rotationEffect(.degrees(Double(index) * 45))
-                            .opacity(cookieOpacity(
-                                for: index,
-                                currentRotation: timeline.date.timeIntervalSince1970 * 500
-                            ))
-                    }
+            HStack(spacing: 16) {
+                ForEach(0..<3) { index in
+                    Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 40, height: 40)
+                        .modifier(WaveBounceModifier(index: index))
                 }
-                .frame(width: 120, height: 120)
             }
+            .frame(height: 50)
             
             VStack(spacing: 16) {
-                Text("Loading Questions...")
-                    .font(.system(size: 28, weight: .bold))
+                Text("Loading Questions")
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundColor(darkBrown)
                 
-              if !hasCompletedStreakToday {
-                  VStack(spacing: 8) {
-                      HStack(spacing: 4) {
-                          Text("\(streakLength) day streak")
-                              .font(.headline)
-                              .foregroundColor(.orange)
-                          Image(systemName: "flame.fill")
-                              .foregroundColor(.orange)
-                      }
-                      
-                      Text("Score 80% or better to\nextend your streak!")
-                          .font(.subheadline)
-                          .foregroundColor(darkBrown.opacity(0.8))
-                          .multilineTextAlignment(.center)
-                          .fixedSize(horizontal: false, vertical: true)
-                  }
-                  .frame(maxWidth: 200)
-                  .padding(.horizontal, 16)
-                  .padding(.vertical, 12)
-                  .background(
-                      RoundedRectangle(cornerRadius: 12)
-                          .fill(Color.orange.opacity(0.1))
-                  )
-              }
+                if !hasCompletedStreakToday {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Text("\(streakLength) day streak")
+                                .font(.headline)
+                                .foregroundColor(.orange)
+                            Image(systemName: "flame.fill")
+                                .foregroundColor(.orange)
+                        }
+                        
+                        Text("Score 80% or better to\nextend your streak!")
+                            .font(.subheadline)
+                            .foregroundColor(darkBrown.opacity(0.8))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: 200)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange.opacity(0.1))
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct WaveBounceModifier: ViewModifier {
+    let index: Int
+    @State private var isAnimating = false
+    
+    func body(content: Content) -> some View {
+        content
+            .offset(y: isAnimating ? -15 : 0)
+            .animation(
+                Animation
+                    .easeInOut(duration: 0.4)
+                    .repeatForever(autoreverses: true)
+                    .delay(Double(index) * 0.1)
+                    .speed(0.7),
+                value: isAnimating
+            )
+            .onAppear {
+                isAnimating = true
+            }
     }
 }
 
