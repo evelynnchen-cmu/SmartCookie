@@ -18,6 +18,8 @@ struct TextParserView: View {
   @State private var selectedImage: UIImage? = nil
   @State private var alertMessage = ""
   @State private var showAlert = false
+  @State private var showExitConfirmation = false
+  @State private var saveOrChatPressed = false
   @State private var navigateToNoteView = false
   @State private var isChatViewPresented: Bool? = false
   @State private var title: String // Passed in init
@@ -63,7 +65,11 @@ struct TextParserView: View {
                    HStack {
                        Spacer()
                        Button(action: {
-                           isPresented = false
+                        if !saveOrChatPressed {
+                            showExitConfirmation = true
+                        } else {
+                          isPresented = false
+                        }
                        }) {
                            Image(systemName: "xmark")
                                .foregroundColor(.black)
@@ -161,6 +167,7 @@ struct TextParserView: View {
                        HStack(spacing: 12) {
                            Button(action: {
                                isChatViewPresented = true
+                               saveOrChatPressed = true
                            }) {
                                Text("Chat Now")
                                    .frame(maxWidth: .infinity)
@@ -180,6 +187,7 @@ struct TextParserView: View {
                             } else {
                                 isSaving = true
                                 handleSave()
+                                saveOrChatPressed = true
                             }
                            }) {
                                Text("Save")
@@ -207,6 +215,16 @@ struct TextParserView: View {
        }
        .alert(isPresented: $showAlert) {
            Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+       }
+       .alert(isPresented: $showExitConfirmation) {
+           Alert(
+               title: Text("Exit Confirmation"),
+               message: Text("Are you sure you want to exit? Your data won't be saved."),
+               primaryButton: .destructive(Text("Exit")) {
+                   isPresented = false
+               },
+               secondaryButton: .cancel()
+           )
        }
        .fullScreenCover(isPresented: Binding(
            get: { isChatViewPresented ?? false },
@@ -244,6 +262,7 @@ struct TextParserView: View {
               self.title = title
               isSaving = true
               handleSave()
+              saveOrChatPressed = true
             }
           }
         
