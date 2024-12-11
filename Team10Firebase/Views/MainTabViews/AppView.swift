@@ -19,6 +19,7 @@ struct AppView: View {
   @State private var pendingTab: Tab?
 
   @State private var isKeyboardVisible = false
+  @State private var needToSave = false
 
   var body: some View {
         ZStack {
@@ -36,7 +37,8 @@ struct AppView: View {
                                 }
                             }
                     case .scan:
-                        ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote)
+                        ScanView(selectedTabIndex: .constant(0), navigateToCourse: $navigateToCourse, navigateToNote: $navigateToNote,
+                        needToSave: $needToSave)
                     case .chat:
                         ChatView()
                     }
@@ -50,7 +52,7 @@ struct AppView: View {
              Spacer()
              CustomTabBar(selectedTab: $selectedTab, tabs: Tab.allCases, onTabSelected: { tab in
                // Shows alert only if swtiching away from chat and scan tab
-               if selectedTab == .chat || selectedTab == .scan {
+               if (selectedTab == .chat || selectedTab == .scan) && needToSave {
                  pendingTab = tab
                  showAlert = true
                } else {
@@ -96,6 +98,7 @@ struct AppView: View {
                             NotificationCenter.default.post(name: .resetChatView, object: nil)
                         }
                         selectedTab = tab
+                        needToSave = false
                    }
                 },
                 secondaryButton: .cancel()

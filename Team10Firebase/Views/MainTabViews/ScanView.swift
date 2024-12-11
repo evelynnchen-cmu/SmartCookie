@@ -21,6 +21,7 @@ struct ScanView: View {
     @Binding var selectedTabIndex: Int
     @Binding var navigateToCourse: Course?
     @Binding var navigateToNote: Note?
+    @Binding var needToSave: Bool
 
     var body: some View {
       NavigationStack {
@@ -138,6 +139,11 @@ struct ScanView: View {
                 course = nil
                 noteTitle = ""
                 selectedTab = 0
+            }
+            .onChange(of: capturedImages) { _ in
+              if !capturedImages.isEmpty {
+                needToSave = true
+              }
             }
         }
       }
