@@ -9,8 +9,6 @@ struct FolderModal: View {
     var course: Course
     
     @State private var folderName: String = ""
-    @State private var notes: [String] = []
-    @State private var showAddNoteModal = false
     @State private var selectedFolder: Folder?
     
     var body: some View {
@@ -28,23 +26,6 @@ struct FolderModal: View {
                     }
                 }
                 .disabled(folderName.isEmpty)
-                
-                Button("Add Note") {
-                    showAddNoteModal = true
-                }
-                .disabled(selectedFolder == nil)
-                .sheet(isPresented: $showAddNoteModal) {
-                    if let folder = selectedFolder {
-                        AddNoteModal(
-                            onNoteCreated: {
-                                firebase.getFolders { _ in }
-                            },
-                            firebase: firebase,
-                            course: course,
-                            folder: folder
-                        )
-                    }
-                }
             }
             .navigationTitle("New Folder")
             .toolbar {
@@ -69,7 +50,7 @@ struct FolderModal: View {
             try await firebase.createFolder(
                 folderName: folderName,
                 course: course,
-                notes: notes,
+                notes: [],
                 fileLocation: fileLocation
             )
             

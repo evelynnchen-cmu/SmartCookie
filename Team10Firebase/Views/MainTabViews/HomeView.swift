@@ -98,7 +98,8 @@ struct HomeView: View {
                                   ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
                                       let course = firebase.courses.first { $0.id == note.courseID }
                                       
-                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, 
+                                      course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
                                           RecentNoteCard(note: note, course: course)
                                               .frame(width: 150)
                                       }

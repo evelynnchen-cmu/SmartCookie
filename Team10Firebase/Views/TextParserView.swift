@@ -308,7 +308,7 @@ struct TextParserView: View {
                 let noteTitle = title.isEmpty ? "\(imagePaths[0])" : title
                 
                 Task {
-                  await firebase.createNoteSimple(
+                  await firebase.createNoteWithIDs(
                     title: noteTitle,
                     content: content ?? "",
                     images: imagePaths,

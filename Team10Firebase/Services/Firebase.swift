@@ -221,11 +221,11 @@ class Firebase: ObservableObject {
     images: [String] = [],
     course: Course,
     folder: Folder? = nil,
-    completion: @escaping (Error?) -> Void
-    // completion: @escaping (Result<String, Error>) -> Void
+    // completion: @escaping (Error?) -> Void
+    completion: @escaping (Note?, Error?) -> Void
   ) {
     guard let courseID = course.id else {
-      completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course ID"]))
+      completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid course ID"]))
       return
     }
     
@@ -240,7 +240,6 @@ class Firebase: ObservableObject {
       createdAt: Date(),
       courseID: courseID,
       fileLocation: "\(courseID)/\(folder?.id ?? "")",
-      // lastAccessed: nil
       lastAccessed: Date(),
       lastUpdated: Date()
     )
@@ -253,23 +252,35 @@ class Firebase: ObservableObject {
         db.collection(folderCollection).document(folder.id ?? "").updateData([
           "notes": FieldValue.arrayUnion([ref.documentID])
         ]) { error in
-          completion(error)
+          if let error = error {
+            completion(nil, error)
+          } else {
+              var createdNote = note
+              createdNote.id = ref.documentID
+              completion(createdNote, nil)
+          }
         }
       } else {
         db.collection(courseCollection).document(courseID).updateData([
           "notes": FieldValue.arrayUnion([ref.documentID])
         ]) { error in
-          completion(error)
+          if let error = error {
+              completion(nil, error)
+          } else {
+              var createdNote = note
+              createdNote.id = ref.documentID
+              completion(createdNote, nil)
+          }
         }
       }
     } catch {
       print("Error creating note: \(error)")
-      completion(error)
+      completion(nil, error)
     }
   }
   
   // Doesn't require course or folder objects, returns the new note created, autogenerates summary
-  func createNoteSimple(title: String, content: String, images: [String] = [],
+  func createNoteWithIDs(title: String, content: String, images: [String] = [],
                         courseID: String, folderID: String?, userID: String,
                         completion: @escaping (Note?) -> Void) async {
     // Generate a summary from the content
