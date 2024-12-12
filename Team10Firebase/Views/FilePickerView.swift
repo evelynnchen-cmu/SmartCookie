@@ -145,17 +145,17 @@ struct FilePickerView: View {
                     }) {
                         HStack {
                             Image(systemName: "folder.fill")
-                                .foregroundColor(.brown)
+                                .foregroundColor(darkBrown)
                             Text(folder.folderName)
-                                .foregroundColor(.brown)
+                                .foregroundColor(darkBrown)
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundColor(.brown)
+                                .foregroundColor(darkBrown)
                         }
                         .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(Color(UIColor.systemGroupedBackground))
+                                .fill(tan)
                         )
                     }
                 }
@@ -208,13 +208,13 @@ struct FilePickerView: View {
         }) {
             HStack {
                 Text(note.title ?? "Unnamed Note")
-                    .foregroundColor(selectedNote?.id == note.id ? .black : .brown)
+                    .foregroundColor(selectedNote?.id == note.id ? .black : darkBrown)
                 Spacer()
             }
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(selectedNote?.id == note.id ? Color.blue.opacity(0.2) : Color(UIColor.systemGroupedBackground))
+                    .fill(selectedNote?.id == note.id ? lightBlue.opacity(0.2) : tan)
             )
         }
     }
