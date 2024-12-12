@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseFirestore
 
 struct AddNoteModal: View {
+    var openAI: OpenAI = OpenAI()
     @Environment(\.dismiss) private var dismiss
     @State private var title: String = ""
     @State private var content: String = ""
@@ -17,26 +18,14 @@ struct AddNoteModal: View {
     @ObservedObject var firebase: Firebase
     var course: Course
     var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
+    @Binding var navigationPath: NavigationPath
 
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Note Information")) {
-                    TextField("Title", text: $title)
+                Section(header: Text("New Note")) {
+                    TextField("Name", text: $title)
                     TextField("Content", text: $content)
-                  
-//                    if let selectedImage = selectedImage {
-//                        Image(uiImage: selectedImage)
-//                            .resizable()
-//                            .scaledToFit()
-//                            .frame(height: 200)
-//                    }
-//
-//                    Button(action: {
-//                        showImagePicker = true
-//                    }) {
-//                        Text("Select Image")
-//                    }
                 }
                 
                 Button(action: {
@@ -67,7 +56,10 @@ struct AddNoteModal: View {
     
     private func createNote() async {
         do {
-            let summary = try await summarizeContent(content: content)
+            var summary = "Add note content by editing or uploading images/PDFs to generate a summary."
+            if !content.isEmpty {
+                summary = try await openAI.summarizeContent(content: content)
+            }
             
             // Determine note location based on whether folder is provided
             firebase.createNote(
@@ -77,78 +69,22 @@ struct AddNoteModal: View {
                 images: images,
                 course: course,
                 folder: folder // Adds to folder if specified, else directly to course
-            ) { error in
+            ) { (newNote, error) in
                 if let error = error {
                     errorMessage = error.localizedDescription
                     showError = true
                 } else {
+                    if let newNote = newNote {
+                        onNoteCreated()
+                        navigationPath.append(newNote)
+                    }
 //                    updateFolderNotes()
-                    onNoteCreated()
 //                    dismiss()
                 }
             }
-            // ) { result in
-            //     switch result {
-            //     case .success(let documentID):
-            //         print("Note created with ID: \(documentID)")
-            //         updateFolderNotes()
-            //         onNoteCreated()
-            //         dismiss()
-            //     case .failure(let error):
-            //         errorMessage = error.localizedDescription
-            //         showError = true
-            //     }
-            // }
         } catch {
             errorMessage = error.localizedDescription
             showError = true
-        }
-    }
-
-    private func summarizeContent(content: String) async throws -> String {
-        guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
-        }
-
-        let openAIKey: String = {
-            guard let filePath = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
-                  let plist = NSDictionary(contentsOfFile: filePath),
-                  let key = plist["OpenAIKey"] as? String else {
-                fatalError("Couldn't find key 'OpenAIKey' in 'Secrets.plist'.")
-            }
-            return key
-        }()
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let requestBody = OpenAIRequest(
-            model: "gpt-4o-mini",
-            messages: [
-                Message(role: "system", content: [MessageContent(type: "text", text: "You will summarize the following content. Be concise, just touch on the main points. The summary should be readable in 15-20 seconds. Content: \(content)", imageURL: nil)])
-            ],
-            maxTokens: 150
-        )
-
-        guard let jsonData = try? JSONEncoder().encode(requestBody) else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create JSON payload"])
-        }
-
-        request.httpBody = jsonData
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to connect to the API"])
-        }
-
-        let jsonResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-        if let choice = jsonResponse.choices.first {
-            return choice.message.content.trimmingCharacters(in: .whitespacesAndNewlines)
-        } else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unexpected response format"])
         }
     }
 }
