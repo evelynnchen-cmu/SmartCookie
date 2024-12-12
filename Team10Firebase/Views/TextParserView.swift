@@ -372,7 +372,7 @@ struct TextParserView: View {
                 }) {
                     Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 40))
-                    .foregroundColor(Color.blue.opacity(0.2))
+                    .foregroundColor(darkBrown)
                     
                 }
                 .padding(8)

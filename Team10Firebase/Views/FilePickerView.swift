@@ -82,9 +82,6 @@ struct FilePickerView: View {
 
     private func notesInFolderSection(course: Course, folder: Folder) -> some View {
         Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")")) {
-            // let notesInFolder = firebase.notes.filter {
-            //     $0.courseID == course.id && $0.fileLocation.contains(folder.id ?? "") == true
-            // }
             if notes.isEmpty {
                 Text("No notes available").foregroundColor(.secondary)
             } else {
@@ -97,7 +94,7 @@ struct FilePickerView: View {
                             Text(note.title ?? "Unnamed Note")
                             if selectedNote?.id == note.id {
                                 Spacer()
-                                Image(systemName: "checkmark").foregroundColor(.blue)
+                                Image(systemName: "checkmark").foregroundColor(darkBrown)
                             }
                         }
                     }
@@ -110,7 +107,7 @@ struct FilePickerView: View {
     private func foldersAndNotesSection(course: Course) -> some View {
         Group {
             Section(header: Text("Folders in \(course.courseName)")) {
-                let courseFolders = folders.filter { $0.courseID == course.id } // Use local folders state
+                let courseFolders = folders.filter { $0.courseID == course.id }
                 if courseFolders.isEmpty {
                     Text("No folders available").foregroundColor(.secondary)
                 } else {
@@ -140,7 +137,7 @@ struct FilePickerView: View {
                                 Text(note.title)
                                 if selectedNote?.id == note.id {
                                     Spacer()
-                                    Image(systemName: "checkmark").foregroundColor(.blue)
+                                    Image(systemName: "checkmark").foregroundColor(darkBrown)
                                 }
                             }
                         }

@@ -20,24 +20,4 @@ struct CameraContainerView: View {
         })
         .edgesIgnoringSafeArea(.all)
     }
-    // var body: some View {
-    //     ZStack {
-    //         CameraView(onPhotoCaptured: onPhotoCaptured)
-    //             .edgesIgnoringSafeArea(.all)
-
-    //         VStack {
-    //             Spacer()
-    //             Button(action: {
-    //                 NotificationCenter.default.post(name: .takePicture, object: nil)
-    //             }) {
-    //                 Text("Take Picture")
-    //                     .padding()
-    //                     .background(Color.blue)
-    //                     .foregroundColor(.white)
-    //                     .cornerRadius(8)
-    //             }
-    //             .padding(.bottom, 30)
-    //         }
-    //     }
-    // }
 }
