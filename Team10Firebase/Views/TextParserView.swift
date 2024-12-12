@@ -321,7 +321,7 @@ struct TextParserView: View {
                 
                 editingButtons
             } else {
-                ProgressView("Parsing text...")
+              LoadingView(msg: "Parsing images...")
                     .padding()
             }
         }
@@ -421,5 +421,49 @@ struct TextParserView: View {
         }
         .padding(.horizontal)
         .padding(.bottom, 20)
+    }
+}
+
+private struct LoadingView: View {
+    var msg: String
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack(spacing: 16) {
+                ForEach(0..<3) { index in
+                    Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 40, height: 40)
+                        .modifier(WaveBounceModifier(index: index))
+                }
+            }
+            .frame(height: 50)
+            
+            Text(msg)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(darkBrown)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private struct WaveBounceModifier: ViewModifier {
+    let index: Int
+    @State private var isAnimating = false
+    
+    func body(content: Content) -> some View {
+        content
+            .offset(y: isAnimating ? -15 : 0)
+            .animation(
+                Animation
+                    .easeInOut(duration: 0.4)
+                    .repeatForever(autoreverses: true)
+                    .delay(Double(index) * 0.1)
+                    .speed(0.7),
+                value: isAnimating
+            )
+            .onAppear {
+                isAnimating = true
+            }
     }
 }
