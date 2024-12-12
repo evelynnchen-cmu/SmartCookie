@@ -24,7 +24,9 @@ final class FirebaseNoteTests: XCTestCase {
             images: [],
             createdAt: Date(),
             courseID: nil,
-            fileLocation: "/"
+            fileLocation: "/",
+            lastAccessed: Date(),
+            lastUpdated: Date()
         )
     }
 
@@ -54,10 +56,17 @@ final class FirebaseNoteTests: XCTestCase {
         createdCourse = course
         
         // Create folder
-        try await firebase.createFolder(
+        firebase.createFolder(
             folderName: "Test Folder",
-            course: course
-        )
+            course: course,
+            notes: [],
+            fileLocation: ""
+        ) { folder, error in
+            if let error = error {
+                XCTFail("Failed to create folder: \(error.localizedDescription)")
+            }
+            createdFolder = folder
+        }
         
         // Wait for folders to be created
         try await Task.sleep(nanoseconds: 2_000_000_000)
@@ -91,8 +100,9 @@ final class FirebaseNoteTests: XCTestCase {
             images: [],
             course: course,
             folder: folder
-        ) { error in
+        ) { note, error in
             XCTAssertNil(error, "Failed to create note")
+            XCTAssertNotNil(note, "Note was not created")
             expectation.fulfill()
         }
         
@@ -117,8 +127,9 @@ final class FirebaseNoteTests: XCTestCase {
             images: [],
             course: course,
             folder: folder
-        ) { error in
+        ) { note, error in
             XCTAssertNil(error, "Failed to create note")
+            XCTAssertNotNil(note, "Note was not created")
             createExpectation.fulfill()
         }
         
@@ -155,8 +166,9 @@ final class FirebaseNoteTests: XCTestCase {
             images: [],
             course: course,
             folder: folder
-        ) { error in
+        ) { note, error in
             XCTAssertNil(error, "Failed to create note")
+            XCTAssertNotNil(note, "Note was not created")
             createExpectation.fulfill()
         }
         
@@ -196,8 +208,9 @@ final class FirebaseNoteTests: XCTestCase {
             images: [],
             course: course,
             folder: folder
-        ) { error in
+        ) { note, error in
             XCTAssertNil(error, "Failed to create note")
+            XCTAssertNotNil(note, "Note was not created")
             createExpectation.fulfill()
         }
         
@@ -235,7 +248,9 @@ final class FirebaseNoteTests: XCTestCase {
             images: [],
             createdAt: Date(),
             courseID: "test-course",
-            fileLocation: "/"
+            fileLocation: "/",
+            lastAccessed: Date(),
+            lastUpdated: Date()
         )
         
         firebase.notes = [note]
