@@ -120,7 +120,7 @@ struct PDFParserView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(darkBrown, lineWidth: 3)
-                        .background(Color.white)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
                 )
                 .padding()
                 
