@@ -19,7 +19,6 @@ class FirebaseStorage: ObservableObject {
         imageData = image.pngData()
     }
     guard let finalImageData = imageData else {
-        print("Image data is nil")
         completion(nil)
         return
     }
@@ -40,32 +39,12 @@ class FirebaseStorage: ObservableObject {
   }
 
   func uploadImagesToFirebase(_ images: [UIImage], completion: @escaping ([String]?) -> Void) {
-//    var imagePaths: [String] = []
     var imagesToUpload = images
     var uploadedImages: [String] = []
     var errorOccurred = false
     var imagePaths: [String?] = Array(repeating: nil, count: images.count)
     let dispatchGroup = DispatchGroup()
 
-    // for image in imagesToUpload {
-    //   dispatchGroup.enter()
-    //   uploadImageToFirebase(image) { path in
-    //     if let path = path {
-    //       uploadedImages.append(path)
-    //     } else {
-    //       errorOccurred = true
-    //     }
-    //     dispatchGroup.leave()
-    //   }
-    // }
-
-    // dispatchGroup.notify(queue: .main) {
-    //   if errorOccurred {
-    //     completion(nil)
-    //   } else {
-    //     completion(uploadedImages)
-    //   }
-    // }
     for (index, image) in images.enumerated() {
             dispatchGroup.enter()
             uploadImageToFirebase(image) { path in

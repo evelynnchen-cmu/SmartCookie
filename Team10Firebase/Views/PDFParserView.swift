@@ -261,7 +261,6 @@ struct PDFParserView: View {
                 var updatedSummary = updatedNote.summary
                 do {
                     updatedSummary = try await openAI.summarizeContent(content: updatedContent)
-                    print("new summary done")
                 } catch {
                     alertMessage = "Failed to summarize content"
                     showAlert = true

@@ -115,7 +115,7 @@ struct TextParserView: View {
             }
         )
        .sheet(isPresented: $showSaveForm) {
-            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course, folder) in
+            AddNoteToCourseModal(isPresented: $showSaveForm, firebase: firebase) { (title, course, folder) in
               if let courseObj = course {
                 self.course = courseObj
               }
@@ -218,7 +218,6 @@ struct TextParserView: View {
                                 var updatedSummary = combinedContent
                                 do {
                                     updatedSummary = try await openAI.summarizeContent(content: combinedContent)
-                                    print("new summary done")
                                 } catch {
                                     alertMessage = "Failed to summarize content"
                                     showAlert = true

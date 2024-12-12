@@ -1,7 +1,7 @@
 import SwiftUI
 import FirebaseFirestore
 
-struct AddNoteModalCourse: View {
+struct AddNoteToCourseModal: View {
     @State private var title: String = ""
     @State private var content: String = ""
     @State private var images: [String] = []

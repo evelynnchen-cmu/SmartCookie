@@ -319,7 +319,6 @@ class Firebase: ObservableObject {
         createdAt: Date(),
         courseID: courseID,
         fileLocation: "\(courseID)/\(folderID ?? "")",
-        // lastAccessed: nil
         lastAccessed: Date(),
         lastUpdated: Date()
       )
@@ -1078,10 +1077,4 @@ func deleteCourse(courseID: String, completion: @escaping (Error?) -> Void) {
       
       return Array(sortedNotes.prefix(limit))
   }
-  
-  
-  
-  
-
-
 }
