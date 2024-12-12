@@ -81,7 +81,7 @@ struct CourseView: View {
               Button(action: {
                   editStates.showPlusActions = true
               }) {
-                  Image(systemName: "document.badge.plus")
+                Image(systemName: "document.badge.plus")
                       .foregroundColor(darkBrown)
                       .imageScale(.large)
               }
@@ -97,12 +97,13 @@ struct CourseView: View {
           Button("Cancel", role: .cancel) {}
       }
       .sheet(isPresented: $isAddingFolder) {
-          FolderModal(
+          AddFolderModal(
               onFolderCreated: {
                   viewModel.fetchData()
               },
               firebase: viewModel.firebase,
-              course: viewModel.course
+              course: viewModel.course,
+              navigationPath: $navigationPath
           )
       }
       .sheet(isPresented: $isAddingNote) {
@@ -112,7 +113,8 @@ struct CourseView: View {
               },
               firebase: viewModel.firebase,
               course: viewModel.course,
-              folder: nil
+              folder: nil,
+              navigationPath: $navigationPath
           )
       }
       .sheet(isPresented: $editStates.showEditFolderModal) {
@@ -172,7 +174,9 @@ struct CourseView: View {
           NoteView(firebase: firebase, note: note, course: course)
       }
       .navigationDestination(for: Folder.self) { folder in
-          FolderView(firebase: firebase, course: course, folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course))
+          FolderView(firebase: firebase, course: course, 
+          folderViewModel: FolderViewModel(firebase: firebase, folder: folder, course: course),
+          navigationPath: $navigationPath)
       }
   }
 
@@ -241,7 +245,8 @@ struct CourseView: View {
                       destination: FolderView(
                           firebase: viewModel.firebase,
                           course: viewModel.course,
-                          folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course)
+                          folderViewModel: FolderViewModel(firebase: viewModel.firebase, folder: folder, course: viewModel.course),
+                          navigationPath: $navigationPath
                       )
                   ) {
                       VStack(spacing: 8) {

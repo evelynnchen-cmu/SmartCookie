@@ -1,36 +1,5 @@
 import SwiftUI
 
-
-struct RecentNoteCard: View {
-    let note: Note
-    let course: Course?
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {  // Reduced spacing
-            Text(note.title)
-                .font(.subheadline)  // Smaller font
-                .fontWeight(.medium)
-                .lineLimit(1)
-            
-            if let courseName = course?.courseName {
-                Text(courseName)
-                    .font(.caption)  // Smaller font
-                    .foregroundColor(.gray)
-                    .lineLimit(1)
-            }
-            
-            Text(note.summary)
-                .font(.caption)  // Smaller font
-                .lineLimit(2)
-                .foregroundColor(.gray)
-        }
-        .padding(8)  // Reduced padding
-        .frame(height: 100)  // Reduced height
-        .background(lightBlue)
-        .cornerRadius(8)  // Slightly reduced corner radius
-    }
-}
-
 struct HomeView: View {
     @StateObject private var firebase = Firebase()
     @State private var errorMessage: String?
@@ -98,9 +67,10 @@ struct HomeView: View {
                                   ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
                                       let course = firebase.courses.first { $0.id == note.courseID }
                                       
-                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
+                                      NavigationLink(destination: NoteView(firebase: firebase, note: note, 
+                                      course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
                                           RecentNoteCard(note: note, course: course)
-                                              .frame(width: 150)
+                                            //   .frame(width: 150)
                                       }
                                       .buttonStyle(PlainButtonStyle())
                                   }
@@ -343,5 +313,36 @@ struct CourseCard: View {
             )
             .cornerRadius(12)
         }
+    }
+}
+
+struct RecentNoteCard: View {
+    let note: Note
+    let course: Course?
+    
+    var body: some View {
+      VStack(alignment: .leading, spacing: 4) {  // Reduced spacing
+            Text(note.title)
+                .font(.subheadline)  // Smaller font
+                .fontWeight(.medium)
+                .lineLimit(1)
+            
+            if let courseName = course?.courseName {
+                Text(courseName)
+                    .font(.caption)  // Smaller font
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+            }
+            
+            Text(note.summary)
+                .font(.caption)  // Smaller font
+                .lineLimit(2)
+                .foregroundColor(.gray)
+        }
+      .padding(.horizontal, 8)
+      .padding(.vertical, 12)
+        .frame(width: 150, height: 100, alignment: .topLeading)
+        .background(lightBlue)
+        .cornerRadius(8)
     }
 }
