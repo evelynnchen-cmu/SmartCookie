@@ -13,7 +13,7 @@ The SmartCookie app is designed to streamline studying for students by offering 
    - Secrets.plist file contains the OpenAI API key
    - GoogleService-Info.plist file for Firebase configuration
 
-3. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available and will not display (icons for notes and add new note icon). UI will also be slightly different.
+3. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available in lower iOS versions and will not display (icons for notes and add new note icon (located in the top right) in CourseView/FolderView and icons for uploading new image/pdf in NoteView (located in the top right)). UI will also be slightly different.
 - Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
 - If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [yourname].Team10Firebase).
 
@@ -50,6 +50,7 @@ Generally, most of our design decisions were based on user feedback received thr
    - Chose OpenAI's gpt4o-mini model because it was best suited for our use case and was the most cost effective. AWS Textract broke down the given image into individual words and gave more information (like its bounding box and confidence score) that we didn't need. OpenAI's gpt-vision model performed about the same as 4o-mini, but took significantly longer to parse than 4o-mini.
 - PDFKit vs. OpenAI API parse pdf
    - Chose PDFKit over OpenAI for parsing to optimize for local processing and cost efficiency.
+   - While using the OpenAI API for parsing a PDF similarly to how images are parsed would've allowed us to maintain consistency within our app, PDFKit offered all of the basic functionality for supporting PDF upload and parse that our users wanted prioritized the most. 
 - Firebase Firestore vs AWS S3
    - Chose Firebase Firestore because there was more classroom help with this service and it is built to integrate with Firebase.
 
