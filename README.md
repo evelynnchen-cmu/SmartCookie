@@ -13,7 +13,9 @@ The SmartCookie app is designed to streamline studying for students by offering 
    - Secrets.plist file contains the OpenAI API key
    - GoogleService-Info.plist file for Firebase configuration
 
-3. Build and run the app on an iPhone (not simulator) iOS version 18. If necessary, can downgrade our app to run on lower iOS versions.
+3. Build and run the app on an iPhone (not simulator) iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available and will not display (icons for notes and add new note icon). UI will also be slightly different.
+- Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
+- If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist.
 
 ## Intended Flows
 
