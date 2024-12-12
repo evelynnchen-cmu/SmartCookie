@@ -2,7 +2,6 @@ import SwiftUI
 import FirebaseFirestore
 
 struct AddNoteModalCourse: View {
-    // @Environment(\.dismiss) private var dismiss
     @State private var title: String = ""
     @State private var content: String = ""
     @State private var images: [String] = []
@@ -35,7 +34,6 @@ struct AddNoteModalCourse: View {
                   }
                 completion(title, course)
                   isPresented = false
-                //   dismiss()
               }
               .disabled(courseName.isEmpty)
             }
@@ -50,7 +48,6 @@ struct AddNoteModalCourse: View {
                 Text(errorMessage)
             }
             .onAppear {
-//              firebase.getCourses()
               courses = firebase.courses
               if let firstCourse = courses.first {
                   courseName = firstCourse.courseName
@@ -58,11 +55,4 @@ struct AddNoteModalCourse: View {
             }
         }
     }
-    
-    // Helper for testing
-    #if DEBUG
-    func getTestableCourseName() -> String {
-        return courseName
-    }
-    #endif
 }

@@ -68,9 +68,7 @@ struct AddNoteModal: View {
                     errorMessage = error.localizedDescription
                     showError = true
                 } else {
-//                    updateFolderNotes()
                     onNoteCreated()
-//                    dismiss()
                 }
             }
         } catch {
@@ -125,10 +123,4 @@ struct AddNoteModal: View {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unexpected response format"])
         }
     }
-    
-//  Testing helper
-    #if DEBUG
-    @Binding var testTitle: String
-    @Binding var testContent: String
-    #endif
 }
