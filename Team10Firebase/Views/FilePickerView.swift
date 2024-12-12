@@ -26,7 +26,6 @@ struct FilePickerView: View {
                     leading: Button("Cancel") { isPresented = false },
                     trailing: saveButton
                 )
-                .toolbar { toolbarContent }
                 .onAppear {
                     loadNotesIfNeeded()
                     loadFoldersIfNeeded()
@@ -52,39 +51,22 @@ struct FilePickerView: View {
                 coursesSection()
             }
         }
+        .listStyle(InsetGroupedListStyle())
+        .background(Color(UIColor.systemGroupedBackground))
     }
 
     private func currentTitle() -> String {
         if let folder = selectedFolder { return folder.folderName }
         if let course = selectedCourse { return course.courseName }
-        return "Select Note"
+        return "Select Course"
     }
 
     private var saveButton: some View {
-        Group {
-            if selectedFolder != nil {
-                Button("Save") {
-                    isPresented = false
-                }
-            }
-        }
-    }
-
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
-            if selectedFolder != nil {
-                Button("Back") { 
-                    selectedFolder = nil
-                    selectedNote = nil
-                    updateFilteredNotes()
-                }
-            } else if selectedCourse != nil {
-                Button("Back") { 
-                    selectedCourse = nil
-                    selectedNote = nil
-                    notes = []
-                }
-            }
+        Button(action: {
+            isPresented = false
+        }) {
+            Image(systemName: selectedNote == nil ? "square.and.arrow.down" : "square.and.arrow.down.fill")
+                .foregroundColor(selectedNote == nil ? .gray : .brown)
         }
     }
 
@@ -108,22 +90,22 @@ struct FilePickerView: View {
 
     private func updateFilteredNotes() {
         guard let selectedCourse = selectedCourse,
-            let courseId = selectedCourse.id else { // Safely unwrap courseId
+              let courseId = selectedCourse.id else {
             notes = []
             return
         }
 
         let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
-                
+
         if let selectedFolder = selectedFolder,
-        let folderId = selectedFolder.id { // Safely unwrap folderId
+           let folderId = selectedFolder.id {
             let expectedPath1 = "\(courseId)/\(folderId)"
             let expectedPath2 = folderId
-            
+
             notes = notesToUse.filter { note in
                 note.courseID == courseId &&
                 (note.fileLocation == expectedPath1 ||
-                note.fileLocation == expectedPath2)
+                 note.fileLocation == expectedPath2)
             }
         } else {
             let expectedPaths = [
@@ -131,11 +113,11 @@ struct FilePickerView: View {
                 "\(courseId)/",
                 ""
             ]
-            
+
             notes = notesToUse.filter { note in
                 note.courseID == courseId &&
                 (note.fileLocation.isEmpty ||
-                expectedPaths.contains(note.fileLocation))
+                 expectedPaths.contains(note.fileLocation))
             }
         }
     }
@@ -146,47 +128,45 @@ struct FilePickerView: View {
             let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
             let courseId = course.id ?? ""
 
-            // Folders section
-            Section(header: Text("Folders")) {
+            Section(header: Text("Folders").foregroundColor(.brown)) {
                 ForEach(courseFolders) { folder in
                     Button(action: {
                         selectedFolder = folder
                         updateFilteredNotes()
                     }) {
                         HStack {
-                            Image(systemName: "folder")
+                            Image(systemName: "folder.fill")
+                                .foregroundColor(.brown)
                             Text(folder.folderName)
+                                .foregroundColor(.brown)
                             Spacer()
                             Image(systemName: "chevron.right")
+                                .foregroundColor(.brown)
                         }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color(UIColor.systemGroupedBackground))
+                        )
                     }
                 }
             }
-            
-            // Uncategorized notes section
-            Section(header: Text("Notes")) {
+
+            Section(header: Text("Notes").foregroundColor(.brown)) {
                 let uncategorizedNotes = notesToUse.filter { note in
                     note.courseID == courseId &&
                     (note.fileLocation == courseId ||
-                    note.fileLocation == "\(courseId)/" ||
-                    note.fileLocation.isEmpty)
+                     note.fileLocation == "\(courseId)/" ||
+                     note.fileLocation.isEmpty)
                 }
 
                 if uncategorizedNotes.isEmpty {
-                    Text("No uncategorized notes").foregroundColor(.secondary)
+                    Text("No uncategorized notes")
+                        .foregroundColor(.gray)
+                        .italic()
                 } else {
                     ForEach(uncategorizedNotes) { note in
-                        Button(action: {
-                            selectedNote = note
-                        }) {
-                            HStack {
-                                Text(note.title ?? "Unnamed Note")
-                                if selectedNote?.id == note.id {
-                                    Spacer()
-                                    Image(systemName: "checkmark").foregroundColor(.blue)
-                                }
-                            }
-                        }
+                        noteButton(note: note)
                     }
                 }
             }
@@ -194,54 +174,60 @@ struct FilePickerView: View {
     }
 
     private func notesInFolderSection(course: Course, folder: Folder) -> some View {
-        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")")) {
-            let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
-            let courseId = course.id ?? ""
-            let folderId = folder.id ?? ""
-            
-            let notesInFolder = notesToUse.filter { note in
-                note.courseID == courseId &&
-                (note.fileLocation == "\(courseId)/\(folderId)" ||
-                note.fileLocation == folderId)
-            }
+        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")").foregroundColor(.brown)) {
+            let notesInFolder = notes.filter { $0.fileLocation == folder.id }
 
             if notesInFolder.isEmpty {
-                Text("No notes available").foregroundColor(.secondary)
+                Text("No notes available")
+                    .foregroundColor(.gray)
+                    .italic()
             } else {
                 ForEach(notesInFolder) { note in
-                    Button(action: {
-                        selectedNote = note
-                    }) {
-                        HStack {
-                            Text(note.title ?? "Unnamed Note")
-                            if selectedNote?.id == note.id {
-                                Spacer()
-                                Image(systemName: "checkmark").foregroundColor(.blue)
-                            }
-                        }
-                    }
+                    noteButton(note: note)
                 }
             }
         }
     }
 
+    private func noteButton(note: Note) -> some View {
+        Button(action: {
+            selectedNote = note
+        }) {
+            HStack {
+                Text(note.title ?? "Unnamed Note")
+                    .foregroundColor(selectedNote?.id == note.id ? .black : .brown)
+                Spacer()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(selectedNote?.id == note.id ? Color.blue.opacity(0.2) : Color(UIColor.systemGroupedBackground))
+            )
+        }
+    }
+
     private func coursesSection() -> some View {
-        Section(header: Text("Courses")) {
+        Section(header: Text("Courses").foregroundColor(.brown)) {
             ForEach(firebase.courses) { course in
                 Button(action: {
                     selectedCourse = course
                     selectedFolder = nil
                     updateFilteredNotes()
                 }) {
-                    Text(course.courseName)
+                    HStack {
+                        Text(course.courseName)
+                            .foregroundColor(.brown)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.brown)
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(UIColor.systemGroupedBackground))
+                    )
                 }
             }
-        }
-    }
-
-    private func fetchFolders() {
-        firebase.getFolders { fetchedFolders in
-            folders = fetchedFolders
         }
     }
 }
