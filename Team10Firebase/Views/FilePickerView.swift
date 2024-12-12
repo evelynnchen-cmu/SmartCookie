@@ -33,7 +33,6 @@ struct FilePickerView: View {
                 }
                 .onChange(of: firebase.notes) { newNotes in
                     if !newNotes.isEmpty {
-                        print("Updating local notes cache with \(newNotes.count) notes")
                         localNotes = newNotes
                         updateFilteredNotes()
                     }
@@ -65,7 +64,6 @@ struct FilePickerView: View {
         Group {
             if selectedFolder != nil {
                 Button("Save") {
-                    print("Save button pressed. Selected Folder: \(selectedFolder?.folderName ?? "nil")")
                     isPresented = false
                 }
             }
@@ -92,10 +90,8 @@ struct FilePickerView: View {
 
     private func loadNotesIfNeeded() {
         if firebase.notes.isEmpty && localNotes.isEmpty {
-            print("Loading notes from Firebase...")
             firebase.getNotes()
         } else if !firebase.notes.isEmpty && localNotes.isEmpty {
-            print("Caching \(firebase.notes.count) notes locally")
             localNotes = firebase.notes
             updateFilteredNotes()
         }
@@ -117,45 +113,30 @@ struct FilePickerView: View {
             return
         }
 
-        print("\nDebug - Course Info:")
-        print("Selected Course ID: \(courseId)")
-
         let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
-        print("Total notes to filter: \(notesToUse.count)")
-        
-        // Print all notes for this course to debug
-        let allCourseNotes = notesToUse.filter { $0.courseID == courseId }
-        print("Notes with matching courseID: \(allCourseNotes.count)")
-        allCourseNotes.forEach { note in
-            print("Note: \(note.title ?? ""), Location: '\(note.fileLocation)'")
-        }
-        
+                
         if let selectedFolder = selectedFolder,
         let folderId = selectedFolder.id { // Safely unwrap folderId
             let expectedPath1 = "\(courseId)/\(folderId)"
             let expectedPath2 = folderId
-            print("Looking for notes with paths: '\(expectedPath1)' or '\(expectedPath2)'")
             
             notes = notesToUse.filter { note in
                 note.courseID == courseId &&
                 (note.fileLocation == expectedPath1 ||
                 note.fileLocation == expectedPath2)
             }
-            print("Filtered \(notes.count) notes for folder \(selectedFolder.folderName ?? "")")
         } else {
             let expectedPaths = [
                 courseId,
                 "\(courseId)/",
                 ""
             ]
-            print("Looking for notes with paths: \(expectedPaths)")
             
             notes = notesToUse.filter { note in
                 note.courseID == courseId &&
                 (note.fileLocation.isEmpty ||
                 expectedPaths.contains(note.fileLocation))
             }
-            print("Filtered \(notes.count) uncategorized notes for course \(selectedCourse.courseName)")
         }
     }
 
@@ -250,9 +231,7 @@ struct FilePickerView: View {
                 Button(action: {
                     selectedCourse = course
                     selectedFolder = nil
-                    print("\nSelected Course: \(course.courseName)")
-                    print("Course ID: \(course.id)")
-                    updateFilteredNotes() // Use updateFilteredNotes instead of fetchNotes
+                    updateFilteredNotes()
                 }) {
                     Text(course.courseName)
                 }
@@ -262,63 +241,7 @@ struct FilePickerView: View {
 
     private func fetchFolders() {
         firebase.getFolders { fetchedFolders in
-            folders = fetchedFolders // Update local folders state
-        }
-    }
-
-    // private func fetchNotes() {
-    //     guard let selectedCourse = selectedCourse else {
-    //         print("No course selected.")
-    //         notes = []
-    //         return
-    //     }
-                
-    //     if let selectedFolder = selectedFolder {
-    //         notes = firebase.notes.filter { note in
-    //             let matches = note.courseID == selectedCourse.id &&
-    //                 (note.fileLocation == "\(selectedCourse.id)/\(selectedFolder.id)" ||
-    //                  note.fileLocation == selectedFolder.id)
-    //             if matches {
-    //                 print("Matched note in folder: \(note.title ?? "")")
-    //             }
-    //             return matches
-    //         }
-    //     } else {
-    //         notes = firebase.notes.filter { note in
-    //             let matches = note.courseID == selectedCourse.id &&
-    //                 (note.fileLocation == "\(selectedCourse.id)/" ||
-    //                  note.fileLocation == "\(selectedCourse.id)" ||
-    //                  note.fileLocation.isEmpty)
-    //             if matches {
-    //                 print("Matched uncategorized note: \(note.title ?? "")")
-    //             }
-    //             return matches
-    //         }
-    //     }
-        
-    //     print("Found \(notes.count) notes")
-    // }
-
-    private func debugPrintData() {
-        print("Debugging Firebase Data:")
-        print("Total Courses: \(firebase.courses.count)")
-        print("Total Folders: \(folders.count)")
-        print("Total Notes: \(firebase.notes.count)")
-        
-        print("\nFolders:")
-        for folder in folders {
-            print("Folder Name: \(folder.folderName ?? "nil"), ID: \(folder.id ?? "nil"), CourseID: \(folder.courseID ?? "nil")")
-        }
-        
-        print("\nNotes:")
-        for note in firebase.notes {
-            print("Note Title: \(note.title ?? "nil"), CourseID: \(note.courseID ?? "nil"), FileLocation: \(note.fileLocation ?? "nil")")
-        }
-        
-        // Cross-check notes and folders
-        for folder in folders {
-            let notesInFolder = firebase.notes.filter { $0.fileLocation == folder.id }
-            print("Folder '\(folder.folderName ?? "nil")' contains notes: \(notesInFolder.map { $0.title ?? "nil" })")
+            folders = fetchedFolders
         }
     }
 }
