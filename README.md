@@ -47,7 +47,7 @@ Generally, many of our design decisions were based on user feedback received thr
 
 ## Tech Decisions 
 - OCR (Parsing Images): OpenAI API vs. AWS Textract, Google Cloud Vision
-   - Chose OpenAI's gpt4o-mini model because it was best suited for our use case and was the most cost effective. 
+   - Chose OpenAI's gpt4o-mini model because it was best suited for our use case and was the most cost effective. AWS Textract broke down the given image into individual words and gave more information (like its bounding box and confidence score) that we didn't need. OpenAI's gpt-vision model performed about the same as 4o-mini, but took significantly longer to parse than 4o-mini.
 - PDFKit vs. OpenAI API parse pdf
    - Chose PDFKit over OpenAI for parsing to optimize for local processing and cost efficiency.
 
