@@ -36,7 +36,7 @@ struct EditCourseModal: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Course Information")) {
+                Section(header: Text("Course Name")) {
                     TextField("Course Name", text: $newName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .textInputAutocapitalization(.never)
@@ -60,7 +60,7 @@ struct EditCourseModal: View {
                         Text("Update Course")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(newName.isEmpty || newName == course.courseName ? Color.gray : Color.blue)
+                            .background(newName.isEmpty || newName == course.courseName ? Color.gray : darkBrown)
                             .foregroundColor(.white)
                             .cornerRadius(10)
                     }

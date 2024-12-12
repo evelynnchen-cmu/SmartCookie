@@ -13,6 +13,8 @@ struct ChatHeaderView: View {
     @Binding var isMessageSelectionViewPresented: Bool
     @Binding var isChatViewPresented: Bool?
     @ObservedObject var firebase: Firebase
+    var hasUnsavedMessages: Bool
+    @Binding var showExitConfirmation: Bool
 
     @State private var localCourses: [Course] = []
 
@@ -86,7 +88,11 @@ struct ChatHeaderView: View {
             // Close chat button
             if let isPresented = isChatViewPresented {
                 Button(action: {
-                    isChatViewPresented = false
+                    if hasUnsavedMessages {
+                        showExitConfirmation = true
+                    } else {
+                        isChatViewPresented = false
+                    }
                 }) {
                     Image(systemName: "xmark")
                         .foregroundColor(.black)
