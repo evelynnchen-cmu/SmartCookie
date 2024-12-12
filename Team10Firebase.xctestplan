@@ -1,0 +1,37 @@
+{
+  "configurations" : [
+    {
+      "id" : "F8E790A1-3BAF-4F1D-A8B3-EB1373DAB1AD",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:Team10Firebase.xcodeproj",
+      "identifier" : "55E8C8972CC72C8500C551F3",
+      "name" : "Team10Firebase"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Team10Firebase.xcodeproj",
+        "identifier" : "55E8C8A72CC72C8600C551F3",
+        "name" : "Team10FirebaseTests"
+      }
+    },
+    {
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:Team10Firebase.xcodeproj",
+        "identifier" : "55E8C8B12CC72C8600C551F3",
+        "name" : "Team10FirebaseUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
