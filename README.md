@@ -50,12 +50,14 @@ Generally, many of our design decisions were based on user feedback received thr
    - Chose OpenAI's gpt4o-mini model because it was best suited for our use case and was the most cost effective. AWS Textract broke down the given image into individual words and gave more information (like its bounding box and confidence score) that we didn't need. OpenAI's gpt-vision model performed about the same as 4o-mini, but took significantly longer to parse than 4o-mini.
 - PDFKit vs. OpenAI API parse pdf
    - Chose PDFKit over OpenAI for parsing to optimize for local processing and cost efficiency.
+- Firebase Firestore vs AWS S3
+   - Chose Firebase Firestore because there was more classroom help with this service and it is built to integrate with Firebase.
 
 
 ## Testing Issues 
 Based on what was mentioned in lecture that UI tests are very slow and fragile, we did not do them. We recognize that this impacted our testing code coverage because much of our code logic is in views. :)
 
-We also made the decision to write most of our tests using Firebase directly, rather than using mocks. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down.
+We also made the decision to write our tests using both mocks and Firebase directly. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down. This is why we used mocks where we could, in order to minimize the amount of side effects.
 
 
 ## Future Extensions
