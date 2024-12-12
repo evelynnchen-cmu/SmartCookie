@@ -15,40 +15,32 @@ The SmartCookie app is designed to streamline studying for students by offering 
 
 3. Build and run the app on an iPhone (not simulator) iOS version 18. If necessary, can downgrade our app to run on lower iOS versions.
 
+## Intended Flows
+
 ## Design Decisions
 Generally, many of our design decisions were based on user feedback received throughout the ideation and development process. Our user testing reports cover these decisions in much greated depth, and can be found here: [Sprint 2](https://docs.google.com/document/d/1jH_xv7wfiSZur2KKgGq4W6AJhWWvTzmzcy_XwHZ1FUo/edit?usp=sharing), and [Sprint 5](https://docs.google.com/document/d/1nSijWxFvLL3BzYLVRLy4AT7Zor1WZ2SGQcPo0ch3bOw/edit?usp=sharing)
 
-- Making a general settings page
-  - Supporting functionality of allowing users to select if they want chat responses and quiz questions to be limited to their notes only or also be able to access intern
-- Chat prompt recommendations - quick usability
-- Upload pdfs since most users have notes as pdf
-  - Intended use of upload pdf is to upload text-only PDFs (use of pdfkit over open ai), currently images within a pdf are not extracted with pdf
-- Clarify intended flows and flows TAs/prof H should not attempt
-- Simplified navigation by centralizing settings.
-- Removed points system in favor of streak-based incentives due to lack of user interest.
+**Some specific design decisions we wanted to highlight/justify:**
 
-Some specific design decisions we wanted to highlight/justify:
 - Upload PDF Functionality
-  Restricted to within course view only, while images can be uploaded/scanned throughout the app. This decision allows us to centralize note organization, ensuring that uploaded PDFs are directly associated with specific courses. By limiting where users can perform this action, this prevents clutter or confusion and also aligns with user feedback received emphasizing the need for structured workflows within a course-based context.
+  
+   Restricted to within course view only, while images can be uploaded/scanned throughout the app. This decision allows us to centralize note organization, ensuring that uploaded PDFs are directly associated with specific courses. By limiting where users can perform this action, this prevents clutter or confusion and also aligns with user feedback received emphasizing the need for structured workflows within a course-based context.
 
 - General Settings Page
-Centralized location for managing app preferences, reducing navigation complexity.
-Added flexibility for users to choose the scope of AI features (notes-only vs. external data).
-Simplifies the app’s cognitive load by eliminating multiple settings scattered across various views.
+  
+   Centralized app settings in one location to reduce navigation complexity and improve usability. This decision eliminates the need for users to search across different views for scattered settings, making it easier for them to configure the app. Specifically, it allows users to control whether AI features (e.g., chat responses and quiz questions) are restricted to their own notes or can also utilize external internet data, supporting flexibility and personal preference.
 
 - Chat Prompt Recommendations
-Enable quick usability by suggesting commonly used prompts (e.g., "Summarize this note," "Create a quiz from this topic").
-Minimizes typing effort, making the app more efficient and user-friendly.
 
+  Introduced pre-filled chat prompt recommendations (e.g., "Summarize the key points of," "Explain this concept") to enable faster interactions with the AI assistant. This minimizes typing effort and caters to user feedback highlighting the importance of quick usability, especially during high-stress study sessions.
 
 - PDF Upload and Text Extraction
-PDF uploads focus on text-based notes, as these are more compatible with current parsing technologies.
-Recognized limitation: PDFs with embedded images are not fully supported, but future updates could address this.
+
+   Designed the PDF upload feature to focus specifically on text-based PDFs, as these are more compatible with the app’s current parsing technologies. While the app does not currently extract images embedded within PDFs, this limitation reflects the trade-offs in development prioritization, with the potential for future updates to address it. This feature was prioritized because most users expressed a desire to migrate existing materials, such as their professor’s lecture slides, into the app. By enabling students to integrate these resources seamlessly, the app enhances their ability to apply its features—like summarization, organization, and quiz generation—directly to their learning.
 
 - Streak-Based Incentives
-Why Not Points?
-User testing showed low engagement with point systems.
-Streak-based rewards, such as maintaining daily or weekly study goals, align more closely with intrinsic motivators.
+
+   Replaced the originally planned points system with streak-based rewards after user testing revealed a lack of interest in points. Streak-based incentives, such as maintaining daily or weekly study goals, are more aligned with students' intrinsic motivators, promoting consistency without unnecessary gamification elements.
 
 
 ## Tech Decisions 
@@ -66,3 +58,4 @@ We also made the decision to write most of our tests using Firebase directly, ra
 ## Future Extensions
 - Expand app to support accessibility features like audio transcriptions
 - Offer better support for parsing and displaying advanced content such as code, math symbols, etc.
+- Support PDF image extraction
