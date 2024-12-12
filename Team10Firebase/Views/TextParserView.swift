@@ -25,8 +25,7 @@ struct TextParserView: View {
   @State private var title: String // Passed in init
   @State private var courseID: String = ""
   @State private var userID: String = ""
-//   @State private var content: String? = nil
-    @State private var content: String?
+  @State private var content: String? = nil
   @State private var newNote: Note? = nil
   @State private var isParsing = true
   @State private var isEditing = false
@@ -52,7 +51,6 @@ struct TextParserView: View {
         self.title = title
         self._note = note ?? .constant(nil)
         self.completion = completion
-        self.content = nil
     }
   
   var body: some View {
@@ -408,7 +406,7 @@ struct TextParserView: View {
                 } else {
                     isSaving = true
                     handleSave()
-                    saveOrChatPressed = true
+                    savePressed = true
                 }
                 }) {
                     Text("Save")

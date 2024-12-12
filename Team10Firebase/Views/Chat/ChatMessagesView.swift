@@ -52,7 +52,7 @@ struct ChatMessagesView: View {
 
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(message.content)
-                                    .padding(.horizontal, 12)
+                                    .padding(.horizontal, 16)
                                     .padding(.vertical, 10)
                                     .background(tan)
                                     .foregroundColor(.black)
