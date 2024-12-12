@@ -15,7 +15,7 @@ struct AddNoteModalCourse: View {
     @ObservedObject var firebase: Firebase
     @State var course: Course?
     @State var courseFolders: [Folder] = []
-    @State var folder: Folder?
+    var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
   
     @State private var selectedFolder: Folder?
   
