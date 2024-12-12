@@ -57,4 +57,11 @@ struct EditNoteModal: View {
             })
         }
     }
+    
+    // Helper for testing
+    #if DEBUG
+    func getTestableState() -> (newTitle: String, newContent: String) {
+        return (newTitle, newContent)
+    }
+    #endif
 }

@@ -58,4 +58,11 @@ struct AddNoteModalCourse: View {
             }
         }
     }
+    
+    // Helper for testing
+    #if DEBUG
+    func getTestableCourseName() -> String {
+        return courseName
+    }
+    #endif
 }

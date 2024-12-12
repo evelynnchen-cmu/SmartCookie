@@ -13,7 +13,6 @@ struct AddNoteModal: View {
     @State private var showTextParserView = false
     
     var onNoteCreated: () -> Void
-//    var updateFolderNotes: () -> Void
     @ObservedObject var firebase: Firebase
     var course: Course
     var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
@@ -24,19 +23,6 @@ struct AddNoteModal: View {
                 Section(header: Text("Note Information")) {
                     TextField("Title", text: $title)
                     TextField("Content", text: $content)
-                  
-//                    if let selectedImage = selectedImage {
-//                        Image(uiImage: selectedImage)
-//                            .resizable()
-//                            .scaledToFit()
-//                            .frame(height: 200)
-//                    }
-//
-//                    Button(action: {
-//                        showImagePicker = true
-//                    }) {
-//                        Text("Select Image")
-//                    }
                 }
                 
                 Button(action: {
@@ -87,18 +73,6 @@ struct AddNoteModal: View {
 //                    dismiss()
                 }
             }
-            // ) { result in
-            //     switch result {
-            //     case .success(let documentID):
-            //         print("Note created with ID: \(documentID)")
-            //         updateFolderNotes()
-            //         onNoteCreated()
-            //         dismiss()
-            //     case .failure(let error):
-            //         errorMessage = error.localizedDescription
-            //         showError = true
-            //     }
-            // }
         } catch {
             errorMessage = error.localizedDescription
             showError = true
@@ -151,4 +125,10 @@ struct AddNoteModal: View {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unexpected response format"])
         }
     }
+    
+//  Testing helper
+    #if DEBUG
+    @Binding var testTitle: String
+    @Binding var testContent: String
+    #endif
 }
