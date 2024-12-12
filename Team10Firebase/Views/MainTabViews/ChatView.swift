@@ -18,6 +18,7 @@ struct ChatView: View {
     @State private var courseNotes: [Note] = []
     @State private var selectedCourse: Course?
     @State private var selectedFolder: Folder?
+    @State private var parsedText: String?
     
     @State private var isFilePickerPresented = false
     @State private var selectedNote: Note?
@@ -57,7 +58,8 @@ struct ChatView: View {
         return key
     }()
 
-    init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil, needToSave: Binding<Bool>? = .constant(false)) {
+    init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, parsedText: String? = nil,
+            isChatViewPresented: Binding<Bool?>? = nil, needToSave: Binding<Bool>? = .constant(false)) {
         if let isPresented = isChatViewPresented {
             self._isChatViewPresented = isPresented
         } else {
@@ -76,6 +78,7 @@ struct ChatView: View {
             self.selectedScope = "General"
             self.lastValidScope = "General"
         }
+        self._parsedText = State(initialValue: parsedText)
     }
 
     var body: some View {
@@ -236,7 +239,15 @@ struct ChatView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         // Add notes context
-        let notesContext = courseNotes.map { note in
+      var notesContext = ""
+      if let parsedText = parsedText {
+          print("Using parsed text as notes context.")
+          notesContext += "You have been provided parsed text from an image the user has passed in. If the user asks any questions about this image, reference the parsed text. Parsed text: " + parsedText + "\n\n"
+      } else {
+        print("No parsed text")
+      }
+
+        notesContext += courseNotes.map { note in
             let formattedDate = DateFormatter.localizedString(from: note.createdAt, dateStyle: .long, timeStyle: .short)
             return """
             Title: \(note.title)
@@ -245,6 +256,7 @@ struct ChatView: View {
             Content: \(note.content)
             """
         }.joined(separator: "\n\n")
+            
 
         // Check if notes are empty
         if notesContext.isEmpty {
