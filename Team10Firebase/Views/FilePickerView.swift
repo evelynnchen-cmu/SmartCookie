@@ -208,7 +208,6 @@ struct FilePickerView: View {
                 } else {
                     ForEach(uncategorizedNotes) { note in
                         noteButton(note: note)
-                            // .listRowBackground(selectedNote?.id == note.id ? Color(.systemGray6) : nil)
                     }
                 }
             }
@@ -230,7 +229,6 @@ struct FilePickerView: View {
             } else {
                 ForEach(notesInFolder) { note in
                     noteButton(note: note)
-                        // .listRowBackground(Color(.systemGray6))
                 }
             }
         }

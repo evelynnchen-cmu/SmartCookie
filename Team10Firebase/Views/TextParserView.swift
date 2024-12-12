@@ -115,7 +115,7 @@ struct TextParserView: View {
             }
         )
        .sheet(isPresented: $showSaveForm) {
-            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course, folder) in
+            AddNoteToCourseModal(isPresented: $showSaveForm, firebase: firebase) { (title, course, folder) in
               if let courseObj = course {
                 self.course = courseObj
               }
