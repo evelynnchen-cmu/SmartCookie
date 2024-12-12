@@ -8,6 +8,7 @@
 
 @testable import Team10Firebase
 import Foundation
+import UIKit
 
 class MockOpenAI: OpenAI {
     var shouldFail = false
@@ -37,5 +38,20 @@ class MockOpenAI: OpenAI {
         }
         
         return mockQuestions
+    }
+
+    override func parseImage(_ image: UIImage, completion: @escaping (String?) -> Void) {
+        if shouldFail {
+            completion(nil)
+            return
+        }
+
+        if mockDelay > 0 {
+            DispatchQueue.global().asyncAfter(deadline: .now() + mockDelay) {
+                completion("Mock parsed text")
+            }
+        } else {
+            completion("Mock parsed text")
+        }
     }
 }
