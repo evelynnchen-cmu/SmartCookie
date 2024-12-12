@@ -218,7 +218,6 @@ struct TextParserView: View {
                                 var updatedSummary = combinedContent
                                 do {
                                     updatedSummary = try await openAI.summarizeContent(content: combinedContent)
-                                    print("new summary done")
                                 } catch {
                                     alertMessage = "Failed to summarize content"
                                     showAlert = true
