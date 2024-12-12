@@ -59,6 +59,8 @@ Based on what was mentioned in lecture about how UI tests are very slow and frag
 
 We also made the decision to write our tests using a combination of both mocks and Firebase directly. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down. This is why we used mocks where we could, in order to minimize the amount of side effects.
 
+For our OpenAI tests, we used only mocks since the API calls to Open AI are more costly than the calls to Firebase. We aimed to achieve test coverage by testing the three functions located within the OpenAI class, although couldn’t achieve full test coverage due to being able to not mock the Open AI API endpoint.
+
 Overall, testing coverage for three of our four view models reached over 90% coverage. QuizViewModel was difficult to fully test due to the nature of quizzes generated being variable in length. Since our project follows the MVVM architecture, thorough testing of these files allowed us to meaningfully guarantee the correctness of a significant aspect of our app. Below are screenshots showing our passing XCode testing suite and test coverage report.
 
    <img width="447" alt="IMG_8307" src="https://github.com/user-attachments/assets/eade1409-e747-4261-88de-1bbd7ed78dae" />
