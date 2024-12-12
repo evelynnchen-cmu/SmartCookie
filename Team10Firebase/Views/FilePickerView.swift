@@ -16,6 +16,7 @@ struct FilePickerView: View {
     @State private var selectedFolder: Folder?
     @State private var folders: [Folder] = []
     @State private var notes: [Note] = []
+    @State private var localNotes: [Note] = []
 
     var body: some View {
         NavigationStack {
@@ -27,16 +28,15 @@ struct FilePickerView: View {
                 )
                 .toolbar { toolbarContent }
                 .onAppear {
-                    firebase.getNotes()
-                    firebase.getFolders { fetchedFolders in
-                        folders = fetchedFolders
-                        fetchNotes()
-                    }
-                    debugPrintData() 
+                    loadNotesIfNeeded()
+                    loadFoldersIfNeeded()
                 }
-                .onChange(of: firebase.notes) { updatedNotes in
-                    print("Firebase notes updated: \(updatedNotes.map { $0.title })")
-                    fetchNotes()
+                .onChange(of: firebase.notes) { newNotes in
+                    if !newNotes.isEmpty {
+                        print("Updating local notes cache with \(newNotes.count) notes")
+                        localNotes = newNotes
+                        updateFilteredNotes()
+                    }
                 }
         }
     }
@@ -78,7 +78,7 @@ struct FilePickerView: View {
                 Button("Back") { 
                     selectedFolder = nil
                     selectedNote = nil
-                    fetchNotes()
+                    updateFilteredNotes()
                 }
             } else if selectedCourse != nil {
                 Button("Back") { 
@@ -90,44 +90,87 @@ struct FilePickerView: View {
         }
     }
 
-    private func notesInFolderSection(course: Course, folder: Folder) -> some View {
-        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")")) {
-            let notesInFolder = firebase.notes.filter { note in
-                note.courseID == course.id && note.fileLocation == folder.id
-            }
-            
-            if notesInFolder.isEmpty {
-                Text("No notes available").foregroundColor(.secondary)
-            } else {
-                ForEach(notesInFolder) { note in
-                    Button(action: {
-                        selectedNote = note
-                        print("Selected Note in Folder: \(note.title ?? "Unnamed Note"), ID: \(note.id ?? "nil")")
-                    }) {
-                        HStack {
-                            Text(note.title ?? "Unnamed Note")
-                            if selectedNote?.id == note.id {
-                                Spacer()
-                                Image(systemName: "checkmark").foregroundColor(.blue)
-                            }
-                        }
-                    }
-                }
+    private func loadNotesIfNeeded() {
+        if firebase.notes.isEmpty && localNotes.isEmpty {
+            print("Loading notes from Firebase...")
+            firebase.getNotes()
+        } else if !firebase.notes.isEmpty && localNotes.isEmpty {
+            print("Caching \(firebase.notes.count) notes locally")
+            localNotes = firebase.notes
+            updateFilteredNotes()
+        }
+    }
+
+    private func loadFoldersIfNeeded() {
+        if folders.isEmpty {
+            firebase.getFolders { fetchedFolders in
+                folders = fetchedFolders
+                updateFilteredNotes()
             }
         }
     }
 
+    private func updateFilteredNotes() {
+        guard let selectedCourse = selectedCourse,
+            let courseId = selectedCourse.id else { // Safely unwrap courseId
+            notes = []
+            return
+        }
+
+        print("\nDebug - Course Info:")
+        print("Selected Course ID: \(courseId)")
+
+        let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
+        print("Total notes to filter: \(notesToUse.count)")
+        
+        // Print all notes for this course to debug
+        let allCourseNotes = notesToUse.filter { $0.courseID == courseId }
+        print("Notes with matching courseID: \(allCourseNotes.count)")
+        allCourseNotes.forEach { note in
+            print("Note: \(note.title ?? ""), Location: '\(note.fileLocation)'")
+        }
+        
+        if let selectedFolder = selectedFolder,
+        let folderId = selectedFolder.id { // Safely unwrap folderId
+            let expectedPath1 = "\(courseId)/\(folderId)"
+            let expectedPath2 = folderId
+            print("Looking for notes with paths: '\(expectedPath1)' or '\(expectedPath2)'")
+            
+            notes = notesToUse.filter { note in
+                note.courseID == courseId &&
+                (note.fileLocation == expectedPath1 ||
+                note.fileLocation == expectedPath2)
+            }
+            print("Filtered \(notes.count) notes for folder \(selectedFolder.folderName ?? "")")
+        } else {
+            let expectedPaths = [
+                courseId,
+                "\(courseId)/",
+                ""
+            ]
+            print("Looking for notes with paths: \(expectedPaths)")
+            
+            notes = notesToUse.filter { note in
+                note.courseID == courseId &&
+                (note.fileLocation.isEmpty ||
+                expectedPaths.contains(note.fileLocation))
+            }
+            print("Filtered \(notes.count) uncategorized notes for course \(selectedCourse.courseName)")
+        }
+    }
 
     private func foldersAndNotesSection(course: Course) -> some View {
         Group {
             let courseFolders = folders.filter { $0.courseID == course.id }
-            
+            let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
+            let courseId = course.id ?? ""
+
             // Folders section
             Section(header: Text("Folders")) {
                 ForEach(courseFolders) { folder in
                     Button(action: {
                         selectedFolder = folder
-                        print("Selected Folder: \(folder.folderName ?? "Unnamed Folder")")
+                        updateFilteredNotes()
                     }) {
                         HStack {
                             Image(systemName: "folder")
@@ -141,17 +184,19 @@ struct FilePickerView: View {
             
             // Uncategorized notes section
             Section(header: Text("Notes")) {
-                let uncategorizedNotes = firebase.notes.filter { 
-                    $0.courseID == course.id && $0.fileLocation.isEmpty
+                let uncategorizedNotes = notesToUse.filter { note in
+                    note.courseID == courseId &&
+                    (note.fileLocation == courseId ||
+                    note.fileLocation == "\(courseId)/" ||
+                    note.fileLocation.isEmpty)
                 }
-                
+
                 if uncategorizedNotes.isEmpty {
                     Text("No uncategorized notes").foregroundColor(.secondary)
                 } else {
                     ForEach(uncategorizedNotes) { note in
                         Button(action: {
                             selectedNote = note
-                            print("Selected Note: \(note.title ?? "Unnamed Note")")
                         }) {
                             HStack {
                                 Text(note.title ?? "Unnamed Note")
@@ -167,6 +212,37 @@ struct FilePickerView: View {
         }
     }
 
+    private func notesInFolderSection(course: Course, folder: Folder) -> some View {
+        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")")) {
+            let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
+            let courseId = course.id ?? ""
+            let folderId = folder.id ?? ""
+            
+            let notesInFolder = notesToUse.filter { note in
+                note.courseID == courseId &&
+                (note.fileLocation == "\(courseId)/\(folderId)" ||
+                note.fileLocation == folderId)
+            }
+
+            if notesInFolder.isEmpty {
+                Text("No notes available").foregroundColor(.secondary)
+            } else {
+                ForEach(notesInFolder) { note in
+                    Button(action: {
+                        selectedNote = note
+                    }) {
+                        HStack {
+                            Text(note.title ?? "Unnamed Note")
+                            if selectedNote?.id == note.id {
+                                Spacer()
+                                Image(systemName: "checkmark").foregroundColor(.blue)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     private func coursesSection() -> some View {
         Section(header: Text("Courses")) {
@@ -174,8 +250,9 @@ struct FilePickerView: View {
                 Button(action: {
                     selectedCourse = course
                     selectedFolder = nil
-                    fetchNotes()
-                    print("Selected Course: \(course.courseName), ID: \(course.id ?? "nil")")
+                    print("\nSelected Course: \(course.courseName)")
+                    print("Course ID: \(course.id)")
+                    updateFilteredNotes() // Use updateFilteredNotes instead of fetchNotes
                 }) {
                     Text(course.courseName)
                 }
@@ -189,25 +266,38 @@ struct FilePickerView: View {
         }
     }
 
-    private func fetchNotes() {
-        guard let selectedCourse = selectedCourse else {
-            print("No course selected.")
-            notes = []
-            return
-        }
+    // private func fetchNotes() {
+    //     guard let selectedCourse = selectedCourse else {
+    //         print("No course selected.")
+    //         notes = []
+    //         return
+    //     }
+                
+    //     if let selectedFolder = selectedFolder {
+    //         notes = firebase.notes.filter { note in
+    //             let matches = note.courseID == selectedCourse.id &&
+    //                 (note.fileLocation == "\(selectedCourse.id)/\(selectedFolder.id)" ||
+    //                  note.fileLocation == selectedFolder.id)
+    //             if matches {
+    //                 print("Matched note in folder: \(note.title ?? "")")
+    //             }
+    //             return matches
+    //         }
+    //     } else {
+    //         notes = firebase.notes.filter { note in
+    //             let matches = note.courseID == selectedCourse.id &&
+    //                 (note.fileLocation == "\(selectedCourse.id)/" ||
+    //                  note.fileLocation == "\(selectedCourse.id)" ||
+    //                  note.fileLocation.isEmpty)
+    //             if matches {
+    //                 print("Matched uncategorized note: \(note.title ?? "")")
+    //             }
+    //             return matches
+    //         }
+    //     }
         
-        if let selectedFolder = selectedFolder {
-            // Get notes for the selected folder
-            notes = firebase.notes.filter { 
-                $0.courseID == selectedCourse.id && $0.fileLocation == selectedFolder.id 
-            }
-        } else {
-            // Get all notes for the course
-            notes = firebase.notes.filter { $0.courseID == selectedCourse.id }
-        }
-        print("Fetched notes for \(selectedFolder?.folderName ?? selectedCourse.courseName): \(notes.map { $0.title })")
-    }
-
+    //     print("Found \(notes.count) notes")
+    // }
 
     private func debugPrintData() {
         print("Debugging Firebase Data:")
