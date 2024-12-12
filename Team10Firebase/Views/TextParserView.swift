@@ -19,9 +19,9 @@ struct TextParserView: View {
   @State private var alertMessage = ""
   @State private var showAlert = false
   @State private var showExitConfirmation = false
-  @State private var saveOrChatPressed = false
+  @State private var savePressed = false
   @State private var navigateToNoteView = false
-  @State private var isChatViewPresented: Bool? = false
+  @State private var isChatViewPresented: Bool? = false //Bool optional so ChatView can handle non-sheet presentation
   @State private var title: String // Passed in init
   @State private var courseID: String = ""
   @State private var userID: String = ""
@@ -56,152 +56,11 @@ struct TextParserView: View {
   var body: some View {
        GeometryReader { geometry in
            VStack(spacing: 0) {
-               ZStack {
-                   Text("What we got")
-                       .font(.title)
-                       .bold()
-                       .frame(maxWidth: .infinity, alignment: .center)
-                   
-                   HStack {
-                       Spacer()
-                       Button(action: {
-                        if !saveOrChatPressed {
-                            showExitConfirmation = true
-                        } else {
-                          isPresented = false
-                        }
-                       }) {
-                           Image(systemName: "xmark")
-                               .foregroundColor(.black)
-                               .padding()
-                       }
-                   }
-               }
-               .padding(.horizontal)
-               
-               // Content area
-               ZStack(alignment: .bottomTrailing) {
-                   if !isParsing {
-                       if let text = content {
-                           if isEditing {
-                               // Editable text area
-                               TextEditor(text: $editedContent)
-                                   .focused($isTextEditorFocused)
-                                   .padding()
-                           } else {
-                               ScrollView {
-                                   Text(text)
-                                       .frame(maxWidth: .infinity, alignment: .leading)
-                                       .padding()
-                               }
-                           }
-                       } else {
-                           Text("No text found")
-                               .padding()
-                       }
-                       
-                       VStack(spacing: 8) {
-                           if !isEditing {
-                               Button(action: {
-                                   self.content = nil
-                                   self.isParsing = true
-                                   parseImages()
-                               }) {
-                                   Image(systemName: "arrow.counterclockwise.circle")
-                                       .font(.system(size: 40))
-//                                       .foregroundColor(darkBlue)
-                                       .background(Color.white)
-                                       .foregroundColor(tan)
-                               }
-                               .padding(8)
-                               
-                               Button(action: {
-                                   editedContent = content ?? ""
-                                   isEditing = true
-                                   DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                       isTextEditorFocused = true
-                                   }
-                               }) {
-                                   Image(systemName: "pencil.circle.fill")
-                                   .font(.system(size: 40))
-//                                   .foregroundColor(darkBlue)
-                                   .foregroundColor(tan)
-                               }
-                               .padding(8)
-                           } else {
-                               Button(action: {
-                                   isTextEditorFocused = false
-                                   content = editedContent
-                                   isEditing = false
-                               }) {
-                                 Image(systemName: "checkmark.circle.fill")
-                                  .font(.system(size: 40))
-                                  .foregroundColor(Color.blue.opacity(0.2))
-                                 
-                               }
-                               .padding(8)
-                           }
-                       }
-                       .padding(.trailing, 8)
-                       .padding(.bottom, 8)
-                   } else {
-                       ProgressView("Parsing text...")
-                           .padding()
-                   }
-               }
-               .frame(maxHeight: .infinity)
-               .background(
-                   Group {
-                       if !isParsing {
-                           RoundedRectangle(cornerRadius: 12)
-                               .stroke(tan, lineWidth: 3)
-                               .background(Color.white)
-                       }
-                   }
-               )
-               .padding()
+               headerView
+               contentArea
                
                if !isParsing && !isEditing {
-                   // Bottom buttons
-                   VStack(spacing: 12) {
-                       HStack(spacing: 12) {
-                           Button(action: {
-                               isChatViewPresented = true
-                               saveOrChatPressed = true
-                           }) {
-                               Text("Chat Now")
-                                   .frame(maxWidth: .infinity)
-                                   .padding()
-                                   .background(Color.white)
-                                   .foregroundColor(.black)
-                                   .cornerRadius(8)
-                                   .overlay(
-                                       RoundedRectangle(cornerRadius: 8)
-                                           .stroke(tan, lineWidth: 1)
-                                   )
-                           }
-                           
-                           Button(action: {
-                            if note == nil {
-                                showSaveForm = true
-                            } else {
-                                isSaving = true
-                                handleSave()
-                                saveOrChatPressed = true
-                            }
-                           }) {
-                               Text("Save")
-                                   .frame(maxWidth: .infinity)
-                                   .padding()
-                                   .background(tan)
-//                                   .foregroundColor(tan)
-                                   .foregroundColor(.white)
-                                   .cornerRadius(8)
-                           }
-                       }
-                   }
-                   .padding(.horizontal)
-                   .padding(.bottom, 20)
+                   bottomButtons
                }
            }
        }
@@ -231,9 +90,9 @@ struct TextParserView: View {
            set: { isChatViewPresented = $0 ? true : nil }
        )) {
            if let course = course {
-               ChatView(selectedCourse: course, isChatViewPresented: $isChatViewPresented)
+                ChatView(selectedCourse: course, parsedText: content, isChatViewPresented: $isChatViewPresented)
            } else {
-                ChatView(isChatViewPresented: $isChatViewPresented)
+                ChatView(parsedText: content, isChatViewPresented: $isChatViewPresented)
            }
        }
        .overlay(
@@ -242,7 +101,7 @@ struct TextParserView: View {
                 ZStack {
                   Color.black.opacity(0.4)
                     .edgesIgnoringSafeArea(.all)
-                  ProgressView("Creating note...")
+                  ProgressView("Updating/creating note...")
                     .progressViewStyle(CircularProgressViewStyle())
                     .padding()
                     .background(.white)
@@ -262,7 +121,7 @@ struct TextParserView: View {
               self.title = title
               isSaving = true
               handleSave()
-              saveOrChatPressed = true
+              savePressed = true
             }
           }
         
@@ -410,5 +269,156 @@ struct TextParserView: View {
             self.content = parsedTexts.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
             self.isParsing = false
         }
+    }
+
+    // Views
+    private var headerView: some View {
+        ZStack {
+            Text("What we got")
+                .font(.title)
+                .bold()
+                .frame(maxWidth: .infinity, alignment: .center)
+            
+            HStack {
+                Spacer()
+                Button(action: {
+                if !savePressed {
+                    showExitConfirmation = true
+                } else {
+                    isPresented = false
+                }
+                }) {
+                    Image(systemName: "xmark")
+                        .foregroundColor(.black)
+                        .padding()
+                }
+            }
+        }
+        .padding(.horizontal)
+    }
+
+    private var contentArea: some View {
+        ZStack(alignment: .bottomTrailing) {
+            if !isParsing {
+                if let text = content {
+                    if isEditing {
+                        // Editable text area
+                        TextEditor(text: $editedContent)
+                            .focused($isTextEditorFocused)
+                            .padding()
+                    } else {
+                        ScrollView {
+                            Text(text)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
+                        }
+                    }
+                } else {
+                    Text("No text found")
+                        .padding()
+                }
+                
+                editingButtons
+            } else {
+                ProgressView("Parsing text...")
+                    .padding()
+            }
+        }
+        .frame(maxHeight: .infinity)
+        .background(
+            Group {
+                if !isParsing {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(tan, lineWidth: 3)
+                        .background(Color.white)
+                }
+            }
+        )
+        .padding()
+    }
+
+    private var editingButtons: some View {
+        VStack(spacing: 8) {
+            if !isEditing {
+                Button(action: {
+                    self.content = nil
+                    self.isParsing = true
+                    parseImages()
+                }) {
+                    Image(systemName: "arrow.counterclockwise.circle")
+                        .font(.system(size: 40))
+                        .background(Color.white)
+                        .foregroundColor(tan)
+                }
+                .padding(8)
+                
+                Button(action: {
+                    editedContent = content ?? ""
+                    isEditing = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isTextEditorFocused = true
+                    }
+                }) {
+                    Image(systemName: "pencil.circle.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(tan)
+                }
+                .padding(8)
+            } else {
+                Button(action: {
+                    isTextEditorFocused = false
+                    content = editedContent
+                    isEditing = false
+                }) {
+                    Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(Color.blue.opacity(0.2))
+                    
+                }
+                .padding(8)
+            }
+        }
+        .padding(.trailing, 8)
+        .padding(.bottom, 8)
+    }
+
+    private var bottomButtons: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Button(action: {
+                    isChatViewPresented = true
+                }) {
+                    Text("Chat Now")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.white)
+                        .foregroundColor(.black)
+                        .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(tan, lineWidth: 1)
+                        )
+                }
+                
+                Button(action: {
+                if note == nil {
+                    showSaveForm = true
+                } else {
+                    isSaving = true
+                    handleSave()
+                    savePressed = true
+                }
+                }) {
+                    Text("Save")
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(tan)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
+                }
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 20)
     }
 }

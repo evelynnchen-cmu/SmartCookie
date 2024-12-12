@@ -16,6 +16,10 @@ struct PDFParserView: View {
     @State private var content: String? = nil
     @State private var isParsing = false
     @State private var keyboardHeight: CGFloat = 0
+    @State private var showExitConfirmation = false
+    @State private var savePressed = false
+    @State private var isChatViewPresented: Bool? = false
+    @State private var isSaving = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -29,7 +33,11 @@ struct PDFParserView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            isPresented = false
+                            if !savePressed {
+                                showExitConfirmation = true
+                            } else {
+                                isPresented = false
+                            }
                         }) {
                             Image(systemName: "xmark")
                                 .foregroundColor(.black)
@@ -120,7 +128,7 @@ struct PDFParserView: View {
                     VStack(spacing: 12) {
                         HStack(spacing: 12) {
                             Button(action: {
-                                isPresented = false
+                                isChatViewPresented = true
                             }) {
                                 Text("Chat Now")
                                     .frame(maxWidth: .infinity)
@@ -135,6 +143,8 @@ struct PDFParserView: View {
                             }
                             
                             Button(action: {
+                                isSaving = true
+                                savePressed = true
                                 handleSave()
                             }) {
                                 Text("Save")
@@ -155,6 +165,16 @@ struct PDFParserView: View {
         .alert(isPresented: $showAlert) {
             Alert(title: Text("PDF Update"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
         }
+        .alert(isPresented: $showExitConfirmation) {
+            Alert(
+                title: Text("Exit without saving?"),
+                message: Text("Are you sure you want to exit without saving?"),
+                primaryButton: .default(Text("Yes")) {
+                    isPresented = false
+                },
+                secondaryButton: .cancel()
+            )
+        }
         .onAppear {
             content = pdfText
             setupKeyboardObservers()
@@ -162,6 +182,35 @@ struct PDFParserView: View {
         .onDisappear {
             removeKeyboardObservers()
         }
+        .fullScreenCover(isPresented: Binding(
+           get: { isChatViewPresented ?? false },
+           set: { isChatViewPresented = $0 ? true : nil }
+       )) {
+//        .fullScreenCover(isPresented: $isChatViewPresented) {
+           if let course = course {
+                ChatView(selectedCourse: course, parsedText: content, isChatViewPresented: $isChatViewPresented)
+           } else {
+                ChatView(parsedText: content, isChatViewPresented: $isChatViewPresented)
+           }
+       }
+        .overlay(
+            Group {
+              if self.isSaving {
+                ZStack {
+                  Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                  ProgressView("Updating note...")
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .padding()
+                    .background(.white)
+                    .cornerRadius(15)
+                    .shadow(radius: 10)
+                    .padding(40)
+                    .font(.headline)
+                }
+              }
+            }
+        )
     }
     
     private func setupKeyboardObservers() {

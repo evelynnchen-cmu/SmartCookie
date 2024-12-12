@@ -18,6 +18,7 @@ struct ChatView: View {
     @State private var courseNotes: [Note] = []
     @State private var selectedCourse: Course?
     @State private var selectedFolder: Folder?
+    @State private var parsedText: String?
     
     @State private var isFilePickerPresented = false
     @State private var selectedNote: Note?
@@ -25,6 +26,7 @@ struct ChatView: View {
     @State private var isMessageSelectionViewPresented = false
     @State private var showSaveConfirmation = false
     @State private var saveConfirmationMessage = ""
+    @State private var showExitConfirmation = false
     @State private var notesOnlyChatScope: Bool = false
     @State private var suggestedMessages: [String] = []
     
@@ -57,7 +59,8 @@ struct ChatView: View {
         return key
     }()
 
-    init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, isChatViewPresented: Binding<Bool?>? = nil, needToSave: Binding<Bool>? = .constant(false)) {
+    init(selectedCourse: Course? = nil, selectedFolder: Folder? = nil, parsedText: String? = nil,
+            isChatViewPresented: Binding<Bool?>? = nil, needToSave: Binding<Bool>? = .constant(false)) {
         if let isPresented = isChatViewPresented {
             self._isChatViewPresented = isPresented
         } else {
@@ -76,6 +79,7 @@ struct ChatView: View {
             self.selectedScope = "General"
             self.lastValidScope = "General"
         }
+        self._parsedText = State(initialValue: parsedText)
     }
 
     var body: some View {
@@ -85,7 +89,9 @@ struct ChatView: View {
                     selectedScope: $selectedScope,
                     isMessageSelectionViewPresented: $isMessageSelectionViewPresented,
                     isChatViewPresented: $isChatViewPresented,
-                    firebase: firebase
+                    firebase: firebase,
+                    hasUnsavedMessages: messages.count > 1,
+                    showExitConfirmation: $showExitConfirmation
                 )
 
                 ChatMessagesView(
@@ -178,6 +184,16 @@ struct ChatView: View {
             .alert(isPresented: $showSaveConfirmation) {
                 Alert(title: Text("Save Confirmation"), message: Text(saveConfirmationMessage), dismissButton: .default(Text("OK")))
             }
+            .alert(isPresented: $showExitConfirmation) {
+                Alert(
+                    title: Text("Exit Chat"),
+                    message: Text("Are you sure you want to exit the chat? You will lose any unsaved messages."),
+                    primaryButton: .destructive(Text("Exit")) {
+                        isChatViewPresented = false
+                    },
+                    secondaryButton: .cancel()
+                )
+            }
             .onReceive(NotificationCenter.default.publisher(for: .resetChatView)) { _ in
                 resetChatView()
             }
@@ -236,7 +252,19 @@ struct ChatView: View {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
         // Add notes context
-        let notesContext = courseNotes.map { note in
+      var notesContext = ""
+      if let parsedText = parsedText {
+          print("Using parsed text as notes context.")
+          notesContext += """
+            You have been provided parsed text from either an image or PDF the user has passed in. It 
+            is either a PDF or image depending on which one the user mentions. If the user asks any questions about this 
+            image or PDF, reference the parsed text. Parsed text (from image or PDF): \(parsedText) \n\n
+            """
+      } else {
+        print("No parsed text")
+      }
+
+        notesContext += courseNotes.map { note in
             let formattedDate = DateFormatter.localizedString(from: note.createdAt, dateStyle: .long, timeStyle: .short)
             return """
             Title: \(note.title)
@@ -245,6 +273,7 @@ struct ChatView: View {
             Content: \(note.content)
             """
         }.joined(separator: "\n\n")
+            
 
         // Check if notes are empty
         if notesContext.isEmpty {
