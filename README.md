@@ -13,12 +13,14 @@ The SmartCookie app is designed to streamline studying for students by offering 
    - Secrets.plist file contains the OpenAI API key
    - GoogleService-Info.plist file for Firebase configuration
 
-3. Build and run the app on an iPhone (not simulator) iOS version 18. If necessary, can downgrade our app to run on lower iOS versions.
+3. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available and will not display (icons for notes and add new note icon). UI will also be slightly different.
+- Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
+- If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [yourname].Team10Firebase).
 
 ## Intended Flows
 
 ## Design Decisions
-Generally, many of our design decisions were based on user feedback received throughout the ideation and development process. Our user testing reports cover these decisions in much greated depth, and can be found here: [Sprint 2](https://docs.google.com/document/d/1jH_xv7wfiSZur2KKgGq4W6AJhWWvTzmzcy_XwHZ1FUo/edit?usp=sharing), and [Sprint 5](https://docs.google.com/document/d/1nSijWxFvLL3BzYLVRLy4AT7Zor1WZ2SGQcPo0ch3bOw/edit?usp=sharing)
+Generally, most of our design decisions were based on user feedback received throughout the ideation and development process. Our user testing reports cover these decisions in much greated depth, and can be found here: [Sprint 2](https://docs.google.com/document/d/1jH_xv7wfiSZur2KKgGq4W6AJhWWvTzmzcy_XwHZ1FUo/edit?usp=sharing), and [Sprint 5](https://docs.google.com/document/d/1nSijWxFvLL3BzYLVRLy4AT7Zor1WZ2SGQcPo0ch3bOw/edit?usp=sharing)
 
 **Some specific design decisions we wanted to highlight/justify:**
 
@@ -45,17 +47,21 @@ Generally, many of our design decisions were based on user feedback received thr
 
 ## Tech Decisions 
 - OCR (Parsing Images): OpenAI API vs. AWS Textract, Google Cloud Vision
+   - Chose OpenAI's gpt4o-mini model because it was best suited for our use case and was the most cost effective. AWS Textract broke down the given image into individual words and gave more information (like its bounding box and confidence score) that we didn't need. OpenAI's gpt-vision model performed about the same as 4o-mini, but took significantly longer to parse than 4o-mini.
 - PDFKit vs. OpenAI API parse pdf
    - Chose PDFKit over OpenAI for parsing to optimize for local processing and cost efficiency.
+- Firebase Firestore vs AWS S3
+   - Chose Firebase Firestore because there was more classroom help with this service and it is built to integrate with Firebase.
 
 
 ## Testing Issues 
-Based on what was mentioned in lecture, we did not do UI tests. We recognize that this impacted our testing code coverage because much of our code logic is in views. :)
+Based on what was mentioned in lecture that UI tests are very slow and fragile, we did not do them. We recognize that this impacted our testing code coverage because much of our code logic is in views.
 
-We also made the decision to write most of our tests using Firebase directly, rather than using mocks. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down.
+We also made the decision to write our tests using both mocks and Firebase directly. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down. This is why we used mocks where we could, in order to minimize the amount of side effects.
 
 
 ## Future Extensions
 - Expand app to support accessibility features like audio transcriptions
 - Offer better support for parsing and displaying advanced content such as code, math symbols, etc.
 - Support PDF image extraction
+- Allow users to friend other users to keep each other accountable or start friend streaks similar to Duolingo.
