@@ -55,10 +55,15 @@ Generally, most of our design decisions were based on user feedback received thr
 
 
 ## Testing Issues 
-Based on what was mentioned in lecture that UI tests are very slow and fragile, we did not do them. We recognize that this impacted our testing code coverage because much of our code logic is in views.
+Based on what was mentioned in lecture about how UI tests are very slow and fragile, we did not write any tests for views. We recognize that this impacted our testing code coverage because much of our code logic is in views.
 
-We also made the decision to write our tests using both mocks and Firebase directly. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down. This is why we used mocks where we could, in order to minimize the amount of side effects.
+We also made the decision to write our tests using a combination of both mocks and Firebase directly. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down. This is why we used mocks where we could, in order to minimize the amount of side effects.
 
+Overall, testing coverage for three of our four view models reached over 90% coverage. QuizViewModel was difficult to fully test due to the nature of quizzes generated being variable in length. Since our project follows the MVVM architecture, thorough testing of these files allowed us to meaningfully guarantee the correctness of a significant aspect of our app. Below are screenshots showing our passing XCode testing suite and test coverage report.
+
+   <img width="447" alt="IMG_8307" src="https://github.com/user-attachments/assets/eade1409-e747-4261-88de-1bbd7ed78dae" />
+
+   <img width="681" alt="IMG_6225" src="https://github.com/user-attachments/assets/b65f025f-6294-4ae2-8bff-4a4b1097dc80" />
 
 ## Future Extensions
 - Expand app to support accessibility features like audio transcriptions
