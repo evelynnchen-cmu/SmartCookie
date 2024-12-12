@@ -13,14 +13,14 @@ The SmartCookie app is designed to streamline studying for students by offering 
    - Secrets.plist file contains the OpenAI API key
    - GoogleService-Info.plist file for Firebase configuration
 
-3. Build and run the app on an iPhone (not simulator) iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available and will not display (icons for notes and add new note icon). UI will also be slightly different.
+3. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available and will not display (icons for notes and add new note icon). UI will also be slightly different.
 - Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
-- If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist.
+- If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [yourname].Team10Firebase).
 
 ## Intended Flows
 
 ## Design Decisions
-Generally, many of our design decisions were based on user feedback received throughout the ideation and development process. Our user testing reports cover these decisions in much greated depth, and can be found here: [Sprint 2](https://docs.google.com/document/d/1jH_xv7wfiSZur2KKgGq4W6AJhWWvTzmzcy_XwHZ1FUo/edit?usp=sharing), and [Sprint 5](https://docs.google.com/document/d/1nSijWxFvLL3BzYLVRLy4AT7Zor1WZ2SGQcPo0ch3bOw/edit?usp=sharing)
+Generally, most of our design decisions were based on user feedback received throughout the ideation and development process. Our user testing reports cover these decisions in much greated depth, and can be found here: [Sprint 2](https://docs.google.com/document/d/1jH_xv7wfiSZur2KKgGq4W6AJhWWvTzmzcy_XwHZ1FUo/edit?usp=sharing), and [Sprint 5](https://docs.google.com/document/d/1nSijWxFvLL3BzYLVRLy4AT7Zor1WZ2SGQcPo0ch3bOw/edit?usp=sharing)
 
 **Some specific design decisions we wanted to highlight/justify:**
 
@@ -55,7 +55,7 @@ Generally, many of our design decisions were based on user feedback received thr
 
 
 ## Testing Issues 
-Based on what was mentioned in lecture that UI tests are very slow and fragile, we did not do them. We recognize that this impacted our testing code coverage because much of our code logic is in views. :)
+Based on what was mentioned in lecture that UI tests are very slow and fragile, we did not do them. We recognize that this impacted our testing code coverage because much of our code logic is in views.
 
 We also made the decision to write our tests using both mocks and Firebase directly. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down. This is why we used mocks where we could, in order to minimize the amount of side effects.
 
