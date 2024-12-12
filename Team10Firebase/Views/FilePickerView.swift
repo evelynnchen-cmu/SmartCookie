@@ -23,7 +23,10 @@ struct FilePickerView: View {
             contentList
                 .navigationTitle(currentTitle())
                 .navigationBarItems(
-                    leading: Button("Cancel") { isPresented = false },
+                    leading: Button("Cancel") {
+                        selectedNote = nil // Reset selectedNote when Cancel is tapped
+                        isPresented = false // Close the modal
+                    },
                     trailing: saveButton
                 )
                 .onAppear {
@@ -52,7 +55,6 @@ struct FilePickerView: View {
             }
         }
         .listStyle(InsetGroupedListStyle())
-        .background(Color(UIColor.systemGroupedBackground))
     }
 
     private func currentTitle() -> String {
@@ -66,7 +68,7 @@ struct FilePickerView: View {
             isPresented = false // Dismiss the view without modifying selectedNote
         }) {
             Image(systemName: selectedNote == nil ? "square.and.arrow.down" : "square.and.arrow.down.fill")
-                .foregroundColor(selectedNote == nil ? .gray : .brown)
+                .foregroundColor(selectedNote == nil ? .gray : darkBrown)
         }
     }
 
@@ -137,7 +139,7 @@ struct FilePickerView: View {
             let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
             let courseId = course.id ?? ""
 
-            Section(header: Text("Folders").foregroundColor(.brown)) {
+            Section(header: Text("Folders").foregroundColor(darkBrown)) {
                 ForEach(courseFolders) { folder in
                     Button(action: {
                         selectedFolder = folder
@@ -152,16 +154,11 @@ struct FilePickerView: View {
                             Image(systemName: "chevron.right")
                                 .foregroundColor(darkBrown)
                         }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(tan)
-                        )
                     }
                 }
             }
 
-            Section(header: Text("Notes").foregroundColor(.brown)) {
+            Section(header: Text("Notes").foregroundColor(darkBrown)) {
                 let uncategorizedNotes = notesToUse.filter { note in
                     note.courseID == courseId &&
                     (note.fileLocation == courseId ||
@@ -183,7 +180,7 @@ struct FilePickerView: View {
     }
 
     private func notesInFolderSection(course: Course, folder: Folder) -> some View {
-        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")").foregroundColor(.brown)) {
+        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")").foregroundColor(darkBrown)) {
             let notesInFolder = notes.filter { note in
                 note.courseID == course.id && 
                 (note.fileLocation == "\(course.id ?? "")/\(folder.id ?? "")" || 
@@ -211,16 +208,11 @@ struct FilePickerView: View {
                     .foregroundColor(selectedNote?.id == note.id ? .black : darkBrown)
                 Spacer()
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(selectedNote?.id == note.id ? lightBlue.opacity(0.2) : tan)
-            )
         }
     }
 
     private func coursesSection() -> some View {
-        Section(header: Text("Courses").foregroundColor(.brown)) {
+        Section(header: Text("Courses").foregroundColor(darkBrown)) {
             ForEach(firebase.courses) { course in
                 Button(action: {
                     selectedCourse = course
@@ -229,16 +221,11 @@ struct FilePickerView: View {
                 }) {
                     HStack {
                         Text(course.courseName)
-                            .foregroundColor(.brown)
+                            .foregroundColor(darkBrown)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundColor(.brown)
+                            .foregroundColor(darkBrown)
                     }
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color(UIColor.systemGroupedBackground))
-                    )
                 }
             }
         }
