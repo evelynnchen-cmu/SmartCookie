@@ -118,13 +118,27 @@ final class FirebaseNoteTests: XCTestCase {
     func testDeleteNote() async throws {
         let (course, folder) = try await setupTestEnvironment()
         
-        // Create note first
+        // Create note first with explicitly empty images array
         let createExpectation = XCTestExpectation(description: "Create note")
+        let testNoteWithEmptyImages = Note(
+            id: nil,
+            userID: "test-user-id",
+            title: "Test Note",
+            summary: "Test Summary",
+            content: "Test Content",
+            images: [], // Explicitly set empty images array
+            createdAt: Date(),
+            courseID: course.id,
+            fileLocation: "/",
+            lastAccessed: Date(),
+            lastUpdated: Date()
+        )
+        
         firebase.createNote(
-            title: testNote.title,
-            summary: testNote.summary,
-            content: testNote.content,
-            images: [],
+            title: testNoteWithEmptyImages.title,
+            summary: testNoteWithEmptyImages.summary,
+            content: testNoteWithEmptyImages.content,
+            images: [], // Explicitly pass empty images array
             course: course,
             folder: folder
         ) { note, error in
@@ -139,10 +153,13 @@ final class FirebaseNoteTests: XCTestCase {
         // Get the created note
         firebase.getNotes()
         try await Task.sleep(nanoseconds: 2_000_000_000)
-        guard let note = firebase.notes.first(where: { $0.title == testNote.title }) else {
+        guard let note = firebase.notes.first(where: { $0.title == testNoteWithEmptyImages.title }) else {
             XCTFail("Created note not found")
             return
         }
+        
+        // Verify note has no images before deletion
+        XCTAssertTrue(note.images.isEmpty, "Note should have no images")
         
         // Delete note
         let deleteExpectation = XCTestExpectation(description: "Delete note")
@@ -153,7 +170,7 @@ final class FirebaseNoteTests: XCTestCase {
         
         await fulfillment(of: [deleteExpectation], timeout: 5.0)
     }
-
+    
     func testUpdateNoteTitle() async throws {
         let (course, folder) = try await setupTestEnvironment()
         
