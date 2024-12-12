@@ -63,10 +63,19 @@ struct FilePickerView: View {
 
     private var saveButton: some View {
         Button(action: {
-            isPresented = false
+            isPresented = false // Dismiss the view without modifying selectedNote
         }) {
             Image(systemName: selectedNote == nil ? "square.and.arrow.down" : "square.and.arrow.down.fill")
                 .foregroundColor(selectedNote == nil ? .gray : .brown)
+        }
+    }
+
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button("Cancel") { 
+                selectedNote = nil // Reset selectedNote when cancel is tapped
+                isPresented = false // Close the modal
+            }
         }
     }
 
@@ -175,7 +184,11 @@ struct FilePickerView: View {
 
     private func notesInFolderSection(course: Course, folder: Folder) -> some View {
         Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")").foregroundColor(.brown)) {
-            let notesInFolder = notes.filter { $0.fileLocation == folder.id }
+            let notesInFolder = notes.filter { note in
+                note.courseID == course.id && 
+                (note.fileLocation == "\(course.id ?? "")/\(folder.id ?? "")" || 
+                note.fileLocation == folder.id)
+            }
 
             if notesInFolder.isEmpty {
                 Text("No notes available")
