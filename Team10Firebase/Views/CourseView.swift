@@ -81,7 +81,8 @@ struct CourseView: View {
               Button(action: {
                   editStates.showPlusActions = true
               }) {
-                  Image(systemName: "document.badge.plus")
+                // Image(systemName: "document.badge.plus")
+                  Image(systemName: "plus")
                       .foregroundColor(darkBrown)
                       .imageScale(.large)
               }
@@ -97,12 +98,13 @@ struct CourseView: View {
           Button("Cancel", role: .cancel) {}
       }
       .sheet(isPresented: $isAddingFolder) {
-          FolderModal(
+          AddFolderModal(
               onFolderCreated: {
                   viewModel.fetchData()
               },
               firebase: viewModel.firebase,
-              course: viewModel.course
+              course: viewModel.course,
+              navigationPath: $navigationPath
           )
       }
       .sheet(isPresented: $isAddingNote) {
@@ -200,8 +202,8 @@ struct CourseView: View {
                                 .padding()
                                 .padding(.bottom, 20)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(maxHeight: UIScreen.main.bounds.height / 5)
+                        // .frame(maxWidth: .infinity)
+                        .frame(maxHeight: UIScreen.main.bounds.height / 5, alignment: .topLeading)
                         
                         LinearGradient(
                             gradient: Gradient(colors: [.white.opacity(0), .white]),

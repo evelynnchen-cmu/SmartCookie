@@ -179,37 +179,58 @@ class Firebase: ObservableObject {
   
   
   
-  func createFolder(folderName: String, course: Course, notes: [String] = [], fileLocation: String = "") async throws {
-    let db = Firestore.firestore()
-    let courseID = course.id ?? ""
-    let userID = course.userID ?? ""
-    
-    var ref: DocumentReference? = nil
-    ref = db.collection("Folder").addDocument(data: [
-      "userID": userID,
-      "folderName": folderName,
-      "courseID": courseID,
-      "notes": notes,
-      "fileLocation": fileLocation,
-      "recentNoteSummary": NSNull()
-    ]) { error in
-      if let error = error {
-        print("Error adding folder: \(error)")
-        return
-      }
+  func createFolder(
+    folderName: String,
+    course: Course,
+    notes: [String] = [],
+    fileLocation: String = "",
+    completion: @escaping (Folder?, Error?) -> Void
+  ) {
+      let db = Firestore.firestore()
+      let courseID = course.id ?? ""
+      let userID = course.userID ?? ""
       
-      guard let folderID = ref?.documentID else { return }
-      
-      db.collection("Course").document(courseID).updateData([
-        "folders": FieldValue.arrayUnion([folderID])
+      var ref: DocumentReference? = nil
+      ref = db.collection("Folder").addDocument(data: [
+          "userID": userID,
+          "folderName": folderName,
+          "courseID": courseID,
+          "notes": notes,
+          "fileLocation": fileLocation,
+          "recentNoteSummary": NSNull()
       ]) { error in
-        if let error = error {
-          print("Error updating course with new folder: \(error)")
-        } else {
-          print("Folder successfully added to course!")
-        }
+          if let error = error {
+              print("Error adding folder: \(error)")
+              completion(nil, error)
+              return
+          }
+          
+          guard let folderID = ref?.documentID else {
+              completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to get folder ID"]))
+              return
+          }
+          
+          db.collection("Course").document(courseID).updateData([
+              "folders": FieldValue.arrayUnion([folderID])
+          ]) { error in
+              if let error = error {
+                  print("Error updating course with new folder: \(error)")
+                  completion(nil, error)
+              } else {
+                  print("Folder successfully added to course!")
+                  let folder = Folder(
+                      id: folderID,
+                      userID: userID,
+                      folderName: folderName,
+                      courseID: courseID,
+                      notes: notes,
+                      fileLocation: fileLocation,
+                      recentNoteSummary: nil
+                  )
+                  completion(folder, nil)
+              }
+          }
       }
-    }
   }
   
   

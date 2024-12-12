@@ -2,7 +2,7 @@
 
 import SwiftUI
 
-struct FolderModal: View {
+struct AddFolderModal: View {
     @Environment(\.dismiss) var dismiss
     var onFolderCreated: () -> Void
     @ObservedObject var firebase: Firebase
@@ -10,6 +10,7 @@ struct FolderModal: View {
     
     @State private var folderName: String = ""
     @State private var selectedFolder: Folder?
+    @Binding var navigationPath: NavigationPath
     
     var body: some View {
         NavigationView {
@@ -20,7 +21,7 @@ struct FolderModal: View {
                 
                 Button("Create Folder") {
                     Task {
-                        await createFolder()
+                        createFolder()
                         onFolderCreated()
                         dismiss()
                     }
@@ -38,7 +39,7 @@ struct FolderModal: View {
         }
     }
     
-    private func createFolder() async {
+    private func createFolder() {
         guard let courseID = course.id else {
             print("Error: Missing course ID.")
             return
@@ -46,19 +47,21 @@ struct FolderModal: View {
         
         let fileLocation = "\(courseID)/"
         
-        do {
-            try await firebase.createFolder(
-                folderName: folderName,
-                course: course,
-                notes: [],
-                fileLocation: fileLocation
-            )
-            
-            firebase.getFolders { folders in
-                self.selectedFolder = folders.first { $0.folderName == folderName && $0.courseID == courseID }
+        firebase.createFolder(
+            folderName: folderName,
+            course: course,
+            notes: [],
+            fileLocation: fileLocation
+        ) { (newFolder, error) in
+            if let error = error {
+                print("Error creating folder: \(error.localizedDescription)")
+            } else {
+                if let newFolder = newFolder {
+                    self.selectedFolder = newFolder
+                    print("Selected folder: \(selectedFolder?.folderName ?? "nil")")
+                    navigationPath.append(newFolder)
+                }
             }
-        } catch {
-            print("Error creating folder: \(error.localizedDescription)")
         }
     }
 }
