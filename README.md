@@ -47,12 +47,13 @@ Generally, many of our design decisions were based on user feedback received thr
 
 ## Tech Decisions 
 - OCR (Parsing Images): OpenAI API vs. AWS Textract, Google Cloud Vision
+   - Chose OpenAI's gpt4o-mini model because it was best suited for our use case and was the most cost effective. 
 - PDFKit vs. OpenAI API parse pdf
    - Chose PDFKit over OpenAI for parsing to optimize for local processing and cost efficiency.
 
 
 ## Testing Issues 
-Based on what was mentioned in lecture, we did not do UI tests. We recognize that this impacted our testing code coverage because much of our code logic is in views. :)
+Based on what was mentioned in lecture that UI tests are very slow and fragile, we did not do them. We recognize that this impacted our testing code coverage because much of our code logic is in views. :)
 
 We also made the decision to write most of our tests using Firebase directly, rather than using mocks. We felt that testing with the real Firebase environment would allow us to ensure no discrepancies between our app and Firebase services, as well as validate the end-to-end functionality of our app. A limitation of this approach is that amount of extra calls we would be making to Firebase while testing, as well as the potential for messing up our app's data if tests are not properly teared down.
 
@@ -61,3 +62,4 @@ We also made the decision to write most of our tests using Firebase directly, ra
 - Expand app to support accessibility features like audio transcriptions
 - Offer better support for parsing and displaying advanced content such as code, math symbols, etc.
 - Support PDF image extraction
+- Allow users to friend other users to keep each other accountable or start friend streaks similar to Duolingo.
