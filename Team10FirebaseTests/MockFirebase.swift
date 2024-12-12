@@ -82,12 +82,12 @@ class MockFirebase: Firebase {
 //        completion: @escaping (Error?) -> Void
 //    ) {
 //        createNoteCalled = true
-//        
+//
 //        if shouldFailOperations {
 //            completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"]))
 //            return
 //        }
-//        
+//
 //        let note = Note(
 //            id: UUID().uuidString,
 //            userID: course.userID,
@@ -101,7 +101,7 @@ class MockFirebase: Firebase {
 //            lastAccessed: Date(),
 //            lastUpdated: Date()
 //        )
-//        
+//
 //        _notes.append(note)
 //        completion(nil)
 //    }

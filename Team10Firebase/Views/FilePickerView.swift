@@ -17,17 +17,26 @@ struct FilePickerView: View {
     @State private var folders: [Folder] = []
     @State private var notes: [Note] = []
     @State private var localNotes: [Note] = []
+    @State private var navigationStack: [NavigationState] = [.courses]
+
+    enum NavigationState {
+        case courses
+        case folders(course: Course)
+        case notes(course: Course, folder: Folder?)
+    }
 
     var body: some View {
         NavigationStack {
             contentList
                 .navigationTitle(currentTitle())
                 .navigationBarItems(
-                    leading: Button("Cancel") {
-                        selectedNote = nil // Reset selectedNote when Cancel is tapped
-                        isPresented = false // Close the modal
+                    leading: HStack {
+                        if navigationStack.count > 1 {
+                            backButton
+                        }
+                        cancelButton
                     },
-                    trailing: saveButton
+                    trailing: selectedCourse != nil ? saveButton : nil
                 )
                 .onAppear {
                     loadNotesIfNeeded()
@@ -44,40 +53,64 @@ struct FilePickerView: View {
 
     private var contentList: some View {
         List {
-            if let course = selectedCourse {
-                if let folder = selectedFolder {
-                    notesInFolderSection(course: course, folder: folder)
-                } else {
+            switch navigationStack.last {
+                case .courses:
+                    coursesSection()
+                case .folders(let course):
                     foldersAndNotesSection(course: course)
-                }
-            } else {
-                coursesSection()
+                case .notes(let course, let folder):
+                    if let folder = folder {
+                        notesInFolderSection(course: course, folder: folder)
+                    } else {
+                        notesInCourseSection(course: course)
+                    }
+                case .none:
+                    EmptyView()
             }
         }
         .listStyle(InsetGroupedListStyle())
     }
 
     private func currentTitle() -> String {
-        if let folder = selectedFolder { return folder.folderName }
-        if let course = selectedCourse { return course.courseName }
-        return "Select Course"
+        switch navigationStack.last {
+            case .courses:
+                return "Select Course"
+            case .folders(let course):
+                return course.courseName
+            case .notes(_, let folder):
+                return folder?.folderName ?? "Notes"
+            case .none:
+                return ""
+        }
+    }
+
+    private var backButton: some View {
+        Button(action: {
+            if navigationStack.count > 1 {
+                navigationStack.removeLast()
+                updateFilteredNotes()
+            }
+        }) {
+            HStack {
+                Image(systemName: "chevron.left")
+                Text("Back")
+            }
+        }
+    }
+
+    private var cancelButton: some View {
+        Button("Cancel") {
+            selectedNote = nil // Reset selectedNote when Cancel is tapped
+            isPresented = false // Close the modal
+        }
     }
 
     private var saveButton: some View {
         Button(action: {
             isPresented = false // Dismiss the view without modifying selectedNote
         }) {
-            Image(systemName: selectedNote == nil ? "square.and.arrow.down" : "square.and.arrow.down.fill")
+            Text("Save")
                 .foregroundColor(selectedNote == nil ? .gray : darkBlue)
-        }
-    }
-
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
-            Button("Cancel") { 
-                selectedNote = nil // Reset selectedNote when cancel is tapped
-                isPresented = false // Close the modal
-            }
         }
     }
 
@@ -143,6 +176,8 @@ struct FilePickerView: View {
                 ForEach(courseFolders) { folder in
                     Button(action: {
                         selectedFolder = folder
+                        selectedNote = nil
+                        navigationStack.append(.notes(course: course, folder: folder))
                         updateFilteredNotes()
                     }) {
                         HStack {
@@ -173,6 +208,7 @@ struct FilePickerView: View {
                 } else {
                     ForEach(uncategorizedNotes) { note in
                         noteButton(note: note)
+                            // .listRowBackground(selectedNote?.id == note.id ? Color(.systemGray6) : nil)
                     }
                 }
             }
@@ -194,6 +230,27 @@ struct FilePickerView: View {
             } else {
                 ForEach(notesInFolder) { note in
                     noteButton(note: note)
+                        // .listRowBackground(Color(.systemGray6))
+                }
+            }
+        }
+    }
+
+    private func notesInCourseSection(course: Course) -> some View {
+        Section(header: Text("Notes in \(course.courseName)").foregroundColor(darkBlue)) {
+            let notesInCourse = notes.filter { note in
+                note.courseID == course.id && 
+                (note.fileLocation == "\(course.id ?? "")" || 
+                note.fileLocation.isEmpty)
+            }
+
+            if notesInCourse.isEmpty {
+                Text("No notes available")
+                    .foregroundColor(.gray)
+                    .italic()
+            } else {
+                ForEach(notesInCourse) { note in
+                    noteButton(note: note)
                 }
             }
         }
@@ -210,6 +267,8 @@ struct FilePickerView: View {
                 Spacer()
             }
         }
+        .listRowBackground(selectedNote?.id == note.id ? Color(.systemGray6) : nil)
+        
     }
 
     private func coursesSection() -> some View {
@@ -218,6 +277,7 @@ struct FilePickerView: View {
                 Button(action: {
                     selectedCourse = course
                     selectedFolder = nil
+                    navigationStack.append(.folders(course: course))
                     updateFilteredNotes()
                 }) {
                     HStack {

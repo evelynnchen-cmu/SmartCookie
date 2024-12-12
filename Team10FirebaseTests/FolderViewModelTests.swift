@@ -1,9 +1,10 @@
 //
-//  FolderViewModelTest.swift
+//  FolderViewModelTests.swift
 //  Team10Firebase
 //
 //  Created by Vicky Chen on 12/12/24.
 //
+
 
 import XCTest
 @testable import Team10Firebase
@@ -335,7 +336,7 @@ final class FolderViewModelTests: XCTestCase {
       mockFolder.notes = ["", "note2"]
       sut = FolderViewModel(firebase: mockFirebase, folder: mockFolder, course: mockCourse)
       sut.fetchNotes()
-      XCTAssertEqual(sut.notes.count, 2) 
+      XCTAssertEqual(sut.notes.count, 2)
       if let firstNote = sut.notes.first {
         
           XCTAssertEqual(firstNote.id ?? "", "")
