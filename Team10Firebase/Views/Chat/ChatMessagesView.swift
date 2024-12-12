@@ -41,6 +41,12 @@ struct ChatMessagesView: View {
                                             }) {
                                                 Label("Save to notes", systemImage: "square.and.arrow.down")
                                             }
+                                            Button(action: {
+                                                UIPasteboard.general.string = message.content
+                                            }) {
+                                                Text("Copy")
+                                                Image(systemName: "doc.on.doc")
+                                            }
                                         }
                                 }
                             } else {
@@ -64,6 +70,12 @@ struct ChatMessagesView: View {
                                                 isMessageSelectionViewPresented = true
                                             }) {
                                                 Label("Save to notes", systemImage: "square.and.arrow.down")
+                                            }
+                                            Button(action: {
+                                                UIPasteboard.general.string = message.content
+                                            }) {
+                                                Text("Copy")
+                                                Image(systemName: "doc.on.doc")
                                             }
                                         }
                                 }
