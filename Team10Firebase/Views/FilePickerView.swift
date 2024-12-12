@@ -205,7 +205,8 @@ struct FilePickerView: View {
         }) {
             HStack {
                 Text(note.title ?? "Unnamed Note")
-                    .foregroundColor(selectedNote?.id == note.id ? .black : darkBrown)
+                    .foregroundColor(darkBrown)
+                    .fontWeight(selectedNote?.id == note.id ? .bold : .regular)
                 Spacer()
             }
         }
