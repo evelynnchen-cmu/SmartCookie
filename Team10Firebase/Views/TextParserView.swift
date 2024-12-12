@@ -331,7 +331,7 @@ struct TextParserView: View {
                 if !isParsing {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(tan, lineWidth: 3)
-                        .background(Color.white)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
                 }
             }
         )
