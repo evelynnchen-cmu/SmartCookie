@@ -385,9 +385,9 @@ struct ChatView: View {
 
         if selectedScope == "General" {
             let generalWelcomeMessage = """
-            Hello, you're in the general chat, where you can ask questions about any topic. \
-            If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. \
-            You can also use the clickable prompts at the bottom to start a conversation. \
+            Hello, you're in the general chat, where you can ask questions about any topic. 
+            If you'd like me to reference a specific course's notes, please select a course from the dropdown menu above. 
+            You can also use the clickable prompts at the bottom to start a conversation. 
             Don't forget to save any useful responses to your notes before exiting!
             """
             // Add general chat welcome message
@@ -414,14 +414,14 @@ struct ChatView: View {
 
                     if notes.isEmpty {
                         courseWelcomeMessage = """
-                        Hello, you're in the \(courseName) chat. I don't see any notes for this course yet. \
+                        Hello, you're in the \(courseName) chat. I don't see any notes for this course yet. 
                         Feel free to ask general questions about \(courseName), or use the clickable prompts at the bottom of the screen to start a conversation.
                         """
                     } else {
                         let sampleNotes = notes.prefix(3).map { $0.title }.joined(separator: ", ")
                         courseWelcomeMessage = """
-                        Hello, you're in the \(courseName) chat, and I can see your notes including \(sampleNotes). \
-                        Feel free to type out any questions about the material from this course, or use the clickable prompts at the bottom to start a conversation. \
+                        Hello, you're in the \(courseName) chat, and I can see your notes including \(sampleNotes). 
+                        Feel free to type out any questions about the material from this course, or use the clickable prompts at the bottom to start a conversation. 
                         Don't forget to save any useful responses to your notes before exiting!
                         """
                     }
@@ -471,7 +471,7 @@ struct ScopeIndicator: View {
     
     var body: some View {
       Text("AI Knowledge Limitations: \(notesOnlySetting ? "Notes only" : "None")\nYou can change this in your settings.")
-            .multilineTextAlignment(.center)
+            .multilineTextAlignment(.leading)
             .font(.system(size: 12))
             .foregroundColor(.gray)
             .frame(maxWidth: .infinity, alignment: .center)

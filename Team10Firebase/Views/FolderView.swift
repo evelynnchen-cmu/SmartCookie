@@ -14,7 +14,6 @@ struct FolderView: View {
     @State private var showAddNoteModal = false
     @State private var noteToDelete: Note?
     @State private var showDeleteNoteAlert = false
-    @Binding var navigationPath: NavigationPath
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -90,8 +89,7 @@ struct FolderView: View {
                 },
                 firebase: firebase,
                 course: course,
-                folder: folderViewModel.folder,
-                navigationPath: $navigationPath
+                folder: folderViewModel.folder
             )
         }
         .sheet(isPresented: $editStates.showEditNoteModal) {

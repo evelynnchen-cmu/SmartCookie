@@ -169,7 +169,7 @@ struct TextParserView: View {
                 let noteTitle = title.isEmpty ? "\(imagePaths[0])" : title
                 
                 Task {
-                  await firebase.createNoteWithIDs(
+                  await firebase.createNoteSimple(
                     title: noteTitle,
                     content: content ?? "",
                     images: imagePaths,
@@ -259,8 +259,7 @@ struct TextParserView: View {
             dispatchGroup.enter()
             openAI.parseImage(image) { text in
                 if let text = text {
-                    let strippedText = text.trimmingCharacters(in: CharacterSet(charactersIn: "`"))
-                    parsedTexts[index] = strippedText
+                    parsedTexts[index] = text
                 } else {
                     parsedTexts[index] = "Failed to parse image"
                 }
@@ -311,7 +310,7 @@ struct TextParserView: View {
                             .padding()
                     } else {
                         ScrollView {
-                            Text(.init(text))
+                            Text(text)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding()
                         }

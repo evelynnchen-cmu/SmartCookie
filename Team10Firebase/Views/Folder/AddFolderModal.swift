@@ -2,15 +2,16 @@
 
 import SwiftUI
 
-struct AddFolderModal: View {
+struct FolderModal: View {
     @Environment(\.dismiss) var dismiss
     var onFolderCreated: () -> Void
     @ObservedObject var firebase: Firebase
     var course: Course
     
     @State private var folderName: String = ""
+    @State private var notes: [String] = []
+    @State private var showAddNoteModal = false
     @State private var selectedFolder: Folder?
-    @Binding var navigationPath: NavigationPath
     
     var body: some View {
         NavigationView {
@@ -21,12 +22,29 @@ struct AddFolderModal: View {
                 
                 Button("Create Folder") {
                     Task {
-                        createFolder()
+                        await createFolder()
                         onFolderCreated()
                         dismiss()
                     }
                 }
                 .disabled(folderName.isEmpty)
+                
+                Button("Add Note") {
+                    showAddNoteModal = true
+                }
+                .disabled(selectedFolder == nil)
+                .sheet(isPresented: $showAddNoteModal) {
+                    if let folder = selectedFolder {
+                        AddNoteModal(
+                            onNoteCreated: {
+                                firebase.getFolders { _ in }
+                            },
+                            firebase: firebase,
+                            course: course,
+                            folder: folder
+                        )
+                    }
+                }
             }
             .navigationTitle("New Folder")
             .toolbar {
@@ -39,7 +57,7 @@ struct AddFolderModal: View {
         }
     }
     
-    private func createFolder() {
+    private func createFolder() async {
         guard let courseID = course.id else {
             print("Error: Missing course ID.")
             return
@@ -47,21 +65,19 @@ struct AddFolderModal: View {
         
         let fileLocation = "\(courseID)/"
         
-        firebase.createFolder(
-            folderName: folderName,
-            course: course,
-            notes: [],
-            fileLocation: fileLocation
-        ) { (newFolder, error) in
-            if let error = error {
-                print("Error creating folder: \(error.localizedDescription)")
-            } else {
-                if let newFolder = newFolder {
-                    self.selectedFolder = newFolder
-                    print("Selected folder: \(selectedFolder?.folderName ?? "nil")")
-                    navigationPath.append(newFolder)
-                }
+        do {
+            try await firebase.createFolder(
+                folderName: folderName,
+                course: course,
+                notes: notes,
+                fileLocation: fileLocation
+            )
+            
+            firebase.getFolders { folders in
+                self.selectedFolder = folders.first { $0.folderName == folderName && $0.courseID == courseID }
             }
+        } catch {
+            print("Error creating folder: \(error.localizedDescription)")
         }
     }
 }
