@@ -17,10 +17,6 @@ The SmartCookie app is designed to streamline studying for students by offering 
 
 3. Build and run the app on an iPhone (not simulator) iOS version 18. If necessary, can downgrade our app to run on lower iOS versions. @EMMA ADD TO THIS
 
-## Key Features
-1. Image Parser: Upload or capture photos of notes and extract their contents for editing or storage purposes.
-2. Study Assistant: Answer questions, summarize notes, and reference stored content
-
 ## Design Decisions
 - Upload pdf only possible within course view, not in any other views
 - Majority of our design decisions were informed by user feedback during user testing, see reports (link here)
@@ -32,6 +28,14 @@ The SmartCookie app is designed to streamline studying for students by offering 
 - Clarify intended flows and flows TAs/prof H should not attempt
 - Simplified navigation by centralizing settings.
 - Removed points system in favor of streak-based incentives due to lack of user interest.
+
+## Tech Decisions 
+- OCR (Parsing Images): OpenAI API vs. AWS Textract, Google Cloud Vision
+- PDFKit vs. OpenAI API parse pdf
+- 
+
+## Testing Issues 
+Based on what was mentioned in lecture, we did not do UI tests. We recognize that this impacted our testing code coverage because much of our code logic is in views. :)
 
 ## Future Extensions
 - Expand app to support accessibility features like audio transcriptions
