@@ -90,7 +90,7 @@ struct TextParserView: View {
                                    .padding()
                            } else {
                                ScrollView {
-                                   Text(text)
+                                   Text(.init(text))
                                        .frame(maxWidth: .infinity, alignment: .leading)
                                        .padding()
                                }
@@ -398,7 +398,9 @@ struct TextParserView: View {
             dispatchGroup.enter()
             openAI.parseImage(image) { text in
                 if let text = text {
-                    parsedTexts[index] = text
+                    // parsedTexts[index] = text
+                    let strippedText = text.trimmingCharacters(in: CharacterSet(charactersIn: "`"))
+                    parsedTexts[index] = strippedText
                 } else {
                     parsedTexts[index] = "Failed to parse image"
                 }

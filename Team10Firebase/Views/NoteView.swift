@@ -36,7 +36,7 @@ struct NoteView: View {
                     
                     recentNoteSummarySection
 
-                    Text(note.content)
+                    Text(.init(note.content))
                         .padding()
                 }
             }
@@ -205,10 +205,9 @@ struct NoteView: View {
                 ZStack(alignment: .bottomTrailing) {
                     VStack(alignment: .leading) {
                         ScrollView {
-                            Text(note.summary)
+                            Text(.init(note.summary))
                                 .padding()
                                 .padding(.bottom, 20)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                       }
                       .frame(maxWidth: .infinity)

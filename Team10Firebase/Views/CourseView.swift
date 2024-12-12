@@ -200,7 +200,6 @@ struct CourseView: View {
                                 .multilineTextAlignment(.leading)
                                 .padding()
                                 .padding(.bottom, 20)
-                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(maxHeight: UIScreen.main.bounds.height / 5)
