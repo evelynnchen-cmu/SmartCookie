@@ -176,7 +176,7 @@ private struct LoadingView: View {
     }
 }
 
-struct WaveBounceModifier: ViewModifier {
+private struct WaveBounceModifier: ViewModifier {
     let index: Int
     @State private var isAnimating = false
     
