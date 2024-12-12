@@ -81,8 +81,7 @@ struct CourseView: View {
               Button(action: {
                   editStates.showPlusActions = true
               }) {
-                // Image(systemName: "document.badge.plus")
-                  Image(systemName: "plus")
+                Image(systemName: "document.badge.plus")
                       .foregroundColor(darkBrown)
                       .imageScale(.large)
               }
@@ -201,9 +200,10 @@ struct CourseView: View {
                                 .multilineTextAlignment(.leading)
                                 .padding()
                                 .padding(.bottom, 20)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        // .frame(maxWidth: .infinity)
-                        .frame(maxHeight: UIScreen.main.bounds.height / 5, alignment: .topLeading)
+                        .frame(maxWidth: .infinity)
+                        .frame(maxHeight: UIScreen.main.bounds.height / 5)
                         
                         LinearGradient(
                             gradient: Gradient(colors: [.white.opacity(0), .white]),

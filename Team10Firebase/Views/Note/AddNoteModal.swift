@@ -56,7 +56,7 @@ struct AddNoteModal: View {
     
     private func createNote() async {
         do {
-            var summary = "Add note content by editing or uploading photos/PDFs to generate a summary."
+            var summary = "Add note content by editing or uploading images/PDFs to generate a summary."
             if !content.isEmpty {
                 summary = try await openAI.summarizeContent(content: content)
             }
