@@ -19,7 +19,7 @@ struct TextParserView: View {
   @State private var alertMessage = ""
   @State private var showAlert = false
   @State private var showExitConfirmation = false
-  @State private var saveOrChatPressed = false
+  @State private var savePressed = false
   @State private var navigateToNoteView = false
   @State private var isChatViewPresented: Bool? = false //Bool optional so ChatView can handle non-sheet presentation
   @State private var title: String // Passed in init
@@ -123,7 +123,7 @@ struct TextParserView: View {
               self.title = title
               isSaving = true
               handleSave()
-              saveOrChatPressed = true
+              savePressed = true
             }
           }
         
@@ -284,7 +284,7 @@ struct TextParserView: View {
             HStack {
                 Spacer()
                 Button(action: {
-                if !saveOrChatPressed {
+                if !savePressed {
                     showExitConfirmation = true
                 } else {
                     isPresented = false
@@ -389,7 +389,6 @@ struct TextParserView: View {
             HStack(spacing: 12) {
                 Button(action: {
                     isChatViewPresented = true
-                    saveOrChatPressed = true
                 }) {
                     Text("Chat Now")
                         .frame(maxWidth: .infinity)
