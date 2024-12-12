@@ -14,7 +14,6 @@ struct AddNoteModal: View {
     @State private var showTextParserView = false
     
     var onNoteCreated: () -> Void
-//    var updateFolderNotes: () -> Void
     @ObservedObject var firebase: Firebase
     var course: Course
     var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
