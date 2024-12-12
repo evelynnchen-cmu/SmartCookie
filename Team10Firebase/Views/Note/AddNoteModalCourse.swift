@@ -63,7 +63,7 @@ struct AddNoteModalCourse: View {
                 fetchFolders(for: firstCourse)
               }
             }
-            .onChange(of: courseName) { _ in
+            .onChange(of: courseName) {
                 if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
                     fetchFolders(for: selectedCourse)
                 }

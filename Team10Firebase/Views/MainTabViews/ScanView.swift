@@ -140,7 +140,7 @@ struct ScanView: View {
                 noteTitle = ""
                 selectedTab = 0
             }
-            .onChange(of: capturedImages) { _ in
+            .onChange(of: capturedImages) {
               if !capturedImages.isEmpty {
                 needToSave = true
               }
