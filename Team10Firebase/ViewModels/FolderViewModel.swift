@@ -27,7 +27,6 @@ class FolderViewModel: ObservableObject {
       fetchNotesByIDs()
     }
   
-  
   private func fetchNotesByIDs() {
     let noteIDs = folder.notes
     print("Note IDS to fetch", folder.notes)
@@ -37,9 +36,6 @@ class FolderViewModel: ObservableObject {
       print("Fetched \(self.notes.count) notes for folder \(self.folder.id ?? "")")
     }
   }
-  
-
-
 
   func fetchNotes() {
     updateFolderNotes()
