@@ -53,7 +53,7 @@ struct MessageSelectionView: View {
                                 Spacer()
                             }
 
-                            Text(message.content)
+                            Text(.init(message.content))
                                 .foregroundColor(.primary)
                                 .padding()
                                 .background(message.isUser ? lightBlue : tan)

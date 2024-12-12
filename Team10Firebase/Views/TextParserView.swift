@@ -14,6 +14,7 @@ struct TextParserView: View {
   @Binding var isPresented: Bool
   @Binding var course: Course?
   @Binding var note: Note?
+  @State private var folder: Folder? = nil
 
   @State private var selectedImage: UIImage? = nil
   @State private var alertMessage = ""
@@ -114,11 +115,12 @@ struct TextParserView: View {
             }
         )
        .sheet(isPresented: $showSaveForm) {
-            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
+            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course, folder) in
               if let courseObj = course {
                 self.course = courseObj
               }
               self.title = title
+              self.folder = folder
               isSaving = true
               handleSave()
               savePressed = true
@@ -167,12 +169,12 @@ struct TextParserView: View {
                 let noteTitle = title.isEmpty ? "\(imagePaths[0])" : title
                 
                 Task {
-                  await firebase.createNoteSimple(
+                  await firebase.createNoteWithIDs(
                     title: noteTitle,
                     content: content ?? "",
                     images: imagePaths,
                     courseID: courseID,
-                    folderID: nil,
+                    folderID: folder != nil ? folder?.id : nil,
                     userID: userID
                   ) { note in
                     if let note = note {
@@ -257,7 +259,8 @@ struct TextParserView: View {
             dispatchGroup.enter()
             openAI.parseImage(image) { text in
                 if let text = text {
-                    parsedTexts[index] = text
+                    let strippedText = text.trimmingCharacters(in: CharacterSet(charactersIn: "`"))
+                    parsedTexts[index] = strippedText
                 } else {
                     parsedTexts[index] = "Failed to parse image"
                 }
@@ -308,7 +311,7 @@ struct TextParserView: View {
                             .padding()
                     } else {
                         ScrollView {
-                            Text(text)
+                            Text(.init(text))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding()
                         }
@@ -330,7 +333,7 @@ struct TextParserView: View {
                 if !isParsing {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(tan, lineWidth: 3)
-                        .background(Color.white)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
                 }
             }
         )

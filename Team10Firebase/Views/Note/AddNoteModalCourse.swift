@@ -14,32 +14,40 @@ struct AddNoteModalCourse: View {
     
     @ObservedObject var firebase: Firebase
     @State var course: Course?
-    var folder: Folder? // Optional, if provided, note is added to this folder; otherwise, directly to course
+    @State var courseFolders: [Folder] = []
+    @State var folder: Folder?
   
-    var completion: ((String, Course?) -> Void)
+    @State private var selectedFolder: Folder?
+  
+    var completion: ((String, Course?, Folder?) -> Void)
 
     var body: some View {
         NavigationView {
             Form {
-                  TextField("Title", text: $title)
-                  // Drop-down that provides list of available courses to choose form
-                  Picker("Course", selection: $courseName) {
-                      ForEach(courses) { course in
+                TextField("Title", text: $title)
+                // Drop-down that provides list of available courses to choose from
+                Picker("Course", selection: $courseName) {
+                    ForEach(courses) { course in
                         Text(course.courseName).tag(course.courseName)
                     }
-                  }
-              Button("Next") {
-                  if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
-                      self.course = selectedCourse
-                  }
-                completion(title, course)
-                  isPresented = false
-              }
-              .disabled(courseName.isEmpty)
+                }
+                Picker("Folder", selection: $selectedFolder) {
+                    Text("None").tag(nil as Folder?)
+                    ForEach(courseFolders) { folder in
+                        Text(folder.folderName).tag(folder as Folder?)
+                    }
+                }
+                Button("Next") {
+                    if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
+                        self.course = selectedCourse
+                    }
+                    completion(title, course, selectedFolder)
+                    isPresented = false
+                }
+                .disabled(courseName.isEmpty)
             }
             .navigationTitle("New Note")
             .navigationBarItems(trailing: Button("Cancel") {
-                // dismiss()
                 isPresented = false
             })
             .alert("Error", isPresented: $showError) {
@@ -48,11 +56,23 @@ struct AddNoteModalCourse: View {
                 Text(errorMessage)
             }
             .onAppear {
-              courses = firebase.courses
-              if let firstCourse = courses.first {
-                  courseName = firstCourse.courseName
-              }
+                courses = firebase.courses
+                if let firstCourse = courses.first {
+                    courseName = firstCourse.courseName
+                    fetchFolders(for: firstCourse)
+                }
             }
+            .onChange(of: courseName) { _ in
+                if let selectedCourse = courses.first(where: { $0.courseName == courseName }) {
+                    fetchFolders(for: selectedCourse)
+                }
+            }
+        }
+    }
+
+    private func fetchFolders(for course: Course) {
+        firebase.getFoldersById(folderIDs: course.folders) { fetchedFolders in
+            self.courseFolders = fetchedFolders
         }
     }
 }

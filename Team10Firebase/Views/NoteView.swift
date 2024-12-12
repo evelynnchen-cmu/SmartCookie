@@ -36,14 +36,8 @@ struct NoteView: View {
                     
                     recentNoteSummarySection
 
-                    // Render markdown content
-                    if #available(iOS 15.0, *) {
-                        Text(.init(note.content))
-                            .padding()
-                    } else {
-                        Text(note.content)
-                            .padding()
-                    }
+                    Text(.init(note.content))
+                        .padding()
                 }
             }
 
@@ -180,7 +174,6 @@ struct NoteView: View {
         .actionSheet(isPresented: $isActionSheetPresented) {
             ActionSheet(
                 title: Text("Upload Options"),
-                message: Text("Select an option"),
                 buttons: [
                     .default(Text("Upload Image")) {
                         isPickerPresented = true
@@ -210,13 +203,15 @@ struct NoteView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 ZStack(alignment: .bottomTrailing) {
-                    ScrollView {
-                        Text(note.summary)
-                            .padding()
-                            .padding(.bottom, 20)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: UIScreen.main.bounds.height / 5)
+                    VStack(alignment: .leading) {
+                        ScrollView {
+                            Text(.init(note.summary))
+                                .padding()
+                                .padding(.bottom, 20)
+                        }
+                      }
+                      .frame(maxWidth: .infinity)
+                      .frame(height: UIScreen.main.bounds.height / 5)
                     
                     LinearGradient(
                         gradient: Gradient(colors: [.white.opacity(0), .white]),
