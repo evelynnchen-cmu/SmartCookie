@@ -68,7 +68,7 @@ struct FilePickerView: View {
             isPresented = false // Dismiss the view without modifying selectedNote
         }) {
             Image(systemName: selectedNote == nil ? "square.and.arrow.down" : "square.and.arrow.down.fill")
-                .foregroundColor(selectedNote == nil ? .gray : darkBrown)
+                .foregroundColor(selectedNote == nil ? .gray : darkBlue)
         }
     }
 
@@ -139,7 +139,7 @@ struct FilePickerView: View {
             let notesToUse = !firebase.notes.isEmpty ? firebase.notes : localNotes
             let courseId = course.id ?? ""
 
-            Section(header: Text("Folders").foregroundColor(darkBrown)) {
+            Section(header: Text("Folders").foregroundColor(darkBlue)) {
                 ForEach(courseFolders) { folder in
                     Button(action: {
                         selectedFolder = folder
@@ -147,18 +147,18 @@ struct FilePickerView: View {
                     }) {
                         HStack {
                             Image(systemName: "folder.fill")
-                                .foregroundColor(darkBrown)
+                                .foregroundColor(darkBlue)
                             Text(folder.folderName)
-                                .foregroundColor(darkBrown)
+                                .foregroundColor(darkBlue)
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .foregroundColor(darkBrown)
+                                .foregroundColor(darkBlue)
                         }
                     }
                 }
             }
 
-            Section(header: Text("Notes").foregroundColor(darkBrown)) {
+            Section(header: Text("Notes").foregroundColor(darkBlue)) {
                 let uncategorizedNotes = notesToUse.filter { note in
                     note.courseID == courseId &&
                     (note.fileLocation == courseId ||
@@ -180,7 +180,7 @@ struct FilePickerView: View {
     }
 
     private func notesInFolderSection(course: Course, folder: Folder) -> some View {
-        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")").foregroundColor(darkBrown)) {
+        Section(header: Text("Notes in \(folder.folderName ?? "Unnamed Folder")").foregroundColor(darkBlue)) {
             let notesInFolder = notes.filter { note in
                 note.courseID == course.id && 
                 (note.fileLocation == "\(course.id ?? "")/\(folder.id ?? "")" || 
@@ -205,7 +205,7 @@ struct FilePickerView: View {
         }) {
             HStack {
                 Text(note.title ?? "Unnamed Note")
-                    .foregroundColor(darkBrown)
+                    .foregroundColor(darkBlue)
                     .fontWeight(selectedNote?.id == note.id ? .bold : .regular)
                 Spacer()
             }
@@ -213,7 +213,7 @@ struct FilePickerView: View {
     }
 
     private func coursesSection() -> some View {
-        Section(header: Text("Courses").foregroundColor(darkBrown)) {
+        Section(header: Text("Courses").foregroundColor(darkBlue)) {
             ForEach(firebase.courses) { course in
                 Button(action: {
                     selectedCourse = course
@@ -222,10 +222,10 @@ struct FilePickerView: View {
                 }) {
                     HStack {
                         Text(course.courseName)
-                            .foregroundColor(darkBrown)
+                            .foregroundColor(darkBlue)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .foregroundColor(darkBrown)
+                            .foregroundColor(darkBlue)
                     }
                 }
             }
