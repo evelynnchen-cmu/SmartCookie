@@ -11,6 +11,7 @@ struct QuizView: View {
     @StateObject private var viewModel: QuizViewModel
     @ObservedObject var firebase: Firebase
     @State private var userID: String = ""
+    @State private var streakLength: Int = 0
     @State private var hasCompletedStreakToday: Bool = false
     @Environment(\.dismiss) private var dismiss
     
@@ -26,7 +27,10 @@ struct QuizView: View {
             
             VStack(spacing: 20) {
                 if viewModel.isLoadingQuestions {
-                    LoadingView()
+                  LoadingView(
+                          hasCompletedStreakToday: hasCompletedStreakToday,
+                          streakLength: streakLength
+                      )
                         .transition(.opacity)
                 } else if let error = viewModel.errorMessage {
                     ErrorView(message: error)
@@ -69,15 +73,16 @@ struct QuizView: View {
             .padding()
         }
         .onAppear {
-            firebase.getFirstUser { user in
-                if let user = user {
-                    userID = user.id ?? ""
-                    if let lastQuizDate = user.streak.lastQuizCompletedAt {
-                        hasCompletedStreakToday = Calendar.current.isDate(lastQuizDate, inSameDayAs: Date())
-                    }
-                    viewModel.loadQuestionsWithHistory(userID: userID, firebase: firebase)
-                }
-            }
+          firebase.getFirstUser { user in
+              if let user = user {
+                  userID = user.id ?? ""
+                  streakLength = user.streak.currentStreakLength
+                  if let lastQuizDate = user.streak.lastQuizCompletedAt {
+                      hasCompletedStreakToday = Calendar.current.isDate(lastQuizDate, inSameDayAs: Date())
+                  }
+                  viewModel.loadQuestionsWithHistory(userID: userID, firebase: firebase)
+              }
+          }
         }
     }
 }
@@ -120,40 +125,75 @@ struct CookieProgressView: View {
 
 // Loading View
 private struct LoadingView: View {
-    @State private var isAnimating = false
+    let hasCompletedStreakToday: Bool
+    let streakLength: Int
     
     var body: some View {
-        VStack(spacing: 24) {
-            ZStack {
-                Circle()
-                    .stroke(lineWidth: 8)
-                    .frame(width: 100, height: 100)
+        VStack(spacing: 32) {
+            HStack(spacing: 16) {
+                ForEach(0..<3) { index in
+                    Image(uiImage: UIImage(named: "cookieIcon") ?? UIImage())
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 40, height: 40)
+                        .modifier(WaveBounceModifier(index: index))
+                }
+            }
+            .frame(height: 50)
+            
+            VStack(spacing: 16) {
+                Text("Loading Questions...")
+                    .font(.system(size: 26, weight: .bold))
                     .foregroundColor(darkBrown)
                 
-                Circle()
-                    .trim(from: 0, to: 0.7)
-                    .stroke(darkBrown, lineWidth: 8)
-                    .frame(width: 100, height: 100)
-                    .rotationEffect(Angle(degrees: isAnimating ? 360 : 0))
-                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
-            }
-            .onAppear {
-                isAnimating = true
-            }
-            
-            VStack(spacing: 12) {
-                Text("Preparing Your Quiz")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.black)
-                
-                Text("Loading questions and tracking your progress...")
-                    .foregroundColor(.black)
-                    .multilineTextAlignment(.center)
+                if !hasCompletedStreakToday {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Text("\(streakLength) day streak")
+                                .font(.headline)
+                                .foregroundColor(.orange)
+                            Image(systemName: "flame.fill")
+                                .foregroundColor(.orange)
+                        }
+                        
+                        Text("Score 80% or better to\nextend your streak!")
+                            .font(.subheadline)
+                            .foregroundColor(.black)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: 200)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange.opacity(0.1))
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.white)
+    }
+}
+
+struct WaveBounceModifier: ViewModifier {
+    let index: Int
+    @State private var isAnimating = false
+    
+    func body(content: Content) -> some View {
+        content
+            .offset(y: isAnimating ? -15 : 0)
+            .animation(
+                Animation
+                    .easeInOut(duration: 0.4)
+                    .repeatForever(autoreverses: true)
+                    .delay(Double(index) * 0.1)
+                    .speed(0.7),
+                value: isAnimating
+            )
+            .onAppear {
+                isAnimating = true
+            }
     }
 }
 
@@ -200,12 +240,6 @@ private struct QuizHeaderView: View {
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             }
             .padding(.horizontal)
-            
-//            if !hasCompletedStreakToday {
-//                Text("Score 80% to extend your streak")
-//                    .font(.subheadline)
-//                    .foregroundColor(darkBlue)
-//            }
         }
         .padding(.vertical, 8)
         .background(Color.white)

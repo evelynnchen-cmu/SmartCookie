@@ -12,22 +12,27 @@ struct TextParserView: View {
   var firebaseStorage: FirebaseStorage = FirebaseStorage()
   var firebase: Firebase
   @Binding var isPresented: Bool
+  @Binding var course: Course?
+  @Binding var note: Note?
+
   @State private var selectedImage: UIImage? = nil
   @State private var alertMessage = ""
   @State private var showAlert = false
+  @State private var showExitConfirmation = false
+  @State private var saveOrChatPressed = false
   @State private var navigateToNoteView = false
   @State private var isChatViewPresented: Bool? = false
-  var course: Course?
-  var title: String
-  @Binding var note: Note?
+  @State private var title: String // Passed in init
   @State private var courseID: String = ""
   @State private var userID: String = ""
   @State private var content: String? = nil
   @State private var newNote: Note? = nil
   @State private var isParsing = true
   @State private var isEditing = false
+  @State private var isSaving = false
   @State private var editedContent: String = ""
   @State private var keyboardHeight: CGFloat = 0
+  @State private var showSaveForm = false
   private var openAI = OpenAI()
   @FocusState private var isTextEditorFocused: Bool
   public var tan = Color(hex: "775139")
@@ -38,11 +43,11 @@ struct TextParserView: View {
   
   var completion: ((String) -> Void)?
 
-  init(images: [UIImage], firebase: Firebase, isPresented: Binding<Bool>, course: Course?, title: String, note: Binding<Note?>? = .constant(nil), completion: ((String) -> Void)? = nil) {
+  init(images: [UIImage], firebase: Firebase, isPresented: Binding<Bool>, course: Binding<Course?>, title: String, note: Binding<Note?>? = .constant(nil), completion: ((String) -> Void)? = nil) {
         self.images = images
         self.firebase = firebase
         self._isPresented = isPresented
-        self.course = course
+        self._course = course
         self.title = title
         self._note = note ?? .constant(nil)
         self.completion = completion
@@ -60,7 +65,11 @@ struct TextParserView: View {
                    HStack {
                        Spacer()
                        Button(action: {
-                           isPresented = false
+                        if !saveOrChatPressed {
+                            showExitConfirmation = true
+                        } else {
+                          isPresented = false
+                        }
                        }) {
                            Image(systemName: "xmark")
                                .foregroundColor(.black)
@@ -158,6 +167,7 @@ struct TextParserView: View {
                        HStack(spacing: 12) {
                            Button(action: {
                                isChatViewPresented = true
+                               saveOrChatPressed = true
                            }) {
                                Text("Chat Now")
                                    .frame(maxWidth: .infinity)
@@ -172,7 +182,13 @@ struct TextParserView: View {
                            }
                            
                            Button(action: {
-                               handleSave()
+                            if note == nil {
+                                showSaveForm = true
+                            } else {
+                                isSaving = true
+                                handleSave()
+                                saveOrChatPressed = true
+                            }
                            }) {
                                Text("Save")
                                    .frame(maxWidth: .infinity)
@@ -189,6 +205,7 @@ struct TextParserView: View {
                }
            }
        }
+       .background(tan1)
        .onAppear {
            parseImages()
            setupKeyboardObservers()
@@ -199,6 +216,16 @@ struct TextParserView: View {
        .alert(isPresented: $showAlert) {
            Alert(title: Text("Image Upload"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
        }
+       .alert(isPresented: $showExitConfirmation) {
+           Alert(
+               title: Text("Exit Confirmation"),
+               message: Text("Are you sure you want to exit? Your data won't be saved."),
+               primaryButton: .destructive(Text("Exit")) {
+                   isPresented = false
+               },
+               secondaryButton: .cancel()
+           )
+       }
        .fullScreenCover(isPresented: Binding(
            get: { isChatViewPresented ?? false },
            set: { isChatViewPresented = $0 ? true : nil }
@@ -206,11 +233,39 @@ struct TextParserView: View {
            if let course = course {
                ChatView(selectedCourse: course, isChatViewPresented: $isChatViewPresented)
            } else {
-               Text("Failed to load course")
+                ChatView(isChatViewPresented: $isChatViewPresented)
            }
        }
-//       .background(Color.blue.opacity(0.1))
-       .background(tan1)
+       .overlay(
+            Group {
+              if self.isSaving {
+                ZStack {
+                  Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                  ProgressView("Creating note...")
+                    .progressViewStyle(CircularProgressViewStyle())
+                    .padding()
+                    .background(.white)
+                    .cornerRadius(15)
+                    .shadow(radius: 10)
+                    .padding(40)
+                    .font(.headline)
+                }
+              }
+            }
+        )
+       .sheet(isPresented: $showSaveForm) {
+            AddNoteModalCourse(isPresented: $showSaveForm, firebase: firebase) { (title, course) in
+              if let courseObj = course {
+                self.course = courseObj
+              }
+              self.title = title
+              isSaving = true
+              handleSave()
+              saveOrChatPressed = true
+            }
+          }
+        
    }
 
     private func setupKeyboardObservers() {
@@ -232,59 +287,59 @@ struct TextParserView: View {
 
     private func handleSave() {
         firebaseStorage.uploadImagesToFirebase(images) { paths in
-            // If imagePaths not nil, parse image
-            if let imagePaths = paths {
-                print("Image paths: \(imagePaths)")
-                if let thisNote = self.note {
-                    Task {
-                        do {
-                            try await updateNote(thisNote: thisNote, imagePaths: imagePaths)
-                        } catch {
-                            print("Failed to update note")
-                            alertMessage = "Failed to update note"
-                            showAlert = true
-                        }
-                    }
-                } else {
-                    if let course = course {
-                        courseID = course.id ?? ""
-                        userID = course.userID
-                        
-                        let noteTitle = title.isEmpty ? "\(imagePaths[0])" : title
-                        
-                        Task {
-                            await firebase.createNoteSimple(
-                                title: noteTitle,
-                                content: content ?? "",
-                                images: imagePaths,
-                                courseID: courseID,
-                                folderID: nil,
-                                userID: userID
-                            ) { note in
-                                if let note = note {
-                                    newNote = note
-                                    self.note = newNote
-                                    completion?("\nNote \(newNote?.title ?? "Unknown Name") created successfully!")
-                                    showAlert = false
-                                    isPresented = false
-                                } else {
-                                    print("Failed to create note")
-                                    alertMessage = "Failed to create note"
-                                    showAlert = true
-                                }
-                            }
-                        }
-                    } else {
-                        print("Failed to get course")
-                        alertMessage = "Failed to get course"
-                        showAlert = true
-                    }
+          // If imagePaths not nil, parse image
+          if let imagePaths = paths {
+            print("Image paths: \(imagePaths)")
+            if let thisNote = self.note {
+              Task {
+                do {
+                  try await updateNote(thisNote: thisNote, imagePaths: imagePaths)
+                } catch {
+                  print("Failed to update note")
+                  alertMessage = "Failed to update note"
+                  showAlert = true
                 }
+              }
             } else {
-                print("Failed to upload image")
-                alertMessage = "Failed to upload image"
+              if let course = course {
+                courseID = course.id ?? ""
+                userID = course.userID
+                
+                let noteTitle = title.isEmpty ? "\(imagePaths[0])" : title
+                
+                Task {
+                  await firebase.createNoteSimple(
+                    title: noteTitle,
+                    content: content ?? "",
+                    images: imagePaths,
+                    courseID: courseID,
+                    folderID: nil,
+                    userID: userID
+                  ) { note in
+                    if let note = note {
+                      newNote = note
+                      self.note = newNote
+                      completion?("\nNote \(newNote?.title ?? "Unknown Name") created successfully!")
+                      showAlert = false
+                      isPresented = false
+                    } else {
+                      print("Failed to create note")
+                      alertMessage = "Failed to create note"
+                      showAlert = true
+                    }
+                  }
+                }
+              } else {
+                print("Failed to get course")
+                alertMessage = "Failed to get course"
                 showAlert = true
+              }
             }
+          } else {
+            print("Failed to upload image")
+            alertMessage = "Failed to upload image"
+            showAlert = true
+          }
         }
     }
     

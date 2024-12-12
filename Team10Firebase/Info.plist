@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>VickyChen.Team10Firebase</string>
-    <key>CFBundleName</key>
     <string>Team10Firebase</string>
+    <key>CFBundleName</key>
+    <string>SmartCookie</string>
     <key>CFBundleDisplayName</key>
-    <string>Team 10 Firebase</string>
+    <string>SmartCookie</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>
