@@ -1,3 +1,10 @@
+//
+//  AddNoteModal.swift
+//  Team10Firebase
+//
+//  Created by Vicky Chen on 12/2/24.
+//
+
 import SwiftUI
 import FirebaseFirestore
 
@@ -77,8 +84,6 @@ struct AddNoteModal: View {
                         onNoteCreated()
                         navigationPath.append(newNote)
                     }
-//                    updateFolderNotes()
-//                    dismiss()
                 }
             }
         } catch {

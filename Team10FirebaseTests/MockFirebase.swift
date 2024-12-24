@@ -1,3 +1,9 @@
+//
+//  MockFirebase.swift
+//  Team10Firebase
+//
+//  Created by Alanna Cao on 12/12/24.
+//
 
 @testable import Team10Firebase
 import FirebaseFirestore
@@ -71,77 +77,41 @@ class MockFirebase: Firebase {
         )
         completion(mockUser)
     }
-    
-//    override func createNote(
-//        title: String,
-//        summary: String,
-//        content: String,
-//        images: [String] = [],
-//        course: Course,
-//        folder: Folder? = nil,
-//        completion: @escaping (Error?) -> Void
-//    ) {
-//        createNoteCalled = true
-//
-//        if shouldFailOperations {
-//            completion(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"]))
-//            return
-//        }
-//
-//        let note = Note(
-//            id: UUID().uuidString,
-//            userID: course.userID,
-//            title: title,
-//            summary: summary,
-//            content: content,
-//            images: images,
-//            createdAt: Date(),
-//            courseID: course.id ?? "",
-//            fileLocation: "\(course.id ?? "")/\(folder?.id ?? "")",
-//            lastAccessed: Date(),
-//            lastUpdated: Date()
-//        )
-//
-//        _notes.append(note)
-//        completion(nil)
-//    }
   
-  override func createNote(
-      title: String,
-      summary: String,
-      content: String,
-      images: [String] = [],
-      course: Course,
-      folder: Folder? = nil,
-      completion: @escaping (Note?, Error?) -> Void
-  ) {
-      createNoteCalled = true
-      
-      if shouldFailOperations {
-          completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"]))
-          return
-      }
-      
-      let note = Note(
-          id: UUID().uuidString,
-          userID: course.userID,
-          title: title,
-          summary: summary,
-          content: content,
-          images: images,
-          createdAt: Date(),
-          courseID: course.id ?? "",
-          fileLocation: "\(course.id ?? "")/\(folder?.id ?? "")",
-          lastAccessed: Date(),
-          lastUpdated: Date()
-      )
-      
-      _notes.append(note)
-      completion(note, nil)
-  }
+    override func createNote(
+        title: String,
+        summary: String,
+        content: String,
+        images: [String] = [],
+        course: Course,
+        folder: Folder? = nil,
+        completion: @escaping (Note?, Error?) -> Void
+    ) {
+        createNoteCalled = true
+        
+        if shouldFailOperations {
+            completion(nil, NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"]))
+            return
+        }
+        
+        let note = Note(
+            id: UUID().uuidString,
+            userID: course.userID,
+            title: title,
+            summary: summary,
+            content: content,
+            images: images,
+            createdAt: Date(),
+            courseID: course.id ?? "",
+            fileLocation: "\(course.id ?? "")/\(folder?.id ?? "")",
+            lastAccessed: Date(),
+            lastUpdated: Date()
+        )
+        
+        _notes.append(note)
+        completion(note, nil)
+    }
   
-  
-    
     override func deleteNote(note: Note, folderID: String?, completion: @escaping (Error?) -> Void) {
         deleteNoteCalled = true
         

@@ -166,7 +166,7 @@ final class FolderViewModelTests: XCTestCase {
       
       func testUpdateFolderNotesWithNilResponse() {
           sut = FolderViewModel(firebase: mockFirebase, folder: mockFolder, course: mockCourse)
-          mockFirebase.folders = [] // This will cause getFolder to return nil
+          mockFirebase.folders = []
           let originalFolderName = mockFolder.folderName
           let expectation = XCTestExpectation(description: "Update folder with nil response")
           sut.updateFolderNotes()
@@ -385,9 +385,4 @@ final class FolderViewModelTests: XCTestCase {
         XCTAssertEqual(sut.notes.count, 1)
         XCTAssertEqual(sut.notes.first?.id, "note1")
     }
-
-
-
-  
-  
 }

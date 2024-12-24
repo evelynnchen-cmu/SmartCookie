@@ -46,10 +46,8 @@ struct ChatView: View {
 
     @Binding var needToSave: Bool
   
-    // System prompt defining the behavior and tone of the AI.
     @State private var systemPrompt = ""
     
-    //  The OpenAI API key loaded from the Secrets.plist file.
     let openAIKey: String = {
         guard let filePath = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
               let plist = NSDictionary(contentsOfFile: filePath),
@@ -150,8 +148,8 @@ struct ChatView: View {
                 updateSelectedCourse()
 
                 if selectedScope == "General" {
-                    courseNotes = [] // Clear course notes for general chat
-                    clearChat()      // Ensure general welcome message is shown
+                    courseNotes = []
+                    clearChat()
                 } else {
                     updateSelectedCourse()
                     fetchNotes(for: selectedScope) { _ in
@@ -168,10 +166,8 @@ struct ChatView: View {
             .onChange(of: selectedScope) { oldScope, newScope in
                 guard newScope != oldScope else { return }
                 
-                // Cancel existing timer
                 courseChangeDebouncer?.invalidate()
                 
-                // Set new timer
                 courseChangeDebouncer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
                     updateSelectedCourse()
                     if newScope == "General" {
@@ -236,10 +232,6 @@ struct ChatView: View {
         }
     }
 
-    // Sends chat history to the API and gets the AI's response.
-    // - Parameters:
-    // - messagesHistory: The conversation history as an array of role-content pairs. Roles are system (sets up context), user (what the user inputted), and assistant (the AI's response).
-    // - completion: Completion handler to receive the AI's response.
     func callChatGPTAPI(with messagesHistory: [[String: String]], completion: @escaping (String) -> Void) {
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else {
             print("Invalid URL")
@@ -251,7 +243,6 @@ struct ChatView: View {
         request.setValue("Bearer \(openAIKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Add notes context
       var notesContext = ""
       if let parsedText = parsedText {
           print("Using parsed text as notes context.")
@@ -274,13 +265,10 @@ struct ChatView: View {
             """
         }.joined(separator: "\n\n")
             
-
-        // Check if notes are empty
         if notesContext.isEmpty {
             print("No notes available for context.")
         }
 
-        // Prepare the system message
         let systemMessage = [
             "role": "system",
             "content": """
@@ -291,7 +279,6 @@ struct ChatView: View {
             """
         ]
 
-        // Combine the system message and user messages
         let combinedMessages = [systemMessage] + messagesHistory
 
         let requestBody = [
@@ -334,9 +321,7 @@ struct ChatView: View {
         }.resume()
     }
 
-    // Helper function to strip Markdown formatting
     func stripMarkdown(_ text: String) -> String {
-        // Remove bold, italic, and other Markdown formatting
         let patterns = [
             "\\*\\*(.*?)\\*\\*", // Bold
             "\\*(.*?)\\*",       // Italics
@@ -352,8 +337,6 @@ struct ChatView: View {
         return cleanText
     }
 
-    // Fetches notes for a specific course and updates courseNotes.
-    // - Parameter courseID: The ID of the course for which to fetch notes.
     func fetchNotes(for courseID: String, completion: @escaping ([Note]) -> Void) {
         cancellables.removeAll()
         firebase.getNotes()
@@ -367,8 +350,6 @@ struct ChatView: View {
                     self.courseNotes = filteredNotes
                     completion(filteredNotes)
                 } else {
-                    // Fallback to local notes if Firebase fetch fails or is empty
-                    print("Using local notes for course \(courseID)")
                     let localFilteredNotes = self.localNotes[courseID] ?? []
                     self.courseNotes = localFilteredNotes
                     completion(localFilteredNotes)
@@ -377,9 +358,7 @@ struct ChatView: View {
             .store(in: &cancellables)
     }
 
-    // Clears the chat view and resets the message history.
     func clearChat() {
-        // Clear all existing messages and reset the message history
         messages.removeAll()
         messagesHistory = [["role": "system", "content": systemPrompt]]
 
@@ -390,17 +369,16 @@ struct ChatView: View {
             You can also use the clickable prompts at the bottom to start a conversation. \
             Don't forget to save any useful responses to your notes before exiting!
             """
-            // Add general chat welcome message
+  
             messages.append(MessageBubble(content: generalWelcomeMessage, isUser: false, isMarkdown: true))
             messagesHistory.append(["role": "assistant", "content": generalWelcomeMessage])
         } else {
-            let operationId = UUID() // Create unique ID for this operation
+            let operationId = UUID()
             currentFetchOperation = operationId
             
             let loadingMessage = "Loading chat for the selected course..."
             messages.append(MessageBubble(content: loadingMessage, isUser: false, isMarkdown: false))
 
-            // Fetch course-specific notes asynchronously
             fetchNotes(for: selectedScope) { [operationId] notes in
                 DispatchQueue.main.async {
                     guard self.currentFetchOperation == operationId else {
@@ -426,7 +404,6 @@ struct ChatView: View {
                         """
                     }
 
-                    // Add the welcome message for the specific course
                     self.messages.append(MessageBubble(content: courseWelcomeMessage, isUser: false, isMarkdown: true))
                     self.messagesHistory.append(["role": "assistant", "content": courseWelcomeMessage])
                 }
@@ -435,8 +412,7 @@ struct ChatView: View {
     }
 
     @State private var currentSuggestionOperation: UUID?
-
-    // Calls OpenAI API to get suggested short sentence/question starters for the user
+  
     func fetchSuggestions() {
         let operationId = UUID()
         currentSuggestionOperation = operationId

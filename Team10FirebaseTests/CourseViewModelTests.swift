@@ -1,4 +1,9 @@
-
+//
+//  CourseViewModelTests.swift
+//  Team10Firebase
+//
+//  Created by Vicky Chen on 12/12/24.
+//
 
 import XCTest
 @testable import Team10Firebase

@@ -5,8 +5,6 @@
 //  Created by Vicky Chen on 12/12/24.
 //
 
-
-
 import XCTest
 @testable import Team10Firebase
 import FirebaseFirestore
@@ -40,8 +38,6 @@ class CourseViewModelTest: XCTestCase {
         cancellables = nil
         super.tearDown()
     }
-    
-    // MARK: - Initialization Tests
     
     func testInitialization() {
         XCTAssertEqual(sut.course.id, mockCourse.id)

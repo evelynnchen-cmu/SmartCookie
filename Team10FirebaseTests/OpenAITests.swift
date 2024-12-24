@@ -5,7 +5,6 @@
 //  Created by Alanna Cao on 12/11/24.
 //
 
-
 import XCTest
 @testable import Team10Firebase
 
@@ -23,12 +22,10 @@ class OpenAITests: XCTestCase {
     }
     
     func testSummarizeContent() async throws {
-        // Test successful summarization
         mockOpenAI.mockSummary = "Test summary"
         let summary = try await mockOpenAI.summarizeContent(content: "Test content")
         XCTAssertEqual(summary, "Test summary")
         
-        // Test failure
         mockOpenAI.shouldFail = true
         do {
             _ = try await mockOpenAI.summarizeContent(content: "Test content")
@@ -39,7 +36,6 @@ class OpenAITests: XCTestCase {
     }
     
     func testGenerateQuizQuestions() async throws {
-        // Prepare mock questions
         let mockQuestion = MCQuestion(
             id: "test-id",
             question: "Test question?",
@@ -53,7 +49,6 @@ class OpenAITests: XCTestCase {
         
         mockOpenAI.mockQuestions = [mockQuestion]
         
-        // Test successful question generation
         let questions = try await mockOpenAI.generateQuizQuestions(
             content: "Test content",
             notesOnlyScope: false
@@ -61,7 +56,6 @@ class OpenAITests: XCTestCase {
         XCTAssertEqual(questions.count, 1)
         XCTAssertEqual(questions[0].question, mockQuestion.question)
         
-        // Test failure
         mockOpenAI.shouldFail = true
         do {
             _ = try await mockOpenAI.generateQuizQuestions(
@@ -74,9 +68,7 @@ class OpenAITests: XCTestCase {
         }
     }
     
-    // Add more test cases
     func testQuizGenerationWithDelay() async throws {
-        // Set a small delay
         mockOpenAI.mockDelay = 0.1
         
         let mockQuestion = MCQuestion(

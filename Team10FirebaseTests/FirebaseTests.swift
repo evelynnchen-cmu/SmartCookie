@@ -40,31 +40,6 @@ class FirebaseTests: XCTestCase {
         
         wait(for: [expectation], timeout: 1.0)
     }
-    
-//    func testCreateNote() {
-//        let expectation = XCTestExpectation(description: "Create note")
-//        
-//        mockFirebase.createNote(
-//            title: "Test Note",
-//            summary: "Test Summary",
-//            content: "Test Content",
-//            course: testCourse
-//        ) { error in
-//            XCTAssertNil(error)
-//            XCTAssertTrue(self.mockFirebase.createNoteCalled)
-//            XCTAssertEqual(self.mockFirebase.notes.count, 1)
-//            
-//            let createdNote = self.mockFirebase.notes.first
-//            XCTAssertEqual(createdNote?.title, "Test Note")
-//            XCTAssertEqual(createdNote?.summary, "Test Summary")
-//            XCTAssertEqual(createdNote?.content, "Test Content")
-//            XCTAssertEqual(createdNote?.courseID, "test-course-id")
-//            
-//            expectation.fulfill()
-//        }
-//        
-//        wait(for: [expectation], timeout: 1.0)
-//    }
   
   func testCreateNote() {
           let expectation = XCTestExpectation(description: "Create note")
@@ -91,40 +66,7 @@ class FirebaseTests: XCTestCase {
           wait(for: [expectation], timeout: 1.0)
       }
     
-//    func testGetMostRecentlyUpdatedNotes() {
-//        // Create some test notes with different dates
-//        let oldNote = Note(
-//            id: "old",
-//            title: "Old Note",
-//            summary: "Summary",
-//            content: "Content",
-//            images: [],
-//            createdAt: Date().addingTimeInterval(-86400), // 1 day ago
-//            courseID: testCourse.id,
-//            fileLocation: ""
-//        )
-//        
-//        let newNote = Note(
-//            id: "new",
-//            title: "New Note",
-//            summary: "Summary",
-//            content: "Content",
-//            images: [],
-//            createdAt: Date(),
-//            courseID: testCourse.id,
-//            fileLocation: ""
-//        )
-//        
-//        mockFirebase.notes = [oldNote, newNote]
-//        
-//        let recentNotes = mockFirebase.getMostRecentlyUpdatedNotes(limit: 2)
-//        XCTAssertEqual(recentNotes.count, 2)
-//        XCTAssertEqual(recentNotes.first?.id, "new")
-//        XCTAssertEqual(recentNotes.last?.id, "old")
-//    }
-  
   func testGetMostRecentlyUpdatedNotes() {
-         // Create some test notes with different dates
          let oldNote = Note(
              id: "old",
              userID: testCourse.userID,

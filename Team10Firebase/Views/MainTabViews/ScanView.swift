@@ -1,12 +1,15 @@
+//
 //  ScanView.swift
 //  Team10Firebase
+//
+//  Created by Emma Tong on 10/30/24.
+//
 
 import SwiftUI
 
 struct ScanView: View {
     @State private var capturedImages: [UIImage] = []
     @State private var showCamera = true
-//  TODO: Refactor so scanview and noteview use same fb object
     @StateObject var firebase = Firebase()
     @State private var userID: String = ""
     @State private var showTextParserView = false
@@ -16,7 +19,7 @@ struct ScanView: View {
     @State private var course: Course? = nil
     @State private var courseName = ""
     @State private var noteTitle = ""
-    @State private var selectedTab = 0 // For the images
+    @State private var selectedTab = 0
 
     @Binding var selectedTabIndex: Int
     @Binding var navigateToCourse: Course?
@@ -26,7 +29,7 @@ struct ScanView: View {
     var body: some View {
       NavigationStack {
         ZStack {
-          tan.edgesIgnoringSafeArea(.all) // Background color for the entire view
+          tan.edgesIgnoringSafeArea(.all)
           VStack {
             Text("Images Taken")
               .font(.title)
@@ -39,17 +42,15 @@ struct ScanView: View {
                   .resizable()
                   .scaledToFit()
                   .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
-                  .tag(index) // Tag each image with its index
+                  .tag(index)
               }
               
               
               ZStack {
                 Rectangle()
-                  //  .fill(Color.gray.opacity(0.5))
                   .fill(.white)
                   .frame(width: UIScreen.main.bounds.width - 40, height: (UIScreen.main.bounds.width - 40) / 0.75)
                   .overlay(
-                    //                                RoundedRectangle(cornerRadius: 10)
                     Rectangle()
                       .stroke(style: StrokeStyle(lineWidth: 2, dash: [5]))
                       .foregroundColor(darkBrown)
@@ -64,7 +65,6 @@ struct ScanView: View {
                   Text("Add new picture")
                     .font(.headline)
                 }
-                // .foregroundColor(.white)
                 .foregroundColor(.black)
               }
               .tag(capturedImages.count)
@@ -130,7 +130,6 @@ struct ScanView: View {
             Alert(title: Text("Camera Scan"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
           }
           .onReceive(NotificationCenter.default.publisher(for: .resetScanView)) { _ in
-                // Reset the ScanView to its initial state
                 capturedImages = []
                 showCamera = true
                 showTextParserView = false
@@ -150,9 +149,7 @@ struct ScanView: View {
     }
 
     private func setupPageControlAppearance() {
-      // Colors for the progress state dots at the bottom
         UIPageControl.appearance().currentPageIndicatorTintColor = UIColor(darkBrown)
       UIPageControl.appearance().pageIndicatorTintColor = UIColor(.white)
     }
 }
-

@@ -8,15 +8,10 @@
 import SwiftUI
 import FirebaseFirestore
 
-
-
-
 class EditCourseState: ObservableObject {
     @Published var courseToEdit: Course?
     @Published var showEditModal: Bool = false
 }
-
-
 
 struct EditCourseModal: View {
     @Environment(\.dismiss) private var dismiss

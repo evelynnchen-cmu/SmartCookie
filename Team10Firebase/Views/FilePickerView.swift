@@ -100,14 +100,14 @@ struct FilePickerView: View {
 
     private var cancelButton: some View {
         Button("Cancel") {
-            selectedNote = nil // Reset selectedNote when Cancel is tapped
-            isPresented = false // Close the modal
+            selectedNote = nil
+            isPresented = false
         }
     }
 
     private var saveButton: some View {
         Button(action: {
-            isPresented = false // Dismiss the view without modifying selectedNote
+            isPresented = false
         }) {
             Text("Save")
                 .foregroundColor(selectedNote == nil ? .gray : darkBlue)

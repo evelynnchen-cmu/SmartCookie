@@ -37,19 +37,10 @@ struct CustomTabBar: View {
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-      // This padding controls how close the tab buttons are to each other
         .padding(.horizontal, 36)
-        // .padding(.top, 8)
         .padding(.top, 15)
-        // This frame controls the height of the tab bar
         .frame(maxHeight: 60)
         .background(.white)
-//        .overlay(
-//            Rectangle()
-//                .frame(height: 1)
-//                .foregroundColor(.gray),
-//            alignment: .top
-//        )
     }
 }
 

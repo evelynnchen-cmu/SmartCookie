@@ -12,10 +12,6 @@ import FirebaseAuth
 
 @main
 struct Team10FirebaseApp: App {
-
-//    init() {
-//            FirebaseApp.configure()
-//    }
   
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 

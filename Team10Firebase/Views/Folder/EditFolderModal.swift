@@ -8,7 +8,6 @@
 import SwiftUI
 import FirebaseFirestore
 
-
 struct EditFolderModal: View {
     @Environment(\.dismiss) private var dismiss
     @State private var newName: String
@@ -50,4 +49,3 @@ struct EditFolderModal: View {
         }
     }
 }
-

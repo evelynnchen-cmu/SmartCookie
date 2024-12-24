@@ -5,11 +5,10 @@
 //  Created by Alanna Cao on 11/7/24.
 //
 
-// View for selecting an image from photo library using Apple UIKit's UIImagePickerController
-
 import SwiftUI
 import UIKit
 
+// View for selecting an image from photo library using Apple UIKit's UIImagePickerController
 struct ImagePicker: UIViewControllerRepresentable {
     var sourceType: UIImagePickerController.SourceType
     var completionHandler: (() -> Void)?

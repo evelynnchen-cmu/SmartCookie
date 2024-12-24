@@ -20,7 +20,6 @@ struct MessageSelectionView: View {
             Spacer()
                 .frame(height: 12)
 
-            // Header
             HStack {
                 Spacer()
                 Text("Choose to save")
@@ -37,7 +36,6 @@ struct MessageSelectionView: View {
             }
             .padding()
 
-            // Message selection list
             ScrollView {
                 VStack(spacing: 12) {
                     ForEach(messages, id: \.id) { message in
@@ -71,7 +69,6 @@ struct MessageSelectionView: View {
                 }
             }
 
-            // Save and cancel buttons
             HStack {
                 Button(action: {
                     if !selectedMessages.isEmpty {

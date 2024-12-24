@@ -1,3 +1,10 @@
+//
+//  HomeView.swift
+//  Team10Firebase
+//
+//  Created by Emma Tong on 10/30/24.
+//
+
 import SwiftUI
 
 struct HomeView: View {
@@ -63,14 +70,13 @@ struct HomeView: View {
                               .padding(.leading, 20)
                           
                           ScrollView(.horizontal, showsIndicators: false) {
-                              HStack(spacing: 12) {  // Reduced spacing between cards
+                              HStack(spacing: 12) {
                                   ForEach(firebase.getMostRecentlyUpdatedNotes(), id: \.id) { note in
                                       let course = firebase.courses.first { $0.id == note.courseID }
                                       
                                       NavigationLink(destination: NoteView(firebase: firebase, note: note, 
                                       course: course ?? Course(userID: "", courseName: "", folders: [], notes: [], fileLocation: ""))) {
                                           RecentNoteCard(note: note, course: course)
-                                            //   .frame(width: 150)
                                       }
                                       .buttonStyle(PlainButtonStyle())
                                   }
@@ -79,7 +85,6 @@ struct HomeView: View {
                           }
                       }
                       .padding(.vertical, 8)
-
                         
                         HStack {
                             Text("Classes")
@@ -135,7 +140,6 @@ struct HomeView: View {
                           )
                       }
                   }
-              
                 .onAppear {
                     firebase.getCourses()
                     firebase.getNotes()
@@ -159,9 +163,7 @@ struct HomeView: View {
                     message: Text("Are you sure you want to delete this course and all its associated data?"),
                     primaryButton: .destructive(Text("Delete")) {
                         if let courseToDelete = courseToDelete {
-                            // firebase.deleteCourse(course: courseToDelete)
-                          firebase.deleteCourse(courseID: courseToDelete.id ?? "") {_ in 
-                                // firebase.getCourses()
+                          firebase.deleteCourse(courseID: courseToDelete.id ?? "") {_ in
                             }
                         }
                     },
@@ -281,17 +283,14 @@ struct CourseCard: View {
     var body: some View {
         Button(action: onSelect) {
             VStack(spacing: 0) {
-                // Top colored portion (80%)
                 Rectangle()
                     .fill(backgroundColor)
                     .frame(height: 80)
                 
-                // line between color and white section
                 Rectangle()
                     .fill(Color.gray)
                     .frame(height: 1)
                 
-                // Bottom white portion (20%)
                 HStack {
                     Text(course.courseName)
                         .font(.subheadline)
@@ -307,7 +306,7 @@ struct CourseCard: View {
             }
             .frame(height: 122)
             .background(Color.white)
-            .overlay(  // Main border around the entire card
+            .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.gray, lineWidth: 1)
             )
@@ -321,21 +320,21 @@ struct RecentNoteCard: View {
     let course: Course?
     
     var body: some View {
-      VStack(alignment: .leading, spacing: 4) {  // Reduced spacing
+      VStack(alignment: .leading, spacing: 4) {
             Text(note.title)
-                .font(.subheadline)  // Smaller font
+                .font(.subheadline)
                 .fontWeight(.medium)
                 .lineLimit(1)
             
             if let courseName = course?.courseName {
                 Text(courseName)
-                    .font(.caption)  // Smaller font
+                    .font(.caption)
                     .foregroundColor(.gray)
                     .lineLimit(1)
             }
             
             Text(note.summary)
-                .font(.caption)  // Smaller font
+                .font(.caption)
                 .lineLimit(2)
                 .foregroundColor(.gray)
         }

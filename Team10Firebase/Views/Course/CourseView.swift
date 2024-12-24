@@ -1,5 +1,9 @@
-
-
+//
+//  CourseView.swift
+//  Team10Firebase
+//
+//  Created by Evelynn Chen on 10/31/24.
+//
 
 
 import SwiftUI
@@ -363,6 +367,3 @@ private let dateFormatter: DateFormatter = {
     formatter.timeStyle = .short
     return formatter
 }()
-
-
-

@@ -140,10 +140,8 @@ final class NoteViewModelTests: BaseTestCase {
             fileLocation: "/path/"
         )
         
-        // Create view model with updated note
         viewModel = NoteViewModel(note: testNote)
         
-        // Give Firebase time to fetch the course
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             XCTAssertNotNil(self.viewModel.course, "Course should be fetched during NoteViewModel initialization")
             XCTAssertEqual(self.viewModel.course?.id, createdCourse.id, "Fetched course ID should match the created course ID")
