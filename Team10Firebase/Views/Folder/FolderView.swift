@@ -1,3 +1,10 @@
+//
+//  FolderView.swift
+//  Team10Firebase
+//
+//  Created by Evelynn Chen on 10/31/24.
+//
+
 import SwiftUI
 
 class FolderEditStates: ObservableObject {

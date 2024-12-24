@@ -1,3 +1,10 @@
+//
+//  AddNoteToCourseModal.swift
+//  Team10Firebase
+//
+//  Created by Vicky Chen on 12/2/24.
+//
+
 import SwiftUI
 import FirebaseFirestore
 
@@ -25,7 +32,6 @@ struct AddNoteToCourseModal: View {
         NavigationView {
             Form {
                 TextField("Title", text: $title)
-                // Drop-down that provides list of available courses to choose from
                 Picker("Course", selection: $courseName) {
                     ForEach(courses) { course in
                         Text(course.courseName).tag(course.courseName)

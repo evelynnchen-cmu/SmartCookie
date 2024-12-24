@@ -5,7 +5,6 @@
 //  Created by Alanna Cao on 12/2/24.
 //
 
-
 import SwiftUI
 import PDFKit
 import UniformTypeIdentifiers
@@ -57,13 +56,9 @@ struct PDFPicker: UIViewControllerRepresentable {
             }
             defer { url.stopAccessingSecurityScopedResource() }
 
-            // Decode the URL path
             let decodedPath = url.absoluteString.removingPercentEncoding ?? url.absoluteString
             let decodedURL = URL(string: decodedPath)
 
-            print("Decoded URL: \(decodedURL?.path ?? "Invalid URL")")
-
-            // Validate and copy the file to a temporary location
             guard let decodedURL = decodedURL else {
                 print("Failed to decode URL")
                 completion(nil)
@@ -76,14 +71,12 @@ struct PDFPicker: UIViewControllerRepresentable {
                     try FileManager.default.removeItem(at: tempURL)
                 }
                 try FileManager.default.copyItem(at: url, to: tempURL)
-                print("File copied to temporary location: \(tempURL)")
             } catch {
                 print("Failed to copy file to temporary location: \(error)")
                 completion(nil)
                 return
             }
 
-            // Attempt to create PDFDocument
             DispatchQueue.global(qos: .userInitiated).async {
                 guard let pdfDocument = PDFDocument(url: tempURL) else {
                     print("Failed to create PDFDocument from temporary file")

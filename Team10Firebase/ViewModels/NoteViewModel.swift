@@ -27,17 +27,16 @@ class NoteViewModel: ObservableObject {
     init(note: Note) {
       self.note = note
       firebase.getCourse(courseID: note.courseID ?? "") {foundCourse in
-        if let course = foundCourse {
-          self.course = course
-        } else {
-          print("Failed to get course")
-          self.course = nil
-        }
-    }
+          if let course = foundCourse {
+            self.course = course
+          } else {
+            print("Failed to get course")
+            self.course = nil
+          }
+      }
     }
 
     func loadImages() {
-        print("loading images")
         guard let imagePaths = note?.images else {
             print("No images found")
             return

@@ -1,11 +1,14 @@
-
+//
+//  CourseViewModel.swift
+//  Team10Firebase
+//
+//  Created by Emma Tong on 11/8/24.
+//
 
 import Foundation
 import FirebaseFirestore
 import Combine
 
-
-// CourseViewModel.swift
 class CourseViewModel: ObservableObject {
     @Published var course: Course
     @Published var folders: [Folder] = []
@@ -21,14 +24,12 @@ class CourseViewModel: ObservableObject {
     }
   
     private func setupSubscriptions() {
-            // Listen for changes to Firebase's notes
             firebase.$notes
                 .sink { [weak self] _ in
                     self?.fetchDirectNotes()
                 }
                 .store(in: &cancellables)
                 
-            // Monitor course updates
             firebase.getCourse(courseID: course.id ?? "") { [weak self] updatedCourse in
                 if let updatedCourse = updatedCourse {
                     self?.course = updatedCourse
@@ -37,7 +38,6 @@ class CourseViewModel: ObservableObject {
             }
       }
     
-  
     func fetchData() {
         firebase.getNotes()
         fetchFolders()

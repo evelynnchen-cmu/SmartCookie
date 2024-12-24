@@ -8,7 +8,6 @@
 import SwiftUI
 import FirebaseFirestore
 
-
 struct EditNoteModal: View {
     @Environment(\.dismiss) private var dismiss
     @State private var newTitle: String
@@ -41,7 +40,6 @@ struct EditNoteModal: View {
                         if let updatedNote = updatedNote {
                           
                             firebase.updateNoteLastUpdated(noteID: noteID)
-                            // Then update the title
                             firebase.updateNoteTitle(note: updatedNote, newTitle: newTitle) { _ in
                                 onNoteUpdated()
                                 dismiss()

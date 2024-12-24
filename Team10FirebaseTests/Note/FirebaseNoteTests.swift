@@ -41,21 +41,17 @@ final class FirebaseNoteTests: XCTestCase {
         var createdCourse: Course?
         var createdFolder: Folder?
         
-        // Create course and wait for completion
         try await firebase.createCourse(courseName: "Test Course")
         
-        // Wait for courses to be fetched
         try await Task.sleep(nanoseconds: 2_000_000_000)
         firebase.getCourses()
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        // Get the created course
         guard let course = firebase.courses.first else {
             throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Course not created"])
         }
         createdCourse = course
         
-        // Create folder
         firebase.createFolder(
             folderName: "Test Folder",
             course: course,
@@ -68,10 +64,8 @@ final class FirebaseNoteTests: XCTestCase {
             createdFolder = folder
         }
         
-        // Wait for folders to be created
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        // Get the created folder
         let folderFetchExpectation = XCTestExpectation(description: "Fetch folder")
         firebase.getFolders { folders in
             createdFolder = folders.first
@@ -109,7 +103,6 @@ final class FirebaseNoteTests: XCTestCase {
         await fulfillment(of: [expectation], timeout: 5.0)
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        // Verify note creation
         firebase.getNotes()
         try await Task.sleep(nanoseconds: 2_000_000_000)
         XCTAssertTrue(firebase.notes.contains(where: { $0.title == testNote.title }))
@@ -118,7 +111,6 @@ final class FirebaseNoteTests: XCTestCase {
     func testDeleteNote() async throws {
         let (course, folder) = try await setupTestEnvironment()
         
-        // Create note first with explicitly empty images array
         let createExpectation = XCTestExpectation(description: "Create note")
         let testNoteWithEmptyImages = Note(
             id: nil,
@@ -126,7 +118,7 @@ final class FirebaseNoteTests: XCTestCase {
             title: "Test Note",
             summary: "Test Summary",
             content: "Test Content",
-            images: [], // Explicitly set empty images array
+            images: [],
             createdAt: Date(),
             courseID: course.id,
             fileLocation: "/",
@@ -138,7 +130,7 @@ final class FirebaseNoteTests: XCTestCase {
             title: testNoteWithEmptyImages.title,
             summary: testNoteWithEmptyImages.summary,
             content: testNoteWithEmptyImages.content,
-            images: [], // Explicitly pass empty images array
+            images: [],
             course: course,
             folder: folder
         ) { note, error in
@@ -150,7 +142,6 @@ final class FirebaseNoteTests: XCTestCase {
         await fulfillment(of: [createExpectation], timeout: 5.0)
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        // Get the created note
         firebase.getNotes()
         try await Task.sleep(nanoseconds: 2_000_000_000)
         guard let note = firebase.notes.first(where: { $0.title == testNoteWithEmptyImages.title }) else {
@@ -158,10 +149,8 @@ final class FirebaseNoteTests: XCTestCase {
             return
         }
         
-        // Verify note has no images before deletion
         XCTAssertTrue(note.images.isEmpty, "Note should have no images")
         
-        // Delete note
         let deleteExpectation = XCTestExpectation(description: "Delete note")
         firebase.deleteNote(note: note, folderID: folder.id) { error in
             XCTAssertNil(error, "Failed to delete note")
@@ -174,7 +163,6 @@ final class FirebaseNoteTests: XCTestCase {
     func testUpdateNoteTitle() async throws {
         let (course, folder) = try await setupTestEnvironment()
         
-        // Create note first
         let createExpectation = XCTestExpectation(description: "Create note")
         firebase.createNote(
             title: testNote.title,
@@ -192,7 +180,6 @@ final class FirebaseNoteTests: XCTestCase {
         await fulfillment(of: [createExpectation], timeout: 5.0)
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        // Get the created note
         firebase.getNotes()
         try await Task.sleep(nanoseconds: 2_000_000_000)
         guard let note = firebase.notes.first(where: { $0.title == testNote.title }) else {
@@ -200,7 +187,6 @@ final class FirebaseNoteTests: XCTestCase {
             return
         }
         
-        // Update note title
         let updateExpectation = XCTestExpectation(description: "Update note title")
         let newTitle = "Updated Title"
         
@@ -216,7 +202,6 @@ final class FirebaseNoteTests: XCTestCase {
     func testUpdateNoteContent() async throws {
         let (course, folder) = try await setupTestEnvironment()
         
-        // Create note first
         let createExpectation = XCTestExpectation(description: "Create note")
         firebase.createNote(
             title: testNote.title,
@@ -234,7 +219,6 @@ final class FirebaseNoteTests: XCTestCase {
         await fulfillment(of: [createExpectation], timeout: 5.0)
         try await Task.sleep(nanoseconds: 2_000_000_000)
         
-        // Get the created note
         firebase.getNotes()
         try await Task.sleep(nanoseconds: 2_000_000_000)
         guard let note = firebase.notes.first(where: { $0.title == testNote.title }) else {
@@ -242,7 +226,6 @@ final class FirebaseNoteTests: XCTestCase {
             return
         }
         
-        // Update note content
         let updateExpectation = XCTestExpectation(description: "Update note content")
         let newContent = "Updated Content"
         

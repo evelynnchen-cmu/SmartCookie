@@ -87,7 +87,6 @@ struct QuizView: View {
     }
 }
 
-// Cookie Progress View
 struct CookieProgressView: View {
    let currentQuestion: Int
    let totalQuestions: Int
@@ -123,7 +122,6 @@ struct CookieProgressView: View {
    }
 }
 
-// Loading View
 private struct LoadingView: View {
     let hasCompletedStreakToday: Bool
     let streakLength: Int
@@ -197,7 +195,6 @@ private struct WaveBounceModifier: ViewModifier {
     }
 }
 
-// Error View
 private struct ErrorView: View {
     let message: String
     
@@ -220,7 +217,6 @@ private struct ErrorView: View {
     }
 }
 
-// Quiz Header
 private struct QuizHeaderView: View {
     let hasCompletedStreakToday: Bool
     
@@ -246,7 +242,6 @@ private struct QuizHeaderView: View {
     }
 }
 
-// Question View
 private struct QuestionView: View {
     @ObservedObject var viewModel: QuizViewModel
     
@@ -269,7 +264,6 @@ private struct QuestionView: View {
     }
 }
 
-// Answer Options
 private struct AnswerOptionsView: View {
     @ObservedObject var viewModel: QuizViewModel
     private let letters = ["a", "b", "c", "d"]
@@ -288,7 +282,6 @@ private struct AnswerOptionsView: View {
     }
 }
 
-// Answer Button
 private struct AnswerButton: View {
     let index: Int
     let answer: String
@@ -328,7 +321,6 @@ private struct AnswerButton: View {
     }
 }
 
-// Next Button
 private struct NextButton: View {
    @ObservedObject var viewModel: QuizViewModel
    let userID: String

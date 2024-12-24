@@ -1,18 +1,19 @@
+//
 //  CameraView.swift
 //  Team10Firebase
 //
 //  Created by Alanna Cao on 11/2/24.
 //
-//  This view represents a low-level camera interface using `UIViewRepresentable` to integrate `AVCaptureSession` for
-//  live camera feed and photo capturing in SwiftUI. It includes setup for the camera preview and photo output,
-//  and responds to a "take picture" notification to capture a photo when triggered.
-//  The captured photo is returned via the `onPhotoCaptured` closure to be handled by the parent view.
-
 
 import SwiftUI
 import AVFoundation
 import Foundation
 
+
+//  This view represents a low-level camera interface using `UIViewRepresentable` to integrate `AVCaptureSession` for
+//  live camera feed and photo capturing in SwiftUI. It includes setup for the camera preview and photo output,
+//  and responds to a "take picture" notification to capture a photo when triggered.
+//  The captured photo is returned via the `onPhotoCaptured` closure to be handled by the parent view.
 struct CameraView: UIViewRepresentable {
     var onPhotoCaptured: (UIImage) -> Void
 

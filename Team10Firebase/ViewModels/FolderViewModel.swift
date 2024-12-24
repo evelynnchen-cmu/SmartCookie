@@ -30,7 +30,6 @@ class FolderViewModel: ObservableObject {
   
   private func fetchNotesByIDs() {
     let noteIDs = folder.notes
-    print("Note IDS to fetch", folder.notes)
 
     firebase.getNotesById(noteIDs: noteIDs) { notes in
       self.notes = notes

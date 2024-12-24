@@ -50,7 +50,6 @@ struct ChatMessagesView: View {
                                         }
                                 }
                             } else {
-                                // Assistant Profile Picture
                                 Image("cookieIcon")
                                     .resizable()
                                     .frame(width: 30, height: 30)

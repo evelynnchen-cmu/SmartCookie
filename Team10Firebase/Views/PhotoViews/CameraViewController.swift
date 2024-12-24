@@ -1,3 +1,10 @@
+//
+//  CameraViewController.swift
+//  Team10Firebase
+//
+//  Created by Alanna Cao on 11/2/24.
+//
+
 import SwiftUI
 import UIKit
 

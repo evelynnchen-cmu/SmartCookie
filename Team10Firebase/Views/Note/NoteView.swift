@@ -1,3 +1,10 @@
+//
+//  NoteView.swift
+//  Team10Firebase
+//
+//  Created by Vicky Chen on 12/2/24.
+//
+
 import SwiftUI
 import PhotosUI
 
@@ -28,7 +35,6 @@ struct NoteView: View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Title
                     Text(note.title)
                         .font(.largeTitle)
                         .bold()

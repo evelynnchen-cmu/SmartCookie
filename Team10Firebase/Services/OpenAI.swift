@@ -9,8 +9,6 @@ import Foundation
 import UIKit
 
 class OpenAI {
-
-  // First create a temporary struct for parsing the OpenAI response
   private struct MCQuestionResponse: Codable {
       var question: String
       var potentialAnswers: [String]
@@ -105,10 +103,8 @@ class OpenAI {
           }
           
           do {
-              // First decode into the temporary response struct
               let responseQuestions = try JSONDecoder().decode([MCQuestionResponse].self, from: jsonData)
               
-              // Then convert to MCQuestion objects
               return responseQuestions.map { response in
                   MCQuestion(
                       id: nil,
@@ -179,7 +175,6 @@ class OpenAI {
             return
         }
         let base64Image = imageData.base64EncodedString()
-        //  The OpenAI API key loaded from the Secrets.plist file.
         let openAIKey: String = {
             guard let filePath = Bundle.main.path(forResource: "Secrets", ofType: "plist"),
                 let plist = NSDictionary(contentsOfFile: filePath),
@@ -208,8 +203,6 @@ class OpenAI {
             exit(0)
         }
 
-        let startTime = Date()
-
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -217,9 +210,6 @@ class OpenAI {
         request.httpBody = jsonData
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
-            let endTime = Date()
-            let timeInterval = endTime.timeIntervalSince(startTime)
-            
             if let error = error {
                 print("Error: \(error.localizedDescription)")
                 completion(nil)
@@ -246,16 +236,11 @@ class OpenAI {
                 if let content = jsonResponse.choices.first?.message.content {
                     completion(content)
                 }
-
             } catch {
                 print("Failed to parse JSON: \(error)")
                 completion(nil)
             }
-
-            print("Time taken for request: \(timeInterval) seconds")
         }
-
         task.resume()
-
     }
 }

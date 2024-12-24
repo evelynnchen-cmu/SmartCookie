@@ -1,3 +1,9 @@
+//
+//  AddFolderModal.swift
+//  Team10Firebase
+//
+//  Created by Vicky Chen on 12/2/24.
+//
 
 
 import SwiftUI
