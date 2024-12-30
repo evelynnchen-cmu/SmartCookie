@@ -1,8 +1,20 @@
 # SmartCookie
-CMU F24 67-443 Mobile Application Design and Development  
+
+CMU F24 67443 Mobile Application Design and Development  
 by Alanna Cao, Emma Tong, Evelynn Chen, and Vicky Chen
 
-SmartCookie is an iOS app designed to streamline studying for students by offering tools for organizing class materials of different formats and interacting with AI-powered features such as a context-aware chatbot and dynamically generated quizzes with error tracking. Its mobile-first design enables learning on the go, providing students with a centralized, interactive, and intelligent platform for note management and learning enhancement.
+<img src="https://github.com/user-attachments/assets/6c937999-0caa-458a-b657-9bd95e74da98" alt="SmartCookie logo" width="6%">
+
+SmartCookie is an iOS app that streamlines students' studying by offering tools for organizing class materials of different formats and interacting with AI-powered features such as a context-aware chatbot and dynamically generated quizzes with error tracking. Its mobile-first design enables learning on the go, providing students with a centralized, interactive, and intelligent platform for note management and learning enhancement.
+
+<img src="https://github.com/user-attachments/assets/43e0e8b7-22c2-4dfb-ba17-e79d098dc57e" alt="SmartCookie poster" width="50%">
+
+## Tech stack
+- Swift
+- SwiftUI
+- Firebase
+- Firebase Storage
+- OpenAI API
 
 ## Installation and Setup
 **Important:** Add Secrets.plist and GoogleService-Info.plist (provided to Prof H via Slack) to the root of Team10Firebase project. 
