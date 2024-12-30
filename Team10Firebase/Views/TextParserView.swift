@@ -1,9 +1,3 @@
-//
-//  TextParseViewNewNote.swift
-//  Team10Firebase
-//
-//  Created by Emma Tong on 11/14/24.
-//
 
 import SwiftUI
 
@@ -36,12 +30,6 @@ struct TextParserView: View {
   @State private var showSaveForm = false
   private var openAI = OpenAI()
   @FocusState private var isTextEditorFocused: Bool
-  
-//  public var tan = Color(hex: "775139")
-//  public var tan1 = Color(hex: "EBDBCE")
-//  public var lightBlue = Color(hex: "D8E9F5")
-//  public var mediumBlue = Color(hex: "89BBDE")
-//  public var darkBlue = Color(hex: "191D32")
   
   var completion: ((String) -> Void)?
 
@@ -274,7 +262,6 @@ struct TextParserView: View {
         }
     }
 
-    // Views
     private var headerView: some View {
         ZStack {
             Text("What we got")
