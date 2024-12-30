@@ -22,8 +22,8 @@ struct TextParserView: View {
   @State private var showExitConfirmation = false
   @State private var savePressed = false
   @State private var navigateToNoteView = false
-  @State private var isChatViewPresented: Bool? = false //Bool optional so ChatView can handle non-sheet presentation
-  @State private var title: String // Passed in init
+  @State private var isChatViewPresented: Bool? = false
+  @State private var title: String
   @State private var courseID: String = ""
   @State private var userID: String = ""
   @State private var content: String? = nil
@@ -36,11 +36,12 @@ struct TextParserView: View {
   @State private var showSaveForm = false
   private var openAI = OpenAI()
   @FocusState private var isTextEditorFocused: Bool
-  public var tan = Color(hex: "775139")
-  public var tan1 = Color(hex: "EBDBCE")
-  public var lightBlue = Color(hex: "D8E9F5")
-  public var mediumBlue = Color(hex: "89BBDE")
-  public var darkBlue = Color(hex: "191D32")
+  
+//  public var tan = Color(hex: "775139")
+//  public var tan1 = Color(hex: "EBDBCE")
+//  public var lightBlue = Color(hex: "D8E9F5")
+//  public var mediumBlue = Color(hex: "89BBDE")
+//  public var darkBlue = Color(hex: "191D32")
   
   var completion: ((String) -> Void)?
 
@@ -65,7 +66,7 @@ struct TextParserView: View {
                }
            }
        }
-       .background(tan1)
+       .background(tan)
        .onAppear {
            parseImages()
            setupKeyboardObservers()
@@ -331,7 +332,7 @@ struct TextParserView: View {
             Group {
                 if !isParsing {
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(tan, lineWidth: 3)
+                        .stroke(darkBrown, lineWidth: 3)
                         .background(RoundedRectangle(cornerRadius: 12).fill(Color.white))
                 }
             }
@@ -350,7 +351,7 @@ struct TextParserView: View {
                     Image(systemName: "arrow.counterclockwise.circle")
                         .font(.system(size: 40))
                         .background(Color.white)
-                        .foregroundColor(tan)
+                        .foregroundColor(darkBrown)
                 }
                 .padding(8)
                 
@@ -363,7 +364,7 @@ struct TextParserView: View {
                 }) {
                     Image(systemName: "pencil.circle.fill")
                     .font(.system(size: 40))
-                    .foregroundColor(tan)
+                    .foregroundColor(darkBrown)
                 }
                 .padding(8)
             } else {
@@ -398,7 +399,7 @@ struct TextParserView: View {
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(tan, lineWidth: 1)
+                                .stroke(darkBrown, lineWidth: 1)
                         )
                 }
                 
@@ -414,7 +415,7 @@ struct TextParserView: View {
                     Text("Save")
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(tan)
+                        .background(darkBrown)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                 }
