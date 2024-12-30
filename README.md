@@ -1,6 +1,8 @@
-# 67443-team10
+# SmartCookie
+CMU F24 67-443 Mobile Application Design and Development  
+by Alanna Cao, Emma Tong, Evelynn Chen, and Vicky Chen
 
-The SmartCookie app is designed to streamline studying for students by offering tools for organizing notes, extracting text, and interacting with AI-powered features such as chat-based study assistance and quizzes. Its mobile-first design enables learning on the go, providing students with a centralized, interactive, and intelligent platform for note management and learning enhancement.
+SmartCookie is an iOS app designed to streamline studying for students by offering tools for organizing class materials of different formats and interacting with AI-powered features such as a context-aware chatbot and dynamically generated quizzes with error tracking. Its mobile-first design enables learning on the go, providing students with a centralized, interactive, and intelligent platform for note management and learning enhancement.
 
 ## Installation and Setup
 **Important:** Add Secrets.plist and GoogleService-Info.plist (provided to Prof H via Slack) to the root of Team10Firebase project. 
@@ -16,8 +18,6 @@ The SmartCookie app is designed to streamline studying for students by offering 
 3. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available in lower iOS versions and will not display (icons for notes and add new note icon (located in the top right) in CourseView/FolderView and icons for uploading new image/pdf in NoteView (located in the top right)). UI will also be slightly different.
    - Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
    - If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [yourname].Team10Firebase).
-
-## Intended Flows
 
 ## Design Decisions
 Generally, most of our design decisions were based on user feedback received throughout the ideation and development process. Our user testing reports cover these decisions in much greated depth, and can be found here: [Sprint 2](https://docs.google.com/document/d/1jH_xv7wfiSZur2KKgGq4W6AJhWWvTzmzcy_XwHZ1FUo/edit?usp=sharing), and [Sprint 5](https://docs.google.com/document/d/1nSijWxFvLL3BzYLVRLy4AT7Zor1WZ2SGQcPo0ch3bOw/edit?usp=sharing)
