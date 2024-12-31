@@ -25,12 +25,18 @@ SmartCookie is an iOS app that streamlines students' studying by offering tools 
    ```
     git clone https://github.com/evelynnchen-cmu/67443-team10.git
    ```
-2. Prepare Local Environment
-   Replace the Secrets.plist (OpenAI API) and GoogleService-Info.plist (Firebase) files with your own configuration files:
-      - GoogleService-Info.plist: Obtain this by setting up your own Firebase project. Follow [Firebase's setup guide](https://firebase.google.com/docs/web/setup) to configure Firestore and Storage. Then update the app to connect to your Firebase project (modify Info.plist file).
-      - Secrets.plist: Replace the OpenAI API key with your own key. Follow the [OpenAI API setup guide](https://platform.openai.com/docs/quickstart) to obtain this key.
+2. Add Firebase Configuration File
+   - Go to the [Firebase Console](https://console.firebase.google.com/), create a new Firebase project (if you haven't already), and configure Firestore and Storage.
+   - Once your Firebase project is set up, download the GoogleService-Info.plist file.
+   - Add the downloaded GoogleService-Info.plist file to the base of your project directory. This file must not be included in the repository, so make sure it’s added to your local project and not pushed to any public repository.
+   - Ensure that the Info.plist file in the app is updated with your Firebase configuration.
 
-3. Open the project in Xcode. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available in lower iOS versions and will not display (icons for notes and add new note icon (located in the top right) in CourseView/FolderView and icons for uploading new image/pdf in NoteView (located in the top right)). UI will also be slightly different.
+3. Replace OpenAI API Key in Secrets.plist
+   - Obtain your own OpenAI API key by following the [OpenAI API setup guide](https://platform.openai.com/docs/quickstart).
+   - Replace the OpenAIKey value in the Secrets.plist file with your own API key.
+   - The Secrets.plist file is designed to hold your secret keys (like the OpenAI API key), and it should be added to your local project. Make sure to not include it in the repository for security purposes.
+
+4. Open the project in Xcode. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available in lower iOS versions and will not display (icons for notes and add new note icon (located in the top right) in CourseView/FolderView and icons for uploading new image/pdf in NoteView (located in the top right)). UI will also be slightly different.
    - Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
    - If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [yourname].Team10Firebase).
 
@@ -62,7 +68,7 @@ Streak-based incentives replaced a traditional points system after feedback indi
    - Chose Firebase Firestore because there was more classroom help with this service and it is built to integrate with Firebase.
 
 
-## Testing Issues 
+## Testing Overview 
 SmartCookie leverages a combination of real-environment and mock-based testing strategies to ensure functionality and reliability.
 
 - **UI Testing**
