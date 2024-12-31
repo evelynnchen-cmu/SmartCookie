@@ -4,6 +4,7 @@
 *.plist
 Team10Firebase/GoogleService-Info.plist
 !Info.plist
+!Secrets.plist
 *.pbxuser
 !default.pbxuser
 *.mode1v3
