@@ -41,6 +41,7 @@ struct FilePickerView: View {
                 .onAppear {
                     loadNotesIfNeeded()
                     loadFoldersIfNeeded()
+                    loadCoursesIfNeeded()
                 }
                 .onChange(of: firebase.notes) { newNotes in
                     if !newNotes.isEmpty {
@@ -129,6 +130,12 @@ struct FilePickerView: View {
                 folders = fetchedFolders
                 updateFilteredNotes()
             }
+        }
+    }
+  
+    private func loadCoursesIfNeeded() {
+        if firebase.courses.isEmpty {
+            firebase.getCourses()
         }
     }
 
