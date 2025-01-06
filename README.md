@@ -7,6 +7,11 @@ by Alanna Cao, Emma Tong, Evelynn Chen, and Vicky Chen
 
 SmartCookie is an iOS app that streamlines students' studying by offering tools for organizing class materials of different formats and interacting with AI-powered features such as a context-aware chatbot and dynamically generated quizzes with error tracking. Its mobile-first design enables learning on the go, providing students with a centralized, interactive, and intelligent platform for note management and learning enhancement.
 
+
+[Promo video](https://drive.google.com/file/d/19nCO4Ozc0Jr0QhWOAlF-vvh13IKvE---/view)
+
+[Pitch presentation](https://docs.google.com/presentation/d/1CAYkDcG7sniTMj7V9r_SAw0qfy3aFwGrTJym1AHv7DY/edit?usp=sharing)
+
 <img src="https://github.com/user-attachments/assets/43e0e8b7-22c2-4dfb-ba17-e79d098dc57e" alt="SmartCookie poster" width="50%">
 
 ## Tech stack
@@ -19,7 +24,7 @@ SmartCookie is an iOS app that streamlines students' studying by offering tools 
 - PDFKit
 
 ## Installation and Setup
-**Important:** This project relies on Firebase and OpenAI APIs, but our subscriptions for these services are no longer active. These instructions apply to anyone who wishes to personally install our app, as well as those who want to test or develop it further. To set up the app locally, follow the steps below:
+**Important:** This project relies on Firebase and the OpenAI API, but our subscriptions for these services are no longer active. These instructions apply to anyone who wishes to personally install our app, as well as those who want to test or develop it further. To set up the app locally, follow the steps below:
 
 1. Clone the repository
    ```
@@ -28,17 +33,17 @@ SmartCookie is an iOS app that streamlines students' studying by offering tools 
 2. Add Firebase Configuration File
    - Go to the [Firebase Console](https://console.firebase.google.com/), create a new Firebase project (if you haven't already), and configure Firestore and Storage.
    - Once your Firebase project is set up, download the GoogleService-Info.plist file.
-   - Add the downloaded GoogleService-Info.plist file to the base of your project directory. This file must not be included in the repository, so make sure it’s added to your local project and not pushed to any public repository.
+   - Add the downloaded GoogleService-Info.plist file to the base of the project directory. This file must not be included in the repository, so make sure it’s added to your local project and not pushed to any public repository.
    - Ensure that the Info.plist file in the app is updated with your Firebase configuration.
 
-3. Replace OpenAI API Key in Secrets.plist
+3. Replace the OpenAI API Key in Secrets.plist
    - Obtain your own OpenAI API key by following the [OpenAI API setup guide](https://platform.openai.com/docs/quickstart).
    - Replace the OpenAIKey value in the Secrets.plist file with your own API key.
    - The Secrets.plist file is designed to hold your secret keys (like the OpenAI API key), and it should be added to your local project. Make sure to not include it in the repository for security purposes.
 
-4. Open the project in Xcode. Build and run the app on an iPhone (not simulator), iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available in lower iOS versions and will not display (icons for notes and add new note icon (located in the top right) in CourseView/FolderView and icons for uploading new image/pdf in NoteView (located in the top right)). UI will also be slightly different.
-   - Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets->Team10Firebase->General->Minimum Deployments. You must also change the Info.plist
-   - If the bundleID does not work/it says it is taken, change it in Signing & Capabilities to [your name].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [yourname].Team10Firebase).
+4. Open the project in Xcode. Build and run the app on an iPhone (not simulator) with iOS version 18. If necessary, can downgrade our app to run on lower iOS versions although some icons are not available in lower iOS versions and will not display (icons for notes and add new note icon (located in the top right) in CourseView/FolderView and icons for uploading new image/pdf in NoteView (located in the top right)). The UI will also be slightly different.
+   - Can downgrade to iOS version >= 17.6. If the minimum iOS version is 18.0, can change it by going to Targets -> Team10Firebase -> General -> Minimum Deployments. You must also change the Info.plist.
+   - If the bundleID does not work or Xcode says it is taken, change it in Signing & Capabilities to [YourAppleID].Team10Firebase. You must also make this change in the Info.plist bundle ID field (update to match signing team, [YourAppleID].Team10Firebase).
 
 ## Design Decisions
 SmartCookie's design prioritizes user-centric features, guided by iterative feedback and testing. The following are some of our key design decisions we want to highlight:
@@ -66,34 +71,6 @@ Streak-based incentives replaced a traditional points system after feedback indi
    - While using the OpenAI API for parsing a PDF similarly to how images are parsed would've allowed us to maintain consistency within our app, PDFKit offered all of the basic functionality for supporting PDF upload and parse that our users wanted prioritized the most. 
 - Firebase Firestore vs AWS S3
    - Chose Firebase Firestore because there was more classroom help with this service and it is built to integrate with Firebase.
-
-
-## Testing Overview 
-SmartCookie leverages a combination of real-environment and mock-based testing strategies to ensure functionality and reliability.
-
-- **UI Testing**
-
-  To avoid slow and fragile tests, we focused on model and service testing rather than extensive UI testing. While this impacted coverage, our approach emphasized validating core functionalities over fragile, time-intensive UI test cases.
-
-- **Firebase Testing**
-
-  Testing utilized both mocks and real Firebase calls. While real-environment tests validate end-to-end integration, they introduced potential risks such as data conflicts, mitigated through careful teardown processes. Mocks were used where possible to minimize Firebase call costs and side effects.
-
-- **OpenAI Testing**
-
-  OpenAI API calls were tested exclusively using mocks due to cost considerations. Coverage focused on core OpenAI-related functions, ensuring robust testing within practical constraints.
-
-- **View Model Testing**
-  
-   Three of four view models achieved over 90% test coverage, demonstrating the correctness of essential app components. Testing QuizViewModel proved challenging due to variable quiz generation but remains a future area for refinement.
-
-
-### Test Coverage
-Screenshots below demonstrate our Xcode testing suite and test coverage report:
-
-   <img width="447" alt="IMG_8307" src="https://github.com/user-attachments/assets/eade1409-e747-4261-88de-1bbd7ed78dae" />
-
-   <img width="681" alt="IMG_6225" src="https://github.com/user-attachments/assets/b65f025f-6294-4ae2-8bff-4a4b1097dc80" />
 
 ## Future Extensions
 - Expand app to support accessibility features like audio transcriptions
