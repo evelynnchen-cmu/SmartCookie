@@ -28,7 +28,7 @@ SmartCookie is an iOS app that streamlines students' studying by offering tools 
 
 1. Clone the repository
    ```
-    git clone https://github.com/evelynnchen-cmu/67443-team10.git
+    git clone https://github.com/evelynnchen-cmu/SmartCookie.git
    ```
 2. Add Firebase Configuration File
    - Go to the [Firebase Console](https://console.firebase.google.com/), create a new Firebase project (if you haven't already), and configure Firestore and Storage.
